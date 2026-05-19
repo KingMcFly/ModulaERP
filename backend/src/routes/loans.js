@@ -15,7 +15,7 @@ router.get('/overdue', guard, w(async (req, res) => {
     `SELECT l.*, a.serial_number, a.brand, a.model, p.name AS borrower
      FROM loans l JOIN assets a ON a.id = l.asset_id
      LEFT JOIN personnel p ON p.id = l.borrower_id
-     WHERE l.tenant_id = ? AND l.status = 'active' AND l.expected_return < CURDATE()
+     WHERE l.tenant_id = ? AND l.status = 'active' AND l.expected_return < CURRENT_DATE
      ORDER BY l.expected_return ASC`,
     [req.user.tenant_id]
   );
@@ -67,9 +67,9 @@ router.post('/', guard, w(async (req, res) => {
   if (!asset) return res.status(404).json({ error: 'Activo no encontrado' });
   if (asset.status !== 'available') return res.status(409).json({ error: 'El activo no está disponible' });
 
-  const [result] = await db.query(
+  const [rows] = await db.query(
     `INSERT INTO loans (tenant_id, asset_id, borrower_id, borrower_name, issued_by, expected_return, notes, signature_data)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
     [
       req.user.tenant_id,
       asset_id,
@@ -81,7 +81,7 @@ router.post('/', guard, w(async (req, res) => {
       signature_data  || null,
     ]
   );
-  res.status(201).json({ id: result.insertId });
+  res.status(201).json({ id: rows[0].id });
 }));
 
 router.patch('/:id/return', guard, w(async (req, res) => {
@@ -94,7 +94,7 @@ router.patch('/:id/return', guard, w(async (req, res) => {
   if (loan.status !== 'active') return res.status(409).json({ error: 'Préstamo ya cerrado' });
 
   await db.query(
-    `UPDATE loans SET status='returned', actual_return=NOW(), returned_by=?, notes=CONCAT(IFNULL(notes,''), ?)
+    `UPDATE loans SET status='returned', actual_return=NOW(), returned_by=?, notes=COALESCE(notes,'') || ?
      WHERE id=?`,
     [req.user.id, notes ? `\n[Devolución] ${notes}` : '', req.params.id]
   );

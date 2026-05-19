@@ -16,7 +16,7 @@ const w = fn => (req, res, next) => fn(req, res, next).catch(next);
 
 router.get('/locations/all', guardInventory, w(async (req, res) => {
   const [rows] = await db.query(
-    'SELECT * FROM locations WHERE tenant_id = ? AND is_active = 1 ORDER BY floor_level, name',
+    'SELECT * FROM locations WHERE tenant_id = ? AND is_active = true ORDER BY floor_level, name',
     [req.user.tenant_id]
   );
   res.json(rows);
@@ -24,12 +24,12 @@ router.get('/locations/all', guardInventory, w(async (req, res) => {
 
 router.post('/locations', guardInventory, w(async (req, res) => {
   const { name, description, pos_x, pos_y, width, height, floor_level, color, criticality, shape } = req.body;
-  const [result] = await db.query(
+  const [rows] = await db.query(
     `INSERT INTO locations (tenant_id, name, description, pos_x, pos_y, width, height, floor_level, color, criticality, shape)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
     [req.user.tenant_id, name, description, pos_x, pos_y, width, height, floor_level, color, criticality, shape]
   );
-  res.status(201).json({ id: result.insertId });
+  res.status(201).json({ id: rows[0].id });
 }));
 
 router.put('/locations/:id', guardInventory, w(async (req, res) => {
@@ -43,7 +43,7 @@ router.put('/locations/:id', guardInventory, w(async (req, res) => {
 }));
 
 router.delete('/locations/:id', guardInventory, w(async (req, res) => {
-  await db.query('UPDATE locations SET is_active = 0 WHERE id = ? AND tenant_id = ?', [req.params.id, req.user.tenant_id]);
+  await db.query('UPDATE locations SET is_active = false WHERE id = ? AND tenant_id = ?', [req.params.id, req.user.tenant_id]);
   res.json({ message: 'Ubicación eliminada' });
 }));
 
@@ -51,11 +51,11 @@ router.delete('/locations/:id', guardInventory, w(async (req, res) => {
 
 router.get('/stats', guardInventory, w(async (req, res) => {
   const tid = req.user.tenant_id;
-  const [[{ total }]]       = await db.query('SELECT COUNT(*) AS total FROM assets WHERE tenant_id = ? AND is_active = 1', [tid]);
-  const [[{ available }]]   = await db.query("SELECT COUNT(*) AS available FROM assets WHERE tenant_id = ? AND status = 'available' AND is_active = 1", [tid]);
-  const [[{ loaned }]]      = await db.query("SELECT COUNT(*) AS loaned FROM assets WHERE tenant_id = ? AND status = 'loaned' AND is_active = 1", [tid]);
-  const [[{ maintenance }]] = await db.query("SELECT COUNT(*) AS maintenance FROM assets WHERE tenant_id = ? AND status = 'maintenance' AND is_active = 1", [tid]);
-  const [[{ total_value }]] = await db.query('SELECT SUM(value) AS total_value FROM assets WHERE tenant_id = ? AND is_active = 1', [tid]);
+  const [[{ total }]]       = await db.query('SELECT COUNT(*) AS total FROM assets WHERE tenant_id = ? AND is_active = true', [tid]);
+  const [[{ available }]]   = await db.query("SELECT COUNT(*) AS available FROM assets WHERE tenant_id = ? AND status = 'available' AND is_active = true", [tid]);
+  const [[{ loaned }]]      = await db.query("SELECT COUNT(*) AS loaned FROM assets WHERE tenant_id = ? AND status = 'loaned' AND is_active = true", [tid]);
+  const [[{ maintenance }]] = await db.query("SELECT COUNT(*) AS maintenance FROM assets WHERE tenant_id = ? AND status = 'maintenance' AND is_active = true", [tid]);
+  const [[{ total_value }]] = await db.query('SELECT SUM(value) AS total_value FROM assets WHERE tenant_id = ? AND is_active = true', [tid]);
   res.json({ total, available, loaned, maintenance, total_value: total_value || 0 });
 }));
 
@@ -65,7 +65,7 @@ router.get('/', guardInventory, w(async (req, res) => {
   const { search, status, location_id, type } = req.query;
   let sql = `SELECT a.*, l.name AS location_name
              FROM assets a LEFT JOIN locations l ON l.id = a.location_id
-             WHERE a.tenant_id = ? AND a.is_active = 1`;
+             WHERE a.tenant_id = ? AND a.is_active = true`;
   const params = [req.user.tenant_id];
   if (search)      { sql += ' AND (a.serial_number LIKE ? OR a.brand LIKE ? OR a.model LIKE ?)'; const s = `%${search}%`; params.push(s, s, s); }
   if (status)      { sql += ' AND a.status = ?';      params.push(status); }
@@ -132,12 +132,12 @@ router.get('/:id', guardInventory, w(async (req, res) => {
   res.json(rows[0]);
 }));
 
-router.post('/', guardInventory, checkPlanLimit('assets', 'SELECT COUNT(*) AS c FROM assets WHERE tenant_id=? AND is_active=1'), w(async (req, res) => {
+router.post('/', guardInventory, checkPlanLimit('assets', 'SELECT COUNT(*) AS c FROM assets WHERE tenant_id=? AND is_active=true'), w(async (req, res) => {
   const { serial_number, barcode, asset_type, brand, model, value, location_id, purchase_date, notes } = req.body;
   if (!asset_type) return res.status(400).json({ error: 'Tipo de activo requerido' });
-  const [result] = await db.query(
+  const [rows] = await db.query(
     `INSERT INTO assets (tenant_id, serial_number, barcode, asset_type, brand, model, value, location_id, purchase_date, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
     [
       req.user.tenant_id,
       serial_number || null,
@@ -151,8 +151,8 @@ router.post('/', guardInventory, checkPlanLimit('assets', 'SELECT COUNT(*) AS c 
       notes         || null,
     ]
   );
-  await logActivity(req, 'create', 'asset', result.insertId, { serial_number, asset_type });
-  res.status(201).json({ id: result.insertId });
+  await logActivity(req, 'create', 'asset', rows[0].id, { serial_number, asset_type });
+  res.status(201).json({ id: rows[0].id });
 }));
 
 router.put('/:id', guardInventory, w(async (req, res) => {
@@ -181,7 +181,7 @@ router.put('/:id', guardInventory, w(async (req, res) => {
 }));
 
 router.delete('/:id', guardInventory, w(async (req, res) => {
-  await db.query('UPDATE assets SET is_active = 0 WHERE id = ? AND tenant_id = ?', [req.params.id, req.user.tenant_id]);
+  await db.query('UPDATE assets SET is_active = false WHERE id = ? AND tenant_id = ?', [req.params.id, req.user.tenant_id]);
   await logActivity(req, 'delete', 'asset', req.params.id, {});
   res.json({ message: 'Activo eliminado' });
 }));

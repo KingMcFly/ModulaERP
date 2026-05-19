@@ -17,20 +17,20 @@ router.get('/summary', w(async (req, res) => {
 
   const [[{ low_stock }]] = await db.query(
     `SELECT COUNT(*) AS low_stock FROM supplies
-     WHERE tenant_id=? AND is_active=1 AND current_stock <= min_stock`,
+     WHERE tenant_id=? AND is_active=true AND current_stock <= min_stock`,
     [tid]
   );
 
   const [[{ overdue_maintenance }]] = await db.query(
     `SELECT COUNT(*) AS overdue_maintenance FROM maintenance_records
-     WHERE tenant_id=? AND status IN ('pending','in_progress') AND scheduled_at < CURDATE()`,
+     WHERE tenant_id=? AND status IN ('pending','in_progress') AND scheduled_at < CURRENT_DATE`,
     [tid]
   );
 
   const [[{ expiring_contracts }]] = await db.query(
     `SELECT COUNT(*) AS expiring_contracts FROM contracts
      WHERE tenant_id=? AND status='active' AND end_date IS NOT NULL
-       AND DATEDIFF(end_date, CURDATE()) BETWEEN 0 AND alert_days`,
+       AND (end_date - CURRENT_DATE) BETWEEN 0 AND alert_days`,
     [tid]
   ).catch(() => [[{ expiring_contracts: 0 }]]);
 

@@ -12,8 +12,8 @@ const MANDATORY_MODULES = ['inventory', 'personnel'];
 router.get('/', w(async (req, res) => {
   const [rows] = await db.query(
     `SELECT t.*,
-       (SELECT COUNT(*) FROM users u WHERE u.tenant_id = t.id AND u.is_active = 1) AS user_count,
-       (SELECT COUNT(*) FROM tenant_modules tm WHERE tm.tenant_id = t.id AND tm.is_active = 1) AS module_count
+       (SELECT COUNT(*) FROM users u WHERE u.tenant_id = t.id AND u.is_active = true) AS user_count,
+       (SELECT COUNT(*) FROM tenant_modules tm WHERE tm.tenant_id = t.id AND tm.is_active = true) AS module_count
      FROM tenants t
      WHERE t.id != 1
      ORDER BY t.created_at DESC`
@@ -31,21 +31,20 @@ router.post('/', w(async (req, res) => {
   const conn = await db.getConnection();
   await conn.beginTransaction();
   try {
-    const [result] = await conn.query(
+    const [tenantRows] = await conn.query(
       `INSERT INTO tenants (name, slug, contact_email, contact_phone, country, plan, primary_color)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
       [name, slug, contact_email || null, contact_phone || null, country || null,
        plan || 'starter', primary_color || '#6366F1']
     );
-    const tenantId = result.insertId;
+    const tenantId = tenantRows[0].id;
 
     // Always include mandatory modules + selected ones
     const allCodes = [...new Set([...MANDATORY_MODULES, ...(module_codes || [])])];
     if (allCodes.length) {
-      const [mods] = await conn.query('SELECT id FROM modules WHERE code IN (?)', [allCodes]);
-      if (mods.length) {
-        const vals = mods.map(m => [tenantId, m.id]);
-        await conn.query('INSERT INTO tenant_modules (tenant_id, module_id) VALUES ?', [vals]);
+      const [mods] = await conn.query('SELECT id FROM modules WHERE code = ANY(?)', [allCodes]);
+      for (const m of mods) {
+        await conn.query('INSERT INTO tenant_modules (tenant_id, module_id) VALUES (?, ?)', [tenantId, m.id]);
       }
     }
 
@@ -63,12 +62,12 @@ router.get('/:id', w(async (req, res) => {
   if (!rows.length) return res.status(404).json({ error: 'No encontrado' });
 
   const [mods] = await db.query(
-    `SELECT m.*, COALESCE(tm.is_active, 0) AS enabled, tm.config,
-       IF(m.code IN (${MANDATORY_MODULES.map(() => '?').join(',')}), 1, 0) AS is_mandatory
+    `SELECT m.*, COALESCE(tm.is_active, false) AS enabled, tm.config,
+       CASE WHEN m.code = ANY(?) THEN true ELSE false END AS is_mandatory
      FROM modules m
      LEFT JOIN tenant_modules tm ON tm.module_id = m.id AND tm.tenant_id = ?
      ORDER BY m.sort_order`,
-    [...MANDATORY_MODULES, req.params.id]
+    [MANDATORY_MODULES, req.params.id]
   );
 
   const [users] = await db.query(
@@ -142,12 +141,12 @@ router.post('/:id/users', w(async (req, res) => {
 
   const hash = await bcrypt.hash(password, 12);
   const validRoles = ['admin', 'manager', 'operator', 'viewer'];
-  const [result] = await db.query(
-    'INSERT INTO users (tenant_id, email, password, name, role) VALUES (?, ?, ?, ?, ?)',
+  const [uRows] = await db.query(
+    'INSERT INTO users (tenant_id, email, password, name, role) VALUES (?, ?, ?, ?, ?) RETURNING id',
     [req.params.id, email.trim().toLowerCase(), hash, name.trim(), validRoles.includes(role) ? role : 'operator']
   );
-  console.info(`[${new Date().toISOString()}] TENANT_USER_CREATED id=${result.insertId} tenant=${req.params.id} by=${req.user.id}`);
-  res.status(201).json({ id: result.insertId, message: 'Usuario creado' });
+  console.info(`[${new Date().toISOString()}] TENANT_USER_CREATED id=${uRows[0].id} tenant=${req.params.id} by=${req.user.id}`);
+  res.status(201).json({ id: uRows[0].id, message: 'Usuario creado' });
 }));
 
 router.patch('/:id/users/:userId/status', w(async (req, res) => {

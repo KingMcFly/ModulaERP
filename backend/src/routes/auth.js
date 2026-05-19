@@ -57,7 +57,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       `SELECT u.*, t.slug AS tenant_slug, t.name AS tenant_name,
               t.primary_color, t.logo_url, t.status AS tenant_status
        FROM users u JOIN tenants t ON t.id = u.tenant_id
-       WHERE ${whereClause} AND u.is_active = 1`,
+       WHERE ${whereClause} AND u.is_active = true`,
       [queryValue]
     );
 
@@ -88,7 +88,7 @@ router.post('/login', loginLimiter, async (req, res) => {
         `SELECT m.code, m.name, m.icon, m.color, m.sort_order,
                 1 AS can_view, 1 AS can_write, 1 AS can_delete
          FROM tenant_modules tm JOIN modules m ON m.id = tm.module_id
-         WHERE tm.tenant_id = ? AND tm.is_active = 1
+         WHERE tm.tenant_id = ? AND tm.is_active = true
          ORDER BY m.sort_order`,
         [user.tenant_id]
       );
@@ -99,8 +99,8 @@ router.post('/login', loginLimiter, async (req, res) => {
                 ump.can_view, ump.can_write, ump.can_delete
          FROM user_module_permissions ump
          JOIN modules m ON m.code = ump.module_code
-         JOIN tenant_modules tm ON tm.module_id = m.id AND tm.tenant_id = ump.tenant_id AND tm.is_active = 1
-         WHERE ump.user_id = ? AND ump.tenant_id = ? AND ump.can_view = 1
+         JOIN tenant_modules tm ON tm.module_id = m.id AND tm.tenant_id = ump.tenant_id AND tm.is_active = true
+         WHERE ump.user_id = ? AND ump.tenant_id = ? AND ump.can_view = true
          ORDER BY m.sort_order`,
         [user.id, user.tenant_id]
       );
@@ -154,7 +154,7 @@ router.get('/me', requireAuth, async (req, res) => {
       `SELECT m.code, m.name, m.icon, m.color, m.sort_order,
               1 AS can_view, 1 AS can_write, 1 AS can_delete
        FROM tenant_modules tm JOIN modules m ON m.id = tm.module_id
-       WHERE tm.tenant_id = ? AND tm.is_active = 1
+       WHERE tm.tenant_id = ? AND tm.is_active = true
        ORDER BY m.sort_order`,
       [u.tid]
     );
@@ -166,8 +166,8 @@ router.get('/me', requireAuth, async (req, res) => {
               ump.can_view, ump.can_write, ump.can_delete
        FROM user_module_permissions ump
        JOIN modules m ON m.code = ump.module_code
-       JOIN tenant_modules tm ON tm.module_id = m.id AND tm.tenant_id = ump.tenant_id AND tm.is_active = 1
-       WHERE ump.user_id = ? AND ump.tenant_id = ? AND ump.can_view = 1
+       JOIN tenant_modules tm ON tm.module_id = m.id AND tm.tenant_id = ump.tenant_id AND tm.is_active = true
+       WHERE ump.user_id = ? AND ump.tenant_id = ? AND ump.can_view = true
        ORDER BY m.sort_order`,
       [u.id, u.tid]
     );
@@ -238,7 +238,7 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      'SELECT id, name, email FROM users WHERE email = ? AND is_active = 1',
+      'SELECT id, name, email FROM users WHERE email = ? AND is_active = true',
       [email.trim().toLowerCase()]
     );
     if (!rows.length) return res.json(GENERIC);
@@ -248,7 +248,7 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     await db.query(
-      'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+      'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?) RETURNING id',
       [user.id, token, expiresAt]
     );
 
@@ -287,11 +287,12 @@ router.post('/reset-password/:token', async (req, res) => {
   if (strengthError) return res.status(400).json({ error: strengthError });
 
   try {
-    const [[row]] = await db.query(
+    const [prtRows] = await db.query(
       `SELECT prt.id, prt.user_id FROM password_reset_tokens prt
        WHERE prt.token = ? AND prt.used_at IS NULL AND prt.expires_at > NOW()`,
       [token]
     );
+    const row = prtRows[0];
     if (!row) return res.status(400).json({ error: 'Token inválido o expirado' });
 
     const hash = await bcrypt.hash(password, 12);

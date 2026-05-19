@@ -11,65 +11,67 @@ router.get('/overview', w(async (req, res) => {
 
   const [[assets]] = await db.query(
     `SELECT COUNT(*) AS total,
-       SUM(status='available') AS available,
-       SUM(status='loaned') AS loaned,
-       SUM(status='maintenance') AS in_maintenance,
+       SUM(CASE WHEN status='available'   THEN 1 ELSE 0 END) AS available,
+       SUM(CASE WHEN status='loaned'      THEN 1 ELSE 0 END) AS loaned,
+       SUM(CASE WHEN status='maintenance' THEN 1 ELSE 0 END) AS in_maintenance,
        COALESCE(SUM(value), 0) AS value_total
-     FROM assets WHERE tenant_id=? AND is_active=1`,
+     FROM assets WHERE tenant_id=? AND is_active=true`,
     [tid]
   );
 
   const [[{ personnel_total }]] = await db.query(
-    'SELECT COUNT(*) AS personnel_total FROM personnel WHERE tenant_id=? AND is_active=1',
+    'SELECT COUNT(*) AS personnel_total FROM personnel WHERE tenant_id=? AND is_active=true',
     [tid]
   );
   const [[{ technicians }]] = await db.query(
-    'SELECT COUNT(*) AS technicians FROM technicians WHERE tenant_id=? AND is_active=1',
+    'SELECT COUNT(*) AS technicians FROM technicians WHERE tenant_id=? AND is_active=true',
     [tid]
   );
 
   const [[loans]] = await db.query(
     `SELECT
-       COALESCE(SUM(status='active'), 0) AS active,
-       COALESCE(SUM(status='active' AND expected_return < NOW()), 0) AS overdue,
-       COALESCE(SUM(status='returned'), 0) AS returned
+       COALESCE(SUM(CASE WHEN status='active' THEN 1 ELSE 0 END), 0) AS active,
+       COALESCE(SUM(CASE WHEN status='active' AND expected_return < NOW() THEN 1 ELSE 0 END), 0) AS overdue,
+       COALESCE(SUM(CASE WHEN status='returned' THEN 1 ELSE 0 END), 0) AS returned
      FROM loans WHERE tenant_id=?`,
     [tid]
   );
 
   const [[maintenance]] = await db.query(
     `SELECT
-       COALESCE(SUM(status='pending'), 0) AS pending,
-       COALESCE(SUM(status='in_progress'), 0) AS in_progress,
-       COALESCE(SUM(status='completed' AND MONTH(completed_at)=MONTH(NOW()) AND YEAR(completed_at)=YEAR(NOW())), 0) AS completed_this_month
+       COALESCE(SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END), 0) AS pending,
+       COALESCE(SUM(CASE WHEN status='in_progress' THEN 1 ELSE 0 END), 0) AS in_progress,
+       COALESCE(SUM(CASE WHEN status='completed'
+         AND EXTRACT(MONTH FROM completed_at)=EXTRACT(MONTH FROM NOW())
+         AND EXTRACT(YEAR FROM completed_at)=EXTRACT(YEAR FROM NOW()) THEN 1 ELSE 0 END), 0) AS completed_this_month
      FROM maintenance_records WHERE tenant_id=?`,
     [tid]
   );
 
   const [[supplies]] = await db.query(
     `SELECT COUNT(*) AS total,
-       COALESCE(SUM(current_stock <= min_stock), 0) AS low_stock,
+       COALESCE(SUM(CASE WHEN current_stock <= min_stock THEN 1 ELSE 0 END), 0) AS low_stock,
        COALESCE(SUM(current_stock * unit_cost), 0) AS value_total
-     FROM supplies WHERE tenant_id=? AND is_active=1`,
+     FROM supplies WHERE tenant_id=? AND is_active=true`,
     [tid]
   );
 
   const [assets_by_status] = await db.query(
-    `SELECT status AS name, COUNT(*) AS value FROM assets WHERE tenant_id=? AND is_active=1 GROUP BY status`,
+    `SELECT status AS name, COUNT(*) AS value FROM assets WHERE tenant_id=? AND is_active=true GROUP BY status`,
     [tid]
   );
 
   const [maintenance_trend] = await db.query(
-    `SELECT DATE_FORMAT(created_at, '%b %Y') AS month, COUNT(*) AS ordenes
-     FROM maintenance_records WHERE tenant_id=? AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-     GROUP BY DATE_FORMAT(created_at, '%Y-%m'), DATE_FORMAT(created_at, '%b %Y')
+    `SELECT TO_CHAR(created_at, 'Mon YYYY') AS month, COUNT(*) AS ordenes
+     FROM maintenance_records WHERE tenant_id=? AND created_at >= NOW() - INTERVAL '6 months'
+     GROUP BY TO_CHAR(created_at, 'YYYY-MM'), TO_CHAR(created_at, 'Mon YYYY')
      ORDER BY MIN(created_at)`,
     [tid]
   );
 
   const [departments] = await db.query(
     `SELECT department AS name, COUNT(*) AS empleados FROM personnel
-     WHERE tenant_id=? AND is_active=1 AND department IS NOT NULL
+     WHERE tenant_id=? AND is_active=true AND department IS NOT NULL
      GROUP BY department ORDER BY empleados DESC LIMIT 6`,
     [tid]
   );
@@ -77,8 +79,8 @@ router.get('/overview', w(async (req, res) => {
   const [supplies_trend] = await db.query(
     `SELECT s.name, sm.move_type AS type, SUM(sm.quantity) AS qty
      FROM supply_movements sm JOIN supplies s ON s.id = sm.supply_id
-     WHERE s.tenant_id=? AND sm.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-     GROUP BY sm.supply_id, sm.move_type ORDER BY qty DESC LIMIT 8`,
+     WHERE s.tenant_id=? AND sm.created_at >= NOW() - INTERVAL '30 days'
+     GROUP BY sm.supply_id, s.name, sm.move_type ORDER BY qty DESC LIMIT 8`,
     [tid]
   );
 

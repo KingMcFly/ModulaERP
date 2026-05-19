@@ -46,12 +46,12 @@ router.post('/', guard, w(async (req, res) => {
       total += t;
       return { ...i, total_price: t };
     });
-    const [r] = await conn.query(
+    const [poRows] = await conn.query(
       `INSERT INTO purchase_orders (tenant_id, provider_id, cost_center_id, po_number, ordered_at, expected_at, notes, total, created_by)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
+       VALUES (?,?,?,?,?,?,?,?,?) RETURNING id`,
       [req.user.tenant_id, provider_id||null, cost_center_id||null, po_number||null, ordered_at||null, expected_at||null, notes||null, total, req.user.id]
     );
-    const orderId = r.insertId;
+    const orderId = poRows[0].id;
     for (const i of safeItems) {
       await conn.query(
         'INSERT INTO purchase_items (order_id, description, quantity, unit, unit_price, total_price) VALUES (?,?,?,?,?,?)',

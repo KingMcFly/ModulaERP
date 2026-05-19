@@ -52,11 +52,11 @@ router.post('/', w(async (req, res) => {
       ? `${cleanRut.slice(0,-1).replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${cleanRut.slice(-1)}`
       : null;
 
-    const [result] = await conn.query(
-      'INSERT INTO users (tenant_id, email, password, name, role, rut) VALUES (?, ?, ?, ?, ?, ?)',
+    const [userRows] = await conn.query(
+      'INSERT INTO users (tenant_id, email, password, name, role, rut) VALUES (?, ?, ?, ?, ?, ?) RETURNING id',
       [tid, email.trim().toLowerCase(), hash, name.trim(), safeRole, fmtRut]
     );
-    const userId = result.insertId;
+    const userId = userRows[0].id;
 
     // If role=user and no permissions given, default to requests (view + write)
     const perms = module_permissions.length > 0
@@ -68,7 +68,8 @@ router.post('/', w(async (req, res) => {
         await conn.query(
           `INSERT INTO user_module_permissions (user_id, tenant_id, module_code, can_view, can_write, can_delete)
            VALUES (?, ?, ?, ?, ?, ?)
-           ON DUPLICATE KEY UPDATE can_view=VALUES(can_view), can_write=VALUES(can_write), can_delete=VALUES(can_delete)`,
+           ON CONFLICT (user_id, tenant_id, module_code) DO UPDATE
+             SET can_view=EXCLUDED.can_view, can_write=EXCLUDED.can_write, can_delete=EXCLUDED.can_delete`,
           [userId, tid, p.module_code, p.can_view ? 1 : 0, p.can_write ? 1 : 0, p.can_delete ? 1 : 0]
         );
       }
@@ -149,7 +150,7 @@ router.get('/:id/permissions', w(async (req, res) => {
   const [modules] = await db.query(
     `SELECT m.code, m.name, m.icon, m.color, m.sort_order
      FROM tenant_modules tm JOIN modules m ON m.id = tm.module_id
-     WHERE tm.tenant_id = ? AND tm.is_active = 1
+     WHERE tm.tenant_id = ? AND tm.is_active = true
      ORDER BY m.sort_order`,
     [tid]
   );
@@ -183,15 +184,12 @@ router.put('/:id/permissions', w(async (req, res) => {
   await db.query('DELETE FROM user_module_permissions WHERE user_id=? AND tenant_id=?', [req.params.id, tid]);
 
   if (Array.isArray(permissions) && permissions.length > 0) {
-    const values = permissions
-      .filter(p => p.can_view || p.can_write || p.can_delete)
-      .map(p => [req.params.id, tid, p.module_code, p.can_view ? 1 : 0, p.can_write ? 1 : 0, p.can_delete ? 1 : 0]);
-
-    if (values.length > 0) {
+    const filtered = permissions.filter(p => p.can_view || p.can_write || p.can_delete);
+    for (const p of filtered) {
       await db.query(
         `INSERT INTO user_module_permissions (user_id, tenant_id, module_code, can_view, can_write, can_delete)
-         VALUES ?`,
-        [values]
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [req.params.id, tid, p.module_code, p.can_view ? 1 : 0, p.can_write ? 1 : 0, p.can_delete ? 1 : 0]
       );
     }
   }

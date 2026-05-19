@@ -30,13 +30,13 @@ router.post('/', guard, w(async (req, res) => {
   if (!title?.trim()) return res.status(400).json({ error: 'Título requerido' });
   const validTypes = ['loan','supply','maintenance','purchase','other'];
   if (!validTypes.includes(request_type)) return res.status(400).json({ error: 'Tipo inválido' });
-  const [r] = await db.query(
+  const [rows] = await db.query(
     `INSERT INTO requests (tenant_id, request_type, title, description, priority, asset_id, supply_id, quantity, notes, requested_by)
-     VALUES (?,?,?,?,?,?,?,?,?,?)`,
+     VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING id`,
     [req.user.tenant_id, request_type, title.trim(), description||null,
      priority||'medium', asset_id||null, supply_id||null, quantity||null, notes||null, req.user.id]
   );
-  res.status(201).json({ id: r.insertId });
+  res.status(201).json({ id: rows[0].id });
 }));
 
 router.patch('/:id/approve', guard, w(async (req, res) => {
@@ -44,7 +44,7 @@ router.patch('/:id/approve', guard, w(async (req, res) => {
   const [[req_] ] = await db.query('SELECT id, status FROM requests WHERE id=? AND tenant_id=?', [req.params.id, req.user.tenant_id]);
   if (!req_) return res.status(404).json({ error: 'No encontrado' });
   if (req_.status !== 'pending') return res.status(409).json({ error: 'Solo se pueden aprobar solicitudes pendientes' });
-  await db.query('UPDATE requests SET status=?,approved_by=?,resolved_at=NOW(),notes=CONCAT(IFNULL(notes,""),?) WHERE id=?',
+  await db.query('UPDATE requests SET status=?,approved_by=?,resolved_at=NOW(),notes=COALESCE(notes,\'\') || ? WHERE id=?',
     ['approved', req.user.id, notes ? `\n[Aprobado] ${notes}` : '', req.params.id]);
   res.json({ message: 'Solicitud aprobada' });
 }));

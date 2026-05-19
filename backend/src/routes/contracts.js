@@ -11,7 +11,7 @@ const w = fn => (req, res, next) => fn(req, res, next).catch(next);
 router.get('/', guard, w(async (req, res) => {
   const [rows] = await db.query(
     `SELECT c.*, p.name AS provider_name, cc.name AS cost_center_name,
-       DATEDIFF(c.end_date, CURDATE()) AS days_remaining
+       (c.end_date - CURRENT_DATE) AS days_remaining
      FROM contracts c
      LEFT JOIN providers p ON p.id = c.provider_id
      LEFT JOIN cost_centers cc ON cc.id = c.cost_center_id
@@ -24,15 +24,15 @@ router.get('/', guard, w(async (req, res) => {
 router.post('/', guard, w(async (req, res) => {
   const { title, contract_number, provider_id, cost_center_id, contract_type, start_date, end_date, value, description, alert_days } = req.body;
   if (!title?.trim()) return res.status(400).json({ error: 'Título requerido' });
-  const [r] = await db.query(
+  const [rows] = await db.query(
     `INSERT INTO contracts (tenant_id, title, contract_number, provider_id, cost_center_id, contract_type,
        start_date, end_date, value, description, alert_days, created_by)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id`,
     [req.user.tenant_id, title.trim(), contract_number||null, provider_id||null, cost_center_id||null,
      contract_type||null, start_date||null, end_date||null, value||null, description||null,
      parseInt(alert_days)||30, req.user.id]
   );
-  res.status(201).json({ id: r.insertId });
+  res.status(201).json({ id: rows[0].id });
 }));
 
 router.put('/:id', guard, w(async (req, res) => {
@@ -56,12 +56,12 @@ router.delete('/:id', guard, w(async (req, res) => {
 // Contracts expiring within alert_days
 router.get('/expiring', guard, w(async (req, res) => {
   const [rows] = await db.query(
-    `SELECT c.*, p.name AS provider_name, DATEDIFF(c.end_date, CURDATE()) AS days_remaining
+    `SELECT c.*, p.name AS provider_name, (c.end_date - CURRENT_DATE) AS days_remaining
      FROM contracts c
      LEFT JOIN providers p ON p.id = c.provider_id
      WHERE c.tenant_id = ? AND c.status = 'active'
        AND c.end_date IS NOT NULL
-       AND DATEDIFF(c.end_date, CURDATE()) BETWEEN 0 AND c.alert_days
+       AND (c.end_date - CURRENT_DATE) BETWEEN 0 AND c.alert_days
      ORDER BY c.end_date ASC`,
     [req.user.tenant_id]
   );

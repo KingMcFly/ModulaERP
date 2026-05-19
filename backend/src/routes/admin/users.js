@@ -33,12 +33,12 @@ router.post('/', w(async (req, res) => {
 
   const hash = await bcrypt.hash(password, 12);
   const validRoles = ['super_admin', 'admin'];
-  const [result] = await db.query(
-    'INSERT INTO users (tenant_id, email, password, name, role) VALUES (1, ?, ?, ?, ?)',
+  const [uRows] = await db.query(
+    'INSERT INTO users (tenant_id, email, password, name, role) VALUES (1, ?, ?, ?, ?) RETURNING id',
     [email.trim().toLowerCase(), hash, name.trim(), validRoles.includes(role) ? role : 'admin']
   );
-  console.info(`[${new Date().toISOString()}] ADMIN_USER_CREATED id=${result.insertId} by=${req.user.id}`);
-  res.status(201).json({ id: result.insertId, message: 'Usuario creado' });
+  console.info(`[${new Date().toISOString()}] ADMIN_USER_CREATED id=${uRows[0].id} by=${req.user.id}`);
+  res.status(201).json({ id: uRows[0].id, message: 'Usuario creado' });
 }));
 
 router.put('/:id', w(async (req, res) => {

@@ -71,9 +71,9 @@ router.post('/:entity/:entityId', (req, res, next) => {
   const { entity, entityId } = req.params;
   const relPath = path.join('attachments', req.file.filename);
 
-  const [result] = await db.query(
+  const [rows] = await db.query(
     `INSERT INTO attachments (tenant_id, entity_type, entity_id, file_path, file_name, file_size, mime_type, uploaded_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
     [
       req.user.tenant_id, entity, entityId,
       relPath, req.file.originalname,
@@ -81,7 +81,7 @@ router.post('/:entity/:entityId', (req, res, next) => {
       req.user.id,
     ]
   );
-  res.status(201).json({ id: result.insertId, file_name: req.file.originalname });
+  res.status(201).json({ id: rows[0].id, file_name: req.file.originalname });
 }));
 
 // DELETE /api/attachments/:id

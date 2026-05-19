@@ -28,7 +28,7 @@ router.post('/assets', requireModule('inventory'), w(async (req, res) => {
     }
     try {
       const [locRows] = r.location_name
-        ? await db.query('SELECT id FROM locations WHERE tenant_id=? AND name=? AND is_active=1 LIMIT 1', [tid, r.location_name.trim()])
+        ? await db.query('SELECT id FROM locations WHERE tenant_id=? AND name=? AND is_active=true LIMIT 1', [tid, r.location_name.trim()])
         : [[]];
       const locationId = locRows[0]?.id || null;
 
@@ -75,7 +75,7 @@ router.post('/supplies', requireModule('inventory'), w(async (req, res) => {
     if (!r.name?.trim()) { errors.push({ row: i + 2, message: 'Nombre requerido' }); continue; }
     try {
       const [locRows] = r.location_name
-        ? await db.query('SELECT id FROM locations WHERE tenant_id=? AND name=? AND is_active=1 LIMIT 1', [tid, r.location_name.trim()])
+        ? await db.query('SELECT id FROM locations WHERE tenant_id=? AND name=? AND is_active=true LIMIT 1', [tid, r.location_name.trim()])
         : [[]];
       await db.query(
         `INSERT INTO supplies (tenant_id, name, category, unit, current_stock, min_stock, unit_cost, location_id, notes)

@@ -15,7 +15,7 @@ router.get('/upcoming', guard, w(async (req, res) => {
     `SELECT mr.*, a.serial_number, a.brand, a.model
      FROM maintenance_records mr JOIN assets a ON a.id = mr.asset_id
      WHERE mr.tenant_id = ? AND mr.status = 'pending'
-       AND mr.scheduled_at BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+       AND mr.scheduled_at BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'
      ORDER BY mr.scheduled_at ASC LIMIT 20`,
     [req.user.tenant_id]
   );
@@ -24,7 +24,7 @@ router.get('/upcoming', guard, w(async (req, res) => {
 
 router.get('/technicians/all', guard, w(async (req, res) => {
   const [rows] = await db.query(
-    'SELECT * FROM technicians WHERE tenant_id = ? AND is_active = 1 ORDER BY name',
+    'SELECT * FROM technicians WHERE tenant_id = ? AND is_active = true ORDER BY name',
     [req.user.tenant_id]
   );
   res.json(rows);
@@ -32,11 +32,11 @@ router.get('/technicians/all', guard, w(async (req, res) => {
 
 router.post('/technicians', guard, w(async (req, res) => {
   const { name, specialty, personnel_id } = req.body;
-  const [result] = await db.query(
-    'INSERT INTO technicians (tenant_id, name, specialty, personnel_id) VALUES (?, ?, ?, ?)',
+  const [rows] = await db.query(
+    'INSERT INTO technicians (tenant_id, name, specialty, personnel_id) VALUES (?, ?, ?, ?) RETURNING id',
     [req.user.tenant_id, name, specialty, personnel_id || null]
   );
-  res.status(201).json({ id: result.insertId });
+  res.status(201).json({ id: rows[0].id });
 }));
 
 // Main CRUD
@@ -73,16 +73,21 @@ router.get('/:id', guard, w(async (req, res) => {
 router.post('/', guard, w(async (req, res) => {
   const { asset_id, technician_id, maint_type, scheduled_at, description, checklist_items } = req.body;
   if (!asset_id) return res.status(400).json({ error: 'Activo requerido' });
-  const [result] = await db.query(
+  const [rows] = await db.query(
     `INSERT INTO maintenance_records (tenant_id, asset_id, technician_id, maint_type, scheduled_at, description)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
     [req.user.tenant_id, asset_id, technician_id || null, maint_type || 'preventive', scheduled_at || null, description || null]
   );
+  const maintenanceId = rows[0].id;
   if (checklist_items?.length) {
-    const vals = checklist_items.map(item => [result.insertId, item]);
-    await db.query('INSERT INTO maintenance_checklist (maintenance_id, description) VALUES ?', [vals]);
+    for (const item of checklist_items) {
+      await db.query(
+        'INSERT INTO maintenance_checklist (maintenance_id, description) VALUES (?, ?)',
+        [maintenanceId, item]
+      );
+    }
   }
-  res.status(201).json({ id: result.insertId });
+  res.status(201).json({ id: maintenanceId });
 }));
 
 router.put('/:id', guard, w(async (req, res) => {

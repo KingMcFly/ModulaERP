@@ -12,44 +12,44 @@ router.get('/stats', w(async (req, res) => {
   const [[assets]] = await db.query(
     `SELECT
        COUNT(*) AS total,
-       SUM(status = 'available')   AS available,
-       SUM(status = 'loaned')      AS loaned,
-       SUM(status = 'maintenance') AS maintenance,
-       SUM(status = 'retired')     AS retired,
-       COALESCE(SUM(value), 0)     AS total_value
-     FROM assets WHERE tenant_id = ? AND is_active = 1`,
+       SUM(CASE WHEN status = 'available'   THEN 1 ELSE 0 END) AS available,
+       SUM(CASE WHEN status = 'loaned'      THEN 1 ELSE 0 END) AS loaned,
+       SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) AS maintenance,
+       SUM(CASE WHEN status = 'retired'     THEN 1 ELSE 0 END) AS retired,
+       COALESCE(SUM(value), 0) AS total_value
+     FROM assets WHERE tenant_id = ? AND is_active = true`,
     [tid]
   );
 
   const [[personnel]] = await db.query(
-    'SELECT COUNT(*) AS total FROM personnel WHERE tenant_id = ? AND is_active = 1',
+    'SELECT COUNT(*) AS total FROM personnel WHERE tenant_id = ? AND is_active = true',
     [tid]
   );
 
   const [[monitoring]] = await db.query(
     `SELECT COUNT(*) AS total,
-       SUM(agent_status = 'online')  AS online,
-       SUM(agent_status = 'offline') AS offline,
-       SUM(agent_status = 'warning') AS warning
+       SUM(CASE WHEN agent_status = 'online'  THEN 1 ELSE 0 END) AS online,
+       SUM(CASE WHEN agent_status = 'offline' THEN 1 ELSE 0 END) AS offline,
+       SUM(CASE WHEN agent_status = 'warning' THEN 1 ELSE 0 END) AS warning
      FROM monitoring_agents WHERE tenant_id = ?`,
     [tid]
   );
 
   const [[{ overdue_loans }]] = await db.query(
     `SELECT COUNT(*) AS overdue_loans FROM loans
-     WHERE tenant_id = ? AND status = 'active' AND expected_return < CURDATE()`,
+     WHERE tenant_id = ? AND status = 'active' AND expected_return < CURRENT_DATE`,
     [tid]
   );
 
   const [[{ low_stock }]] = await db.query(
     `SELECT COUNT(*) AS low_stock FROM supplies
-     WHERE tenant_id = ? AND is_active = 1 AND current_stock <= min_stock`,
+     WHERE tenant_id = ? AND is_active = true AND current_stock <= min_stock`,
     [tid]
   );
 
   const [[{ overdue_maintenance }]] = await db.query(
     `SELECT COUNT(*) AS overdue_maintenance FROM maintenance_records
-     WHERE tenant_id = ? AND status IN ('pending','in_progress') AND scheduled_at < CURDATE()`,
+     WHERE tenant_id = ? AND status IN ('pending','in_progress') AND scheduled_at < CURRENT_DATE`,
     [tid]
   );
 
@@ -71,7 +71,7 @@ router.get('/stats', w(async (req, res) => {
      FROM loans l
      JOIN assets a ON a.id = l.asset_id
      LEFT JOIN personnel p ON p.id = l.borrower_id
-     WHERE l.tenant_id = ? AND l.status = 'active' AND l.expected_return < CURDATE()
+     WHERE l.tenant_id = ? AND l.status = 'active' AND l.expected_return < CURRENT_DATE
      ORDER BY l.expected_return ASC
      LIMIT 5`,
     [tid]
@@ -80,7 +80,7 @@ router.get('/stats', w(async (req, res) => {
   const [low_stock_list] = await db.query(
     `SELECT id, name, current_stock, min_stock, unit
      FROM supplies
-     WHERE tenant_id = ? AND is_active = 1 AND current_stock <= min_stock
+     WHERE tenant_id = ? AND is_active = true AND current_stock <= min_stock
      ORDER BY (current_stock - min_stock) ASC
      LIMIT 5`,
     [tid]
@@ -118,13 +118,13 @@ router.get('/plan', w(async (req, res) => {
   for (const l of limits) limitMap[l.resource] = l.max_value;
 
   const [[{ assets }]] = await db.query(
-    'SELECT COUNT(*) AS assets FROM assets WHERE tenant_id = ? AND is_active = 1', [tid]
+    'SELECT COUNT(*) AS assets FROM assets WHERE tenant_id = ? AND is_active = true', [tid]
   );
   const [[{ users }]] = await db.query(
-    'SELECT COUNT(*) AS users FROM users WHERE tenant_id = ? AND is_active = 1', [tid]
+    'SELECT COUNT(*) AS users FROM users WHERE tenant_id = ? AND is_active = true', [tid]
   );
   const [[{ locations }]] = await db.query(
-    'SELECT COUNT(*) AS locations FROM locations WHERE tenant_id = ? AND is_active = 1', [tid]
+    'SELECT COUNT(*) AS locations FROM locations WHERE tenant_id = ? AND is_active = true', [tid]
   ).catch(() => [[{ locations: 0 }]]);
 
   res.json({

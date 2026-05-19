@@ -12,7 +12,7 @@ router.post('/heartbeat', w(async (req, res) => {
   if (!token) return res.status(401).json({ error: 'Token requerido' });
 
   const [tRows] = await db.query(
-    'SELECT tenant_id FROM monitoring_tokens WHERE token = ? AND is_active = 1',
+    'SELECT tenant_id FROM monitoring_tokens WHERE token = ? AND is_active = true',
     [token]
   );
   if (!tRows.length) return res.status(401).json({ error: 'Token inválido' });
@@ -38,11 +38,11 @@ router.post('/heartbeat', w(async (req, res) => {
        (tenant_id, agent_key, hostname, ip_address, os_info, processor,
         cpu_usage, ram_usage, disk_usage, uptime_seconds, last_heartbeat, agent_status, asset_id)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)
-     ON DUPLICATE KEY UPDATE
-       hostname=VALUES(hostname), ip_address=VALUES(ip_address), os_info=VALUES(os_info),
-       processor=VALUES(processor), cpu_usage=VALUES(cpu_usage), ram_usage=VALUES(ram_usage),
-       disk_usage=VALUES(disk_usage), uptime_seconds=VALUES(uptime_seconds),
-       last_heartbeat=NOW(), agent_status=VALUES(agent_status), asset_id=VALUES(asset_id)`,
+     ON CONFLICT (agent_key) DO UPDATE SET
+       hostname=EXCLUDED.hostname, ip_address=EXCLUDED.ip_address, os_info=EXCLUDED.os_info,
+       processor=EXCLUDED.processor, cpu_usage=EXCLUDED.cpu_usage, ram_usage=EXCLUDED.ram_usage,
+       disk_usage=EXCLUDED.disk_usage, uptime_seconds=EXCLUDED.uptime_seconds,
+       last_heartbeat=NOW(), agent_status=EXCLUDED.agent_status, asset_id=EXCLUDED.asset_id`,
     [tenant_id, agent_key, hostname, ip_address, os_info, processor,
      cpu_usage, ram_usage, disk_usage, uptime_seconds, status, asset_id]
   );
@@ -64,7 +64,7 @@ const guard = requireModule('monitoring');
 
 router.get('/agents', guard, w(async (req, res) => {
   await db.query(
-    "UPDATE monitoring_agents SET agent_status='offline' WHERE tenant_id=? AND last_heartbeat < DATE_SUB(NOW(), INTERVAL 5 MINUTE)",
+    "UPDATE monitoring_agents SET agent_status='offline' WHERE tenant_id=? AND last_heartbeat < NOW() - INTERVAL '5 minutes'",
     [req.user.tenant_id]
   );
   const [rows] = await db.query(
@@ -87,7 +87,7 @@ router.get('/agents/:id/history', guard, w(async (req, res) => {
 router.get('/stats', guard, w(async (req, res) => {
   const tid = req.user.tenant_id;
   await db.query(
-    "UPDATE monitoring_agents SET agent_status='offline' WHERE tenant_id=? AND last_heartbeat < DATE_SUB(NOW(), INTERVAL 5 MINUTE)",
+    "UPDATE monitoring_agents SET agent_status='offline' WHERE tenant_id=? AND last_heartbeat < NOW() - INTERVAL '5 minutes'",
     [tid]
   );
   const [[{ total }]]   = await db.query('SELECT COUNT(*) AS total   FROM monitoring_agents WHERE tenant_id=?', [tid]);
@@ -108,15 +108,15 @@ router.get('/tokens', guard, w(async (req, res) => {
 router.post('/tokens', guard, w(async (req, res) => {
   const { label } = req.body;
   const token = `MERP-${req.user.tenant_id}-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-  const [result] = await db.query(
-    'INSERT INTO monitoring_tokens (tenant_id, token, label) VALUES (?, ?, ?)',
+  const [rows] = await db.query(
+    'INSERT INTO monitoring_tokens (tenant_id, token, label) VALUES (?, ?, ?) RETURNING id',
     [req.user.tenant_id, token, label || null]
   );
-  res.status(201).json({ id: result.insertId, token });
+  res.status(201).json({ id: rows[0].id, token });
 }));
 
 router.delete('/tokens/:id', guard, w(async (req, res) => {
-  await db.query('UPDATE monitoring_tokens SET is_active = 0 WHERE id = ? AND tenant_id = ?',
+  await db.query('UPDATE monitoring_tokens SET is_active = false WHERE id = ? AND tenant_id = ?',
     [req.params.id, req.user.tenant_id]);
   res.json({ message: 'Token desactivado' });
 }));
