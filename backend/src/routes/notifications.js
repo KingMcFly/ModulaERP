@@ -1,0 +1,65 @@
+import { Router } from 'express';
+import db from '../db.js';
+import { requireAuth } from '../middleware/auth.js';
+
+const router = Router();
+router.use(requireAuth);
+const w = fn => (req, res, next) => fn(req, res, next).catch(next);
+
+router.get('/summary', w(async (req, res) => {
+  const tid = req.user.tenant_id;
+
+  const [[{ overdue_loans }]] = await db.query(
+    `SELECT COUNT(*) AS overdue_loans FROM loans
+     WHERE tenant_id=? AND status='active' AND expected_return < NOW()`,
+    [tid]
+  );
+
+  const [[{ low_stock }]] = await db.query(
+    `SELECT COUNT(*) AS low_stock FROM supplies
+     WHERE tenant_id=? AND is_active=1 AND current_stock <= min_stock`,
+    [tid]
+  );
+
+  const [[{ overdue_maintenance }]] = await db.query(
+    `SELECT COUNT(*) AS overdue_maintenance FROM maintenance_records
+     WHERE tenant_id=? AND status IN ('pending','in_progress') AND scheduled_at < CURDATE()`,
+    [tid]
+  );
+
+  const [[{ expiring_contracts }]] = await db.query(
+    `SELECT COUNT(*) AS expiring_contracts FROM contracts
+     WHERE tenant_id=? AND status='active' AND end_date IS NOT NULL
+       AND DATEDIFF(end_date, CURDATE()) BETWEEN 0 AND alert_days`,
+    [tid]
+  ).catch(() => [[{ expiring_contracts: 0 }]]);
+
+  const [[{ open_tickets }]] = await db.query(
+    `SELECT COUNT(*) AS open_tickets FROM tickets
+     WHERE tenant_id=? AND status IN ('open','in_progress')`,
+    [tid]
+  ).catch(() => [[{ open_tickets: 0 }]]);
+
+  const [[{ pending_requests }]] = await db.query(
+    `SELECT COUNT(*) AS pending_requests FROM requests
+     WHERE tenant_id=? AND status='pending'`,
+    [tid]
+  ).catch(() => [[{ pending_requests: 0 }]]);
+
+  const items = [];
+  if (overdue_loans > 0)
+    items.push({ type: 'loan', message: `${overdue_loans} préstamo${overdue_loans > 1 ? 's' : ''} vencido${overdue_loans > 1 ? 's' : ''}`, count: overdue_loans, severity: 'high' });
+  if (low_stock > 0)
+    items.push({ type: 'stock', message: `${low_stock} insumo${low_stock > 1 ? 's' : ''} con stock bajo`, count: low_stock, severity: 'medium' });
+  if (overdue_maintenance > 0)
+    items.push({ type: 'maintenance', message: `${overdue_maintenance} mantenimiento${overdue_maintenance > 1 ? 's' : ''} vencido${overdue_maintenance > 1 ? 's' : ''}`, count: overdue_maintenance, severity: 'medium' });
+  if (expiring_contracts > 0)
+    items.push({ type: 'contract', message: `${expiring_contracts} contrato${expiring_contracts > 1 ? 's' : ''} por vencer`, count: expiring_contracts, severity: 'medium' });
+  if (pending_requests > 0)
+    items.push({ type: 'request', message: `${pending_requests} solicitud${pending_requests > 1 ? 'es' : ''} pendiente${pending_requests > 1 ? 's' : ''}`, count: pending_requests, severity: 'low' });
+
+  const total = Number(overdue_loans) + Number(low_stock) + Number(overdue_maintenance) + Number(expiring_contracts) + Number(pending_requests);
+  res.json({ total, overdue_loans, low_stock, overdue_maintenance, expiring_contracts, pending_requests, items });
+}));
+
+export default router;

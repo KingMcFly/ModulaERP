@@ -1,0 +1,160 @@
+import { Router } from 'express';
+import bcrypt from 'bcryptjs';
+import db from '../../db.js';
+import { requireSuperAdmin } from '../../middleware/auth.js';
+
+const router = Router();
+router.use(requireSuperAdmin);
+const w = fn => (req, res, next) => fn(req, res, next).catch(next);
+
+const MANDATORY_MODULES = ['inventory', 'personnel'];
+
+router.get('/', w(async (req, res) => {
+  const [rows] = await db.query(
+    `SELECT t.*,
+       (SELECT COUNT(*) FROM users u WHERE u.tenant_id = t.id AND u.is_active = 1) AS user_count,
+       (SELECT COUNT(*) FROM tenant_modules tm WHERE tm.tenant_id = t.id AND tm.is_active = 1) AS module_count
+     FROM tenants t
+     WHERE t.id != 1
+     ORDER BY t.created_at DESC`
+  );
+  res.json(rows);
+}));
+
+router.post('/', w(async (req, res) => {
+  const { name, slug, contact_email, contact_phone, country, plan, primary_color, module_codes } = req.body;
+  if (!name || !slug) return res.status(400).json({ error: 'Nombre y slug requeridos' });
+
+  const [existing] = await db.query('SELECT id FROM tenants WHERE slug = ?', [slug]);
+  if (existing.length) return res.status(409).json({ error: 'El slug ya existe' });
+
+  const conn = await db.getConnection();
+  await conn.beginTransaction();
+  try {
+    const [result] = await conn.query(
+      `INSERT INTO tenants (name, slug, contact_email, contact_phone, country, plan, primary_color)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [name, slug, contact_email || null, contact_phone || null, country || null,
+       plan || 'starter', primary_color || '#6366F1']
+    );
+    const tenantId = result.insertId;
+
+    // Always include mandatory modules + selected ones
+    const allCodes = [...new Set([...MANDATORY_MODULES, ...(module_codes || [])])];
+    if (allCodes.length) {
+      const [mods] = await conn.query('SELECT id FROM modules WHERE code IN (?)', [allCodes]);
+      if (mods.length) {
+        const vals = mods.map(m => [tenantId, m.id]);
+        await conn.query('INSERT INTO tenant_modules (tenant_id, module_id) VALUES ?', [vals]);
+      }
+    }
+
+    await conn.commit();
+    conn.release();
+    res.status(201).json({ id: tenantId, message: 'Tenant creado' });
+  } catch (e) {
+    await conn.rollback(); conn.release();
+    throw e;
+  }
+}));
+
+router.get('/:id', w(async (req, res) => {
+  const [rows] = await db.query('SELECT * FROM tenants WHERE id = ?', [req.params.id]);
+  if (!rows.length) return res.status(404).json({ error: 'No encontrado' });
+
+  const [mods] = await db.query(
+    `SELECT m.*, COALESCE(tm.is_active, 0) AS enabled, tm.config,
+       IF(m.code IN (${MANDATORY_MODULES.map(() => '?').join(',')}), 1, 0) AS is_mandatory
+     FROM modules m
+     LEFT JOIN tenant_modules tm ON tm.module_id = m.id AND tm.tenant_id = ?
+     ORDER BY m.sort_order`,
+    [...MANDATORY_MODULES, req.params.id]
+  );
+
+  const [users] = await db.query(
+    'SELECT id, name, email, role, is_active, last_login, created_at FROM users WHERE tenant_id = ? ORDER BY created_at',
+    [req.params.id]
+  );
+
+  res.json({ ...rows[0], modules: mods, users });
+}));
+
+router.put('/:id', w(async (req, res) => {
+  const { name, contact_email, contact_phone, country, plan, primary_color, status, logo_url } = req.body;
+  await db.query(
+    `UPDATE tenants SET name=?, contact_email=?, contact_phone=?, country=?,
+     plan=?, primary_color=?, status=?, logo_url=? WHERE id=?`,
+    [name, contact_email || null, contact_phone || null, country || null,
+     plan, primary_color, status, logo_url || null, req.params.id]
+  );
+  res.json({ message: 'Tenant actualizado' });
+}));
+
+router.patch('/:id/status', w(async (req, res) => {
+  const { status } = req.body;
+  const valid = ['trial', 'active', 'suspended', 'cancelled'];
+  if (!valid.includes(status)) return res.status(400).json({ error: 'Estado inválido' });
+  await db.query('UPDATE tenants SET status=? WHERE id=?', [status, req.params.id]);
+  res.json({ message: 'Estado actualizado' });
+}));
+
+router.patch('/:id/modules', w(async (req, res) => {
+  const { module_id, is_active } = req.body;
+
+  // Block disabling mandatory modules
+  if (!is_active) {
+    const [[mod]] = await db.query('SELECT code FROM modules WHERE id=?', [module_id]);
+    if (mod && MANDATORY_MODULES.includes(mod.code)) {
+      return res.status(400).json({ error: `El módulo "${mod.code}" es obligatorio y no puede deshabilitarse` });
+    }
+  }
+
+  const [exists] = await db.query(
+    'SELECT id FROM tenant_modules WHERE tenant_id=? AND module_id=?',
+    [req.params.id, module_id]
+  );
+  if (exists.length) {
+    await db.query(
+      'UPDATE tenant_modules SET is_active=?, disabled_at=? WHERE tenant_id=? AND module_id=?',
+      [is_active, is_active ? null : new Date(), req.params.id, module_id]
+    );
+  } else {
+    await db.query(
+      'INSERT INTO tenant_modules (tenant_id, module_id, is_active) VALUES (?, ?, ?)',
+      [req.params.id, module_id, is_active]
+    );
+  }
+  res.json({ message: 'Módulo actualizado' });
+}));
+
+router.post('/:id/users', w(async (req, res) => {
+  const { name, email, password, role } = req.body;
+  if (!name?.trim() || !email?.trim()) return res.status(400).json({ error: 'Nombre y email requeridos' });
+
+  // Requerir contraseña explícita — no usar default débil (A07)
+  if (!password || typeof password !== 'string' || password.length < 8) {
+    return res.status(400).json({ error: 'Contraseña requerida, mínimo 8 caracteres' });
+  }
+  if (password.length > 128) return res.status(400).json({ error: 'Contraseña demasiado larga' });
+
+  const [exists] = await db.query('SELECT id FROM users WHERE email=?', [email.trim().toLowerCase()]);
+  if (exists.length) return res.status(409).json({ error: 'El email ya está en uso' });
+
+  const hash = await bcrypt.hash(password, 12);
+  const validRoles = ['admin', 'manager', 'operator', 'viewer'];
+  const [result] = await db.query(
+    'INSERT INTO users (tenant_id, email, password, name, role) VALUES (?, ?, ?, ?, ?)',
+    [req.params.id, email.trim().toLowerCase(), hash, name.trim(), validRoles.includes(role) ? role : 'operator']
+  );
+  console.info(`[${new Date().toISOString()}] TENANT_USER_CREATED id=${result.insertId} tenant=${req.params.id} by=${req.user.id}`);
+  res.status(201).json({ id: result.insertId, message: 'Usuario creado' });
+}));
+
+router.patch('/:id/users/:userId/status', w(async (req, res) => {
+  const { is_active } = req.body;
+  await db.query('UPDATE users SET is_active=? WHERE id=? AND tenant_id=?',
+    [is_active ? 1 : 0, req.params.userId, req.params.id]);
+  res.json({ message: 'Estado actualizado' });
+}));
+
+export default router;
