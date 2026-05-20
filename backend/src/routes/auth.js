@@ -17,7 +17,7 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiados intentos de inicio de sesión. Espera 15 minutos.' },
-  keyGenerator: (req) => req.body?.email?.toLowerCase?.() || ipKeyGenerator(req),
+  keyGenerator: (req) => req.body?.email?.toLowerCase?.() || ipKeyGenerator(req.ip),
 });
 
 function cleanRutServer(rut) {
