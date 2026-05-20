@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Building2, ExternalLink, CheckCircle2, PauseCircle } from 'lucide-react';
+import { Plus, Search, Building2, ExternalLink, CheckCircle2, PauseCircle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
 
@@ -23,12 +23,21 @@ const PLAN_COLORS: Record<string, string> = {
   starter: '#6366f1', professional: '#0ea5e9', enterprise: '#10b981',
 };
 
-const ALL_MODULES = [
-  { code: 'inventory',   label: 'Inventario' },
-  { code: 'loans',       label: 'Préstamos' },
-  { code: 'maintenance', label: 'Mantenimientos' },
-  { code: 'personnel',   label: 'Personal' },
-  { code: 'monitoring',  label: 'Monitoreo' },
+const MANDATORY_MODULES = [
+  { code: 'inventory', label: 'Inventario' },
+  { code: 'personnel', label: 'Personal' },
+];
+const OPTIONAL_MODULES = [
+  { code: 'loans',        label: 'Préstamos' },
+  { code: 'maintenance',  label: 'Mantenimientos' },
+  { code: 'monitoring',   label: 'Monitoreo' },
+  { code: 'supplies',     label: 'Insumos' },
+  { code: 'contracts',    label: 'Contratos' },
+  { code: 'providers',    label: 'Proveedores' },
+  { code: 'purchases',    label: 'Compras' },
+  { code: 'requests',     label: 'Solicitudes' },
+  { code: 'tickets',      label: 'Tickets' },
+  { code: 'cost_centers', label: 'Centros de costo' },
 ];
 
 interface CreateModalProps { onClose: () => void; onCreated: () => void; }
@@ -124,9 +133,24 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
             </div>
           </div>
           <div>
-            <p className="label" id="modules-label">Módulos habilitados</p>
+            <p className="label mb-2" id="modules-label">Módulos</p>
+            <div className="grid grid-cols-2 gap-2 mb-2" role="group">
+              {MANDATORY_MODULES.map(m => (
+                <div
+                  key={m.code}
+                  className="flex items-center gap-2 p-2.5 rounded-xl"
+                  style={{ border: '1.5px solid rgba(99,102,241,0.30)', background: 'rgba(99,102,241,0.06)' }}
+                >
+                  <input type="checkbox" checked readOnly className="rounded w-3.5 h-3.5" />
+                  <span className="text-[13px] font-semibold text-slate-700 flex-1">{m.label}</span>
+                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9.5px] font-bold" style={{ background: 'rgba(245,158,11,0.12)', color: '#d97706' }}>
+                    <Lock size={7} /> Obligatorio
+                  </span>
+                </div>
+              ))}
+            </div>
             <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby="modules-label">
-              {ALL_MODULES.map(m => (
+              {OPTIONAL_MODULES.map(m => (
                 <label
                   key={m.code}
                   className="flex items-center gap-2 p-2.5 rounded-xl cursor-pointer"

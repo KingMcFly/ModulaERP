@@ -152,7 +152,7 @@ router.post('/:id/users', w(async (req, res) => {
 router.patch('/:id/users/:userId/status', w(async (req, res) => {
   const { is_active } = req.body;
   await db.query('UPDATE users SET is_active=? WHERE id=? AND tenant_id=?',
-    [is_active ? 1 : 0, req.params.userId, req.params.id]);
+    [!!is_active, req.params.userId, req.params.id]);
   res.json({ message: 'Estado actualizado' });
 }));
 
