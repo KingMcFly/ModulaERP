@@ -31,6 +31,9 @@ import usersRouter         from './routes/users.js';
 
 const app = express();
 
+// Trust Vercel/proxy headers so req.ip resolves correctly (needed for rate limiting)
+app.set('trust proxy', 1);
+
 // ── Security headers (A05) ─────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
