@@ -9,7 +9,7 @@ const router = Router();
 router.use(requireAuth);
 const w = fn => (req, res, next) => fn(req, res, next).catch(next);
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
+const UPLOAD_DIR = process.env.VERCEL === '1' ? '/tmp/uploads' : (process.env.UPLOAD_DIR || './uploads');
 const ATTACH_DIR = path.join(UPLOAD_DIR, 'attachments');
 if (!fs.existsSync(ATTACH_DIR)) fs.mkdirSync(ATTACH_DIR, { recursive: true });
 

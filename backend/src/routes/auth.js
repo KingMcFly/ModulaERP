@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { rateLimit } from 'express-rate-limit';
+import { rateLimit, ipKeyGenerator } from 'express-rate-limit';
 import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
 import db from '../db.js';
@@ -17,7 +17,7 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiados intentos de inicio de sesión. Espera 15 minutos.' },
-  keyGenerator: (req) => req.body?.email?.toLowerCase?.() || req.ip,
+  keyGenerator: (req) => req.body?.email?.toLowerCase?.() || ipKeyGenerator(req),
 });
 
 function cleanRutServer(rut) {
