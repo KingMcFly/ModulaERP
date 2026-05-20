@@ -12,8 +12,12 @@ function convertPlaceholders(sql) {
 let poolConfig;
 
 if (process.env.DATABASE_URL) {
+  // Strip sslmode from URL so our ssl config takes full effect.
+  // When sslmode=require is in the URL, pg overrides ssl to { rejectUnauthorized: true }
+  // which causes "self-signed certificate" errors with Aiven/cloud providers.
+  const connectionString = process.env.DATABASE_URL.replace(/([?&])sslmode=[^&]*/g, '$1').replace(/[?&]$/, '');
   poolConfig = {
-    connectionString: process.env.DATABASE_URL,
+    connectionString,
     ssl: { rejectUnauthorized: false },
     max: 10,
   };

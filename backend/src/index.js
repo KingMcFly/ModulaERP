@@ -117,7 +117,7 @@ app.use('/api/users',          usersRouter);
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
 // ── Error handler global — no expone detalles internos (A05, A09) ──────────
-app.use((err, req, _res2, res) => {
+app.use((err, req, res, _next) => {
   const status = err.status || err.statusCode || 500;
   // Log con contexto pero sin stack en respuesta
   console.error(`[${new Date().toISOString()}] ${req.method} ${req.path} → ${status}:`, err.message);
