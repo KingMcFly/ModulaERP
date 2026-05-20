@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import QRModal from '../../components/QRModal';
 import ImportModal from '../../components/ImportModal';
 import { exportToExcel } from '../../utils/exportExcel';
+import AssetLookup, { LookupResult } from '../../components/AssetLookup';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 function authFetch(path: string, opts?: RequestInit) {
@@ -90,6 +91,18 @@ function AssetForm({ asset, onClose, onSaved }: { asset?: Asset | null; onClose:
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="text-lg font-bold text-slate-900 mb-5">{asset ? 'Editar Activo' : 'Nuevo Activo'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="col-span-2">
+            <AssetLookup
+              serial={form.serial_number}
+              onSerialChange={v => set('serial_number', v)}
+              onResult={(r: LookupResult) => {
+                if (r.brand && !form.brand)      set('brand',      r.brand);
+                if (r.model && !form.model)      set('model',      r.model);
+                if (r.asset_type && !form.asset_type) set('asset_type', r.asset_type);
+                if (r.description && !form.notes) set('notes',     r.description);
+              }}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="asset-type" className="label">Tipo *</label>
@@ -103,7 +116,6 @@ function AssetForm({ asset, onClose, onSaved }: { asset?: Asset | null; onClose:
                   placeholder="Ej: Laptop (agrega tipos en Configuración)" />
               )}
             </div>
-            <div><label htmlFor="asset-serial" className="label">N° Serie</label><input id="asset-serial" className="input" value={form.serial_number} onChange={e => set('serial_number', e.target.value)} /></div>
             <div><label htmlFor="asset-brand" className="label">Marca</label><input id="asset-brand" className="input" value={form.brand} onChange={e => set('brand', e.target.value)} /></div>
             <div><label htmlFor="asset-model" className="label">Modelo</label><input id="asset-model" className="input" value={form.model} onChange={e => set('model', e.target.value)} /></div>
             <div><label htmlFor="asset-value" className="label">Valor ($)</label><input id="asset-value" className="input" type="number" step="0.01" value={form.value} onChange={e => set('value', e.target.value)} /></div>
