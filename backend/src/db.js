@@ -12,15 +12,13 @@ function convertPlaceholders(sql) {
 let poolConfig;
 
 if (process.env.DATABASE_URL) {
-  // Strip sslmode from URL so our ssl config takes full effect.
-  // When sslmode=require is in the URL, pg overrides ssl to { rejectUnauthorized: true }
-  // which causes "self-signed certificate" errors with Aiven/cloud providers.
-  const connectionString = process.env.DATABASE_URL.replace(/([?&])sslmode=[^&]*/g, '$1').replace(/[?&]$/, '');
-  poolConfig = {
-    connectionString,
-    ssl: { rejectUnauthorized: false },
-    max: 10,
-  };
+  // pg v8 treats sslmode=require/verify-ca as verify-full (full cert verification).
+  // Aiven uses a self-signed chain, so we force sslmode=no-verify to allow the connection.
+  const connectionString = process.env.DATABASE_URL
+    .replace(/sslmode=require/, 'sslmode=no-verify')
+    .replace(/sslmode=verify-ca/, 'sslmode=no-verify')
+    .replace(/sslmode=verify-full/, 'sslmode=no-verify');
+  poolConfig = { connectionString, max: 10 };
 } else {
   poolConfig = {
     host:     process.env.DB_HOST || 'localhost',
