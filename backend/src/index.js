@@ -125,5 +125,9 @@ app.use((err, req, _res2, res) => {
   }
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`ModulaERP API running on port ${PORT}`));
+if (process.env.VERCEL !== '1') {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => console.log(`ModulaERP API running on port ${PORT}`));
+}
+
+export default app;
