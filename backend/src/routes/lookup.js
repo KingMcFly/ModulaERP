@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth.js';
+import db from '../db.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -60,6 +61,26 @@ function guessAppleModel(serial) {
   return null;
 }
 
+// ── Lenovo model lookup (serial prefix → product line) ───────────────────────
+
+const LENOVO_MODEL_MAP = {
+  ThinkCentre: ['PF', 'PG', 'PC', 'PB', 'PH'],
+  ThinkPad:    ['MJ', 'R9', 'R8', 'R7', 'LEN'],
+  ThinkStation: ['MP', 'MZ', 'MW'],
+  ThinkBook:   ['PU', 'PV', 'PW'],
+  Legion:      ['LR', 'LT', 'LC', 'LG'],
+  IdeaPad:     ['S0', 'MP0', 'NX'],
+  Yoga:        ['YM', 'YG', 'YB'],
+};
+
+function guessLenovoModel(serial) {
+  const upper = serial.toUpperCase();
+  for (const [model, prefixes] of Object.entries(LENOVO_MODEL_MAP)) {
+    if (prefixes.some(p => upper.startsWith(p))) return model;
+  }
+  return null;
+}
+
 // ── UPC/EAN lookup via UPC Item DB ───────────────────────────────────────────
 
 async function lookupBarcode(code) {
@@ -88,6 +109,24 @@ router.get('/', async (req, res) => {
   const q = (req.query.q || '').trim();
   if (q.length < 3) return res.status(400).json({ error: 'Ingresa al menos 3 caracteres' });
 
+  // Check existing asset in database first
+  const [rows] = await db.query(
+    'SELECT brand, model, asset_type, notes FROM assets WHERE tenant_id = ? AND serial_number = ? AND is_active = true LIMIT 1',
+    [req.user.tenant_id, q]
+  );
+  if (rows.length > 0) {
+    const a = rows[0];
+    return res.json({
+      serial: q,
+      manufacturer: 'db',
+      brand: a.brand || null,
+      model: a.model || null,
+      asset_type: a.asset_type || null,
+      description: a.notes || null,
+      confidence: 'high',
+    });
+  }
+
   const mfr = detectManufacturer(q);
   let result = { serial: q, manufacturer: mfr, brand: null, model: null, asset_type: null, description: null, confidence: 'low' };
 
@@ -110,9 +149,11 @@ router.get('/', async (req, res) => {
     result.confidence = 'medium';
     result.asset_type = 'Computador';
   } else if (mfr === 'lenovo') {
+    const model = guessLenovoModel(q);
     result.brand = 'Lenovo';
+    result.model = model;
     result.confidence = 'medium';
-    result.asset_type = 'Computador';
+    result.asset_type = model === 'Legion' ? 'Laptop' : 'Computador';
   } else if (mfr === 'cisco') {
     result.brand = 'Cisco';
     result.confidence = 'medium';
