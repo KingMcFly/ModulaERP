@@ -28,6 +28,7 @@ import contractsRouter     from './routes/contracts.js';
 import ticketsRouter       from './routes/tickets.js';
 import costCentersRouter   from './routes/cost-centers.js';
 import usersRouter         from './routes/users.js';
+import cronRouter          from './routes/cron.js';
 
 const app = express();
 
@@ -112,6 +113,7 @@ app.use('/api/contracts',      contractsRouter);
 app.use('/api/tickets',        ticketsRouter);
 app.use('/api/cost-centers',   costCentersRouter);
 app.use('/api/users',          usersRouter);
+app.use('/api/cron',           cronRouter);
 
 // Health — sin información sensible del servidor (A05)
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

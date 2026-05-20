@@ -11,7 +11,7 @@ export function requireModule(moduleCode) {
       const [rows] = await db.query(
         `SELECT tm.is_active FROM tenant_modules tm
          JOIN modules m ON m.id = tm.module_id
-         WHERE tm.tenant_id = ? AND m.code = ? AND tm.is_active = 1`,
+         WHERE tm.tenant_id = ? AND m.code = ? AND tm.is_active = true`,
         [req.user.tenant_id, moduleCode]
       );
       if (!rows.length) {
@@ -23,7 +23,7 @@ export function requireModule(moduleCode) {
 
       // Regular user: must have explicit can_view permission
       const [perm] = await db.query(
-        'SELECT can_view FROM user_module_permissions WHERE user_id=? AND module_code=? AND can_view=1',
+        'SELECT can_view FROM user_module_permissions WHERE user_id=? AND module_code=? AND can_view=true',
         [req.user.id, moduleCode]
       );
       if (!perm.length) {
@@ -39,7 +39,7 @@ export function requireWrite(moduleCode) {
     try {
       if (FULL_ACCESS_ROLES.includes(req.user.role)) return next();
       const [perm] = await db.query(
-        'SELECT can_write FROM user_module_permissions WHERE user_id=? AND module_code=? AND can_write=1',
+        'SELECT can_write FROM user_module_permissions WHERE user_id=? AND module_code=? AND can_write=true',
         [req.user.id, moduleCode]
       );
       if (!perm.length) {
@@ -55,7 +55,7 @@ export function requireDelete(moduleCode) {
     try {
       if (FULL_ACCESS_ROLES.includes(req.user.role)) return next();
       const [perm] = await db.query(
-        'SELECT can_delete FROM user_module_permissions WHERE user_id=? AND module_code=? AND can_delete=1',
+        'SELECT can_delete FROM user_module_permissions WHERE user_id=? AND module_code=? AND can_delete=true',
         [req.user.id, moduleCode]
       );
       if (!perm.length) {
