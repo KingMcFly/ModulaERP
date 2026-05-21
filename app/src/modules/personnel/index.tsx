@@ -477,7 +477,7 @@ export default function PersonnelModule() {
           </select>
         )}
         <button
-          onClick={() => exportToExcel(people.map(p => ({
+          onClick={() => void exportToExcel(people.map(p => ({
             Nombre: p.name, 'RUT/ID': p.national_id, Departamento: p.department,
             Cargo: p.position, Teléfono: p.phone, Email: p.email,
             Rol: p.role, 'Último acceso': p.last_login,

@@ -116,7 +116,7 @@ export default function ReportsModule() {
   const departments = data.charts.departments ?? [];
 
   function handleExport() {
-    exportToExcel([
+    void exportToExcel([
       { Sección: 'Activos', Métrica: 'Total', Valor: data.assets.total },
       { Sección: 'Activos', Métrica: 'Disponibles', Valor: data.assets.available },
       { Sección: 'Activos', Métrica: 'Prestados', Valor: data.assets.loaned },

@@ -165,7 +165,7 @@ function AssetsTab() {
   const [showImport, setShowImport] = useState(false);
 
   function handleExport() {
-    exportToExcel(assets.map(a => ({
+    void exportToExcel(assets.map(a => ({
       Tipo: a.asset_type, 'N° Serie': a.serial_number, Marca: a.brand, Modelo: a.model,
       Ubicación: a.location_name, Valor: a.value, Estado: STATUS_CFG[a.status]?.label || a.status,
       'Código barra': a.barcode, 'Fecha compra': a.purchase_date,
@@ -487,7 +487,7 @@ function SuppliesTab() {
   }
 
   function handleExportSupplies() {
-    exportToExcel(supplies.map(s => ({
+    void exportToExcel(supplies.map(s => ({
       Nombre: s.name, Categoría: s.category, Unidad: s.unit,
       'Stock actual': s.current_stock, 'Stock mínimo': s.min_stock,
       'Costo unitario': s.unit_cost, Ubicación: s.location_name,
