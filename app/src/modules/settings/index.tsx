@@ -287,16 +287,20 @@ function LocationsCatalog() {
 // ── Plan tab ──────────────────────────────────────────────────────────────────
 
 const PLAN_LABELS: Record<string, { label: string; color: string; description: string }> = {
-  starter:      { label: 'Starter',      color: '#64748B', description: 'Para equipos pequeños' },
-  professional: { label: 'Professional', color: '#6366F1', description: 'Para empresas en crecimiento' },
-  enterprise:   { label: 'Enterprise',   color: '#10B981', description: 'Sin límites' },
+  starter_free:  { label: 'Starter Free',  color: '#F2B045', description: '30 días de prueba incluidos' },
+  starter:       { label: 'Starter',       color: '#64748B', description: 'Para equipos pequeños' },
+  professional:  { label: 'Professional',  color: '#6366F1', description: 'Para empresas en crecimiento' },
+  enterprise:    { label: 'Enterprise',    color: '#10B981', description: 'Sin límites' },
 };
 
 const RESOURCE_LABELS: Record<string, { label: string; icon: React.ElementType }> = {
-  assets:    { label: 'Activos',     icon: Database },
-  users:     { label: 'Usuarios',    icon: Users },
-  locations: { label: 'Ubicaciones', icon: MapPin },
+  assets:       { label: 'Activos',      icon: Database },
+  users:        { label: 'Usuarios',     icon: Users },
+  technicians:  { label: 'Técnicos',     icon: ShieldCheck },
+  locations:    { label: 'Ubicaciones',  icon: MapPin },
 };
+
+const WHATSAPP_NUMBER = '56920023072';
 
 function UsageBar({ used, max, label, icon: Icon }: { used: number; max: number; label: string; icon: React.ElementType }) {
   const unlimited = max === -1;
@@ -337,8 +341,18 @@ function UsageBar({ used, max, label, icon: Icon }: { used: number; max: number;
   );
 }
 
+interface PlanData {
+  plan: string;
+  trial_ends_at: string | null;
+  trial_days_left: number | null;
+  usage: Record<string, number>;
+  limits: Record<string, number>;
+  trial_modules: { code: string; name: string; days_left: number | null; expires_at: string | null }[];
+}
+
 function PlanTab() {
-  const [data, setData] = useState<{ plan: string; usage: Record<string, number>; limits: Record<string, number> } | null>(null);
+  const { user } = useAuth();
+  const [data, setData] = useState<PlanData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -349,96 +363,150 @@ function PlanTab() {
   if (!data) return <div className="py-12 text-center text-slate-400">No disponible</div>;
 
   const planCfg = PLAN_LABELS[data.plan] || PLAN_LABELS.starter;
+  const isStarterFree = data.plan === 'starter_free';
   const hasUpgrade = data.plan !== 'enterprise';
+  const tenantName = user?.tenant?.name || 'mi empresa';
+
+  const waText = `Hola, soy administrador de la empresa ${tenantName} en FB Core ERP. Quiero solicitar información sobre planes.`;
+  const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waText)}`;
+
   const anyNear = Object.entries(data.limits).some(([k, max]) => {
     const used = data.usage[k] || 0;
-    return max !== -1 && used / max >= 0.8;
+    return max !== -1 && max > 0 && used / max >= 0.8;
   });
 
   return (
     <div className="space-y-5">
-      {/* Current plan card */}
-      <div className="bg-white border border-slate-100 rounded-2xl p-6">
-        <div className="flex items-start justify-between">
+      {/* Plan card */}
+      <div className="bg-white border border-slate-100 rounded-2xl p-5">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Zap size={16} style={{ color: planCfg.color }} />
-              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: planCfg.color }}>
-                Plan actual
-              </span>
+              <Zap size={15} style={{ color: planCfg.color }} />
+              <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: planCfg.color }}>Plan actual</span>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900">{planCfg.label}</h2>
-            <p className="text-sm text-slate-500 mt-0.5">{planCfg.description}</p>
+            <h2 className="text-[22px] font-bold text-slate-900">{planCfg.label}</h2>
+            <p className="text-[13px] text-slate-500 mt-0.5">{planCfg.description}</p>
+            {data.trial_days_left !== null && (
+              <div className="flex items-center gap-1.5 mt-2">
+                <Clock size={13} className={data.trial_days_left <= 7 ? 'text-red-500' : 'text-amber-500'} />
+                <span className={`text-[12px] font-semibold ${data.trial_days_left <= 7 ? 'text-red-600' : 'text-amber-600'}`}>
+                  {data.trial_days_left === 0 ? 'Prueba vencida' : `Prueba: ${data.trial_days_left} día${data.trial_days_left !== 1 ? 's' : ''} restante${data.trial_days_left !== 1 ? 's' : ''}`}
+                </span>
+              </div>
+            )}
           </div>
           {hasUpgrade && (
-            <div className="text-right">
-              <p className="text-xs text-slate-400 mb-1">¿Necesitas más?</p>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-50 text-primary-700 text-xs font-semibold rounded-lg">
-                <Zap size={12} /> Contacta a tu administrador
-              </span>
-            </div>
+            <a href={waUrl} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold shrink-0"
+              style={{ background: 'linear-gradient(135deg, #F2B045, #EDA135)', color: '#131316', boxShadow: '0 2px 8px rgba(242,176,69,0.30)' }}>
+              <Zap size={14} /> Mejorar plan
+            </a>
           )}
         </div>
       </div>
 
-      {/* Alert when approaching limits */}
+      {/* Approaching limits alert */}
       {anyNear && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-          <BarChart3 size={18} className="text-amber-600 flex-shrink-0" />
-          <p className="text-sm text-amber-800 font-medium">
-            Estás cerca de alcanzar algún límite de tu plan. Considera actualizar para evitar interrupciones.
+        <div className="rounded-xl p-4 flex items-center gap-3"
+          style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.25)' }}>
+          <BarChart3 size={16} className="text-amber-500 flex-shrink-0" />
+          <p className="text-[13px] text-amber-800 font-medium">
+            Estás cerca del límite de tu plan.{' '}
+            <a href={waUrl} target="_blank" rel="noopener noreferrer"
+              style={{ color: '#F2B045', fontWeight: 700, textDecoration: 'none' }}>
+              Contacta a FBSystems para ampliar →
+            </a>
           </p>
         </div>
       )}
 
       {/* Usage bars */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">Uso actual</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {Object.entries(RESOURCE_LABELS).map(([key, cfg]) => (
-            <UsageBar
-              key={key}
-              label={cfg.label}
-              icon={cfg.icon}
-              used={data.usage[key] || 0}
-              max={data.limits[key] ?? -1}
-            />
-          ))}
+        <h3 className="text-[13px] font-semibold text-slate-700 mb-3">Uso actual</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Object.entries(RESOURCE_LABELS).map(([key, cfg]) => {
+            const limit = data.limits[key] ?? -1;
+            if (limit === undefined && data.usage[key] === undefined) return null;
+            return (
+              <UsageBar key={key} label={cfg.label} icon={cfg.icon}
+                used={data.usage[key] || 0} max={limit} />
+            );
+          })}
         </div>
       </div>
 
-      {/* Plan comparison */}
-      {hasUpgrade && (
+      {/* Trial modules */}
+      {data.trial_modules.length > 0 && (
         <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="font-semibold text-slate-900">Comparación de planes</h3>
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="font-semibold text-slate-900 text-[14px]">Módulos en período de prueba</h3>
+            <span className="text-[11px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
+              {data.trial_modules.length} módulo{data.trial_modules.length !== 1 ? 's' : ''}
+            </span>
           </div>
-          <table className="w-full text-sm">
-            <thead><tr className="bg-[#FAFAFA] border-b border-black/[0.04]">
-              <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Recurso</th>
-              {Object.entries(PLAN_LABELS).map(([k, v]) => (
-                <th key={k} className={`text-center px-4 py-3 text-xs font-semibold uppercase ${k === data.plan ? 'text-primary-600' : 'text-slate-500'}`}>
-                  {k === data.plan ? '★ ' : ''}{v.label}
-                </th>
-              ))}
-            </tr></thead>
-            <tbody className="divide-y divide-slate-50">
-              {[
-                { label: 'Activos',     starter: 100,   professional: 1000,  enterprise: '∞' },
-                { label: 'Usuarios',    starter: 5,     professional: 25,    enterprise: '∞' },
-                { label: 'Ubicaciones', starter: 5,     professional: 50,    enterprise: '∞' },
-              ].map(row => (
-                <tr key={row.label}>
-                  <td className="px-5 py-3 text-slate-700 font-medium">{row.label}</td>
-                  {(['starter','professional','enterprise'] as const).map(plan => (
-                    <td key={plan} className={`px-4 py-3 text-center ${plan === data.plan ? 'font-bold text-primary-700' : 'text-slate-500'}`}>
-                      {row[plan]}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="divide-y divide-slate-50">
+            {data.trial_modules.map(m => {
+              const urgent = m.days_left !== null && m.days_left <= 7;
+              const warn   = m.days_left !== null && m.days_left <= 15 && !urgent;
+              const expired = m.days_left !== null && m.days_left <= 0;
+              const modWaText = `Hola, soy administrador de ${tenantName} en FB Core. Quiero extender la prueba del módulo ${m.name}.`;
+              const modWaUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(modWaText)}`;
+              return (
+                <div key={m.code} className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-2 h-8 rounded-full shrink-0 ${expired ? 'bg-red-400' : urgent ? 'bg-red-400' : warn ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                    <div>
+                      <p className="text-[13px] font-semibold text-slate-800">{m.name}</p>
+                      <p className="text-[11.5px] text-slate-400 mt-0.5">
+                        {expired
+                          ? <span className="text-red-500 font-medium">Prueba vencida</span>
+                          : m.expires_at
+                            ? <>Vence {new Date(m.expires_at).toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })}</>
+                            : 'Sin fecha de vencimiento'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {m.days_left !== null && !expired && (
+                      <span className={`text-[11.5px] font-bold px-2.5 py-1 rounded-lg ${urgent ? 'bg-red-50 text-red-600' : warn ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-600'}`}>
+                        {m.days_left}d restantes
+                      </span>
+                    )}
+                    <a href={modWaUrl} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-bold"
+                      style={{ background: 'rgba(242,176,69,0.12)', color: '#b45309' }}>
+                      <Zap size={11} /> Extender
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="px-5 py-3 bg-slate-50 border-t border-slate-100">
+            <p className="text-[11.5px] text-slate-400">
+              Al vencer, los datos se conservan pero perderás acceso al módulo.{' '}
+              <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#F2B045', fontWeight: 600 }}>
+                Contáctanos para extender o mejorar tu plan →
+              </a>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade CTA for free plan */}
+      {isStarterFree && (
+        <div className="rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap"
+          style={{ background: 'linear-gradient(135deg, rgba(242,176,69,0.08), rgba(237,161,53,0.04))', border: '1px solid rgba(242,176,69,0.20)' }}>
+          <div>
+            <p className="text-[14px] font-bold text-slate-800">¿Listo para crecer?</p>
+            <p className="text-[12.5px] text-slate-500 mt-0.5">Más usuarios, activos ilimitados y módulos sin fecha de vencimiento.</p>
+          </div>
+          <a href={waUrl} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold shrink-0"
+            style={{ background: 'linear-gradient(135deg, #F2B045, #EDA135)', color: '#131316', boxShadow: '0 2px 8px rgba(242,176,69,0.30)' }}>
+            <Zap size={14} /> Vuélvete Plus
+          </a>
         </div>
       )}
     </div>

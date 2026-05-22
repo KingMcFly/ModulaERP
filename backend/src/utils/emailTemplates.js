@@ -163,6 +163,70 @@ export function resetPasswordEmail({ name, resetUrl }) {
   };
 }
 
+export function welcomeEmail({ userName, companyName, plan = 'Starter Free', mandatoryModules = [], trialModules = [], appUrl = 'https://fbcore.cloud', whatsappNumber = '56920023072' }) {
+  const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hola, soy administrador de la empresa ${companyName} en FB Core ERP. Quiero solicitar información sobre planes.`)}`;
+  const trialList = trialModules.length > 0
+    ? trialModules.map(m => `<li style="margin:3px 0;">${m}</li>`).join('')
+    : '<li style="color:#555559;">Sin módulos adicionales de prueba</li>';
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:${BRAND.text};letter-spacing:-0.5px;">
+      ¡Bienvenido a FB Core!
+    </h1>
+    <p style="margin:0 0 24px;font-size:14px;color:${BRAND.textSecondary};line-height:1.6;">
+      Hola <strong style="color:${BRAND.text};">${userName}</strong>, tu empresa
+      <strong style="color:${BRAND.primary};">${companyName}</strong> ha sido creada exitosamente
+      con el plan <strong style="color:${BRAND.primary};">${plan}</strong>.
+    </p>
+
+    <!-- Plan details -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:28px;">
+      <tr>
+        <td style="background-color:${BRAND.surface};border:1px solid ${BRAND.border};border-left:3px solid ${BRAND.primary};border-radius:8px;padding:18px 20px;">
+          <p style="margin:0 0 10px;font-size:14px;font-weight:600;color:${BRAND.text};">Tu plan incluye:</p>
+          <ul style="margin:0;padding-left:18px;color:${BRAND.textSecondary};font-size:13px;line-height:2;">
+            <li>Módulos base activos: ${mandatoryModules.join(', ') || 'Inventario y Personal'}</li>
+            <li>Hasta 5 usuarios · 30 activos</li>
+            ${trialModules.length > 0 ? `<li>Módulos de prueba (30 días):<ul style="margin:2px 0 0;padding-left:16px;">${trialList}</ul></li>` : '<li>Sin módulos adicionales de prueba</li>'}
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+    <!-- CTA -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:32px;">
+      <tr>
+        <td align="center">
+          <a href="${appUrl}"
+            style="display:inline-block;background:${BRAND.primary};color:${BRAND.textOnPrimary};font-size:15px;font-weight:700;text-decoration:none;padding:14px 44px;border-radius:10px;letter-spacing:0.1px;">
+            Ir a FB Core
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- WhatsApp upgrade -->
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+      <tr>
+        <td style="border-top:1px solid ${BRAND.border};padding-top:20px;">
+          <p style="margin:0;font-size:12px;color:${BRAND.textSecondary};line-height:1.6;">
+            ¿Quieres extender tu prueba o mejorar tu plan?
+            <a href="${waUrl}" style="color:${BRAND.primary};text-decoration:none;font-weight:600;">Contáctanos por WhatsApp →</a>
+          </p>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return {
+    subject: `¡Bienvenido a FB Core! Tu empresa ${companyName} está lista`,
+    html: baseTemplate({
+      preheader: `${companyName} ha sido creada en FB Core. Ingresa ahora para comenzar a gestionar tus activos.`,
+      body,
+    }),
+  };
+}
+
 export function dailyAlertsEmail({ tenantName, date, alertItems }) {
   const alertRows = alertItems.map(item => `
     <tr>

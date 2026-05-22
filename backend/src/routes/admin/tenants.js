@@ -63,6 +63,8 @@ router.get('/:id', w(async (req, res) => {
 
   const [mods] = await db.query(
     `SELECT m.*, COALESCE(tm.is_active, false) AS enabled, tm.config,
+       tm.type AS trial_type, tm.status AS trial_status,
+       tm.expires_at, tm.unlimited,
        CASE WHEN m.code = ANY(?) THEN true ELSE false END AS is_mandatory
      FROM modules m
      LEFT JOIN tenant_modules tm ON tm.module_id = m.id AND tm.tenant_id = ?
@@ -154,6 +156,88 @@ router.patch('/:id/users/:userId/status', w(async (req, res) => {
   await db.query('UPDATE users SET is_active=? WHERE id=? AND tenant_id=?',
     [!!is_active, req.params.userId, req.params.id]);
   res.json({ message: 'Estado actualizado' });
+}));
+
+// PATCH /api/admin/tenants/:id/module-trial — extend or set unlimited for a module
+router.patch('/:id/module-trial', w(async (req, res) => {
+  const { module_id, action, days = 30 } = req.body;
+  if (!module_id || !action) return res.status(400).json({ error: 'module_id y action requeridos' });
+
+  const validActions = ['extend', 'set_unlimited', 'set_required', 'expire'];
+  if (!validActions.includes(action)) return res.status(400).json({ error: 'Acción inválida' });
+
+  const [[mod]] = await db.query('SELECT id, code FROM modules WHERE id=?', [module_id]);
+  if (!mod) return res.status(404).json({ error: 'Módulo no encontrado' });
+
+  const [exists] = await db.query(
+    'SELECT id FROM tenant_modules WHERE tenant_id=? AND module_id=?',
+    [req.params.id, module_id]
+  );
+
+  if (action === 'extend') {
+    const extendDays = Math.max(1, Math.min(365, parseInt(days) || 30));
+    if (exists.length) {
+      await db.query(
+        `UPDATE tenant_modules
+         SET is_active = true, status = 'active', type = 'trial', unlimited = false,
+             expires_at = GREATEST(COALESCE(expires_at, NOW()), NOW()) + ($1 * INTERVAL '1 day')
+         WHERE tenant_id = $2 AND module_id = $3`,
+        [extendDays, req.params.id, module_id]
+      );
+    } else {
+      await db.query(
+        `INSERT INTO tenant_modules (tenant_id, module_id, is_active, type, status, unlimited, starts_at, expires_at)
+         VALUES ($1, $2, true, 'trial', 'active', false, NOW(), NOW() + ($3 * INTERVAL '1 day'))`,
+        [req.params.id, module_id, extendDays]
+      );
+    }
+    console.info(`[${new Date().toISOString()}] MODULE_TRIAL_EXTENDED tenant=${req.params.id} module=${mod.code} days=${extendDays} by=${req.user.id}`);
+    return res.json({ message: `Prueba extendida ${extendDays} días` });
+  }
+
+  if (action === 'set_unlimited') {
+    if (exists.length) {
+      await db.query(
+        `UPDATE tenant_modules SET is_active=true, unlimited=true, status='active', expires_at=NULL, type='paid'
+         WHERE tenant_id=? AND module_id=?`,
+        [req.params.id, module_id]
+      );
+    } else {
+      await db.query(
+        `INSERT INTO tenant_modules (tenant_id, module_id, is_active, type, status, unlimited, starts_at)
+         VALUES (?, ?, true, 'paid', 'active', true, NOW())`,
+        [req.params.id, module_id]
+      );
+    }
+    console.info(`[${new Date().toISOString()}] MODULE_SET_UNLIMITED tenant=${req.params.id} module=${mod.code} by=${req.user.id}`);
+    return res.json({ message: 'Módulo activado como ilimitado' });
+  }
+
+  if (action === 'set_required') {
+    if (exists.length) {
+      await db.query(
+        `UPDATE tenant_modules SET is_active=true, unlimited=true, status='active', expires_at=NULL, type='required'
+         WHERE tenant_id=? AND module_id=?`,
+        [req.params.id, module_id]
+      );
+    } else {
+      await db.query(
+        `INSERT INTO tenant_modules (tenant_id, module_id, is_active, type, status, unlimited, starts_at)
+         VALUES (?, ?, true, 'required', 'active', true, NOW())`,
+        [req.params.id, module_id]
+      );
+    }
+    return res.json({ message: 'Módulo marcado como obligatorio' });
+  }
+
+  if (action === 'expire') {
+    await db.query(
+      `UPDATE tenant_modules SET is_active=false, status='expired', expires_at=NOW()
+       WHERE tenant_id=? AND module_id=?`,
+      [req.params.id, module_id]
+    );
+    return res.json({ message: 'Módulo expirado' });
+  }
 }));
 
 export default router;

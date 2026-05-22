@@ -175,9 +175,20 @@ function PlanBanner({
   return null;
 }
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const handler = () => setMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return mobile;
+}
+
 export default function Shell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen]     = useState(false);
   const [notifs, setNotifs]           = useState<NotifSummary>({ total: 0, items: [] });
@@ -187,6 +198,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   );
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Close sidebar on mobile after nav
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [isMobile]);
 
   const primaryColor = user?.tenant?.primary_color || '#F2B045';
 
@@ -247,19 +263,34 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen overflow-hidden" style={{ background: '#F3F3F7' }}>
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
 
+      {/* Mobile backdrop */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+          aria-hidden="true"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside
         aria-label="Navegación principal"
         style={{
-          width: sidebarOpen ? 236 : 62,
-          background: 'rgba(255,255,255,0.92)',
+          width: sidebarOpen ? 236 : (isMobile ? 0 : 62),
+          position: isMobile ? 'fixed' : 'relative',
+          top: isMobile ? 0 : undefined,
+          left: isMobile ? 0 : undefined,
+          height: isMobile ? '100dvh' : undefined,
+          zIndex: isMobile ? 50 : undefined,
+          background: 'rgba(255,255,255,0.96)',
           backdropFilter: 'blur(28px) saturate(220%)',
           WebkitBackdropFilter: 'blur(28px) saturate(220%)',
           borderRight: '1px solid rgba(0,0,0,0.06)',
-          boxShadow: '1px 0 0 rgba(255,255,255,0.6) inset',
+          boxShadow: isMobile && sidebarOpen ? '4px 0 24px rgba(0,0,0,0.12)' : '1px 0 0 rgba(255,255,255,0.6) inset',
           transition: 'width 280ms cubic-bezier(0.32, 0.72, 0, 1)',
+          overflow: 'hidden',
         }}
-        className="flex flex-col flex-shrink-0 overflow-hidden"
+        className="flex flex-col flex-shrink-0"
       >
         {/* Branding */}
         <div
@@ -299,7 +330,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         <nav aria-label="Módulos" className="flex-1 py-3 px-2 overflow-y-auto space-y-0.5">
 
           <div className="animate-fade-up" style={{ animationDelay: '0ms' }}>
-            <NavLink to="/" end className={navLinkClass} style={navLinkStyle}>
+            <NavLink to="/" end className={navLinkClass} style={navLinkStyle}
+              onClick={() => isMobile && setSidebarOpen(false)}>
               <LayoutDashboard size={15} className="flex-shrink-0" aria-hidden="true" />
               {sidebarOpen ? <span>Dashboard</span> : <span className="sr-only">Dashboard</span>}
             </NavLink>
@@ -316,7 +348,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                   className="animate-fade-up"
                   style={{ animationDelay: `${(idx + 1) * 35}ms` }}
                 >
-                  <NavLink to={MODULE_ROUTES[m.code]} className={navLinkClass} style={navLinkStyle}>
+                  <NavLink to={MODULE_ROUTES[m.code]} className={navLinkClass} style={navLinkStyle}
+                    onClick={() => isMobile && setSidebarOpen(false)}>
                     <span className="flex-shrink-0 text-current" aria-hidden="true">
                       {MODULE_ICONS[m.code] || <Package size={15} />}
                     </span>
@@ -333,7 +366,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             ? <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold text-[#C3C3C8] uppercase tracking-[0.1em]">Análisis</p>
             : <div className="my-3 mx-2 border-t border-black/[0.06]" role="separator" />}
           <div className="animate-fade-up" style={{ animationDelay: '240ms' }}>
-            <NavLink to="/reports" className={navLinkClass} style={navLinkStyle}>
+            <NavLink to="/reports" className={navLinkClass} style={navLinkStyle}
+              onClick={() => isMobile && setSidebarOpen(false)}>
               <BarChart2 size={15} className="flex-shrink-0" aria-hidden="true" />
               {sidebarOpen ? <span>Reportes</span> : <span className="sr-only">Reportes</span>}
             </NavLink>
@@ -343,7 +377,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             ? <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold text-[#C3C3C8] uppercase tracking-[0.1em]">Sistema</p>
             : <div className="my-3 mx-2 border-t border-black/[0.06]" role="separator" />}
           <div className="animate-fade-up" style={{ animationDelay: '280ms' }}>
-            <NavLink to="/settings" className={navLinkClass} style={navLinkStyle}>
+            <NavLink to="/settings" className={navLinkClass} style={navLinkStyle}
+              onClick={() => isMobile && setSidebarOpen(false)}>
               <Settings size={15} className="flex-shrink-0" aria-hidden="true" />
               {sidebarOpen ? <span>Configuración</span> : <span className="sr-only">Configuración</span>}
             </NavLink>

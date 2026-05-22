@@ -5,7 +5,7 @@ import { randomBytes } from 'crypto';
 import { rateLimit } from 'express-rate-limit';
 import nodemailer from 'nodemailer';
 import db from '../db.js';
-import { resetPasswordEmail } from '../utils/emailTemplates.js';
+import { welcomeEmail } from '../utils/emailTemplates.js';
 
 const router = Router();
 
@@ -187,48 +187,18 @@ router.post('/', registerLimiter, async (req, res) => {
     // Welcome email (async — don't block response)
     const mailer = getMailer();
     if (mailer) {
-      const appUrl = process.env.FRONTEND_URL || 'https://fbcore.cloud';
-      const whatsappNumber = process.env.COMPANY_WHATSAPP_NUMBER || '56920023072';
-      const trialList = trialModuleDetails.map(m => `• ${m.name}`).join('\n');
-
-      const html = `<!DOCTYPE html><html lang="es"><body style="font-family:'Plus Jakarta Sans',sans-serif;background:#131316;margin:0;padding:40px 16px;">
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;margin:0 auto;">
-<tr><td style="background:linear-gradient(135deg,#F2B045,#EDA135);border-radius:16px 16px 0 0;padding:28px 40px;">
-  <span style="font-size:20px;font-weight:700;color:#131316;">FB <span style="opacity:0.7;">Core</span></span>
-  <span style="float:right;font-size:11px;color:#131316;opacity:0.6;margin-top:4px;">by FBSystems</span>
-</td></tr>
-<tr><td style="background:#1B1B1D;border:1px solid #2C2C30;border-top:none;padding:40px 48px;">
-  <h1 style="margin:0 0 8px;color:#F5F5F5;font-size:22px;">¡Bienvenido a FB Core!</h1>
-  <p style="color:#919197;font-size:14px;line-height:1.6;">Hola <strong style="color:#F5F5F5;">${user_name}</strong>, tu empresa <strong style="color:#F2B045;">${company_name}</strong> ha sido creada exitosamente con el plan <strong style="color:#F2B045;">Starter Free</strong>.</p>
-  <div style="background:#161618;border:1px solid #2C2C30;border-left:3px solid #F2B045;border-radius:8px;padding:16px 20px;margin:24px 0;">
-    <p style="margin:0 0 8px;color:#F5F5F5;font-size:14px;font-weight:600;">Tu plan Starter Free incluye:</p>
-    <ul style="color:#919197;font-size:13px;line-height:2;margin:0;padding-left:20px;">
-      <li>Módulos base activos: Inventario y Personal</li>
-      <li>Hasta 5 usuarios</li>
-      <li>Hasta 30 activos</li>
-      <li>${trialModuleDetails.length > 0 ? `Módulos de prueba (30 días):\n${trialList}` : 'Sin módulos adicionales de prueba'}</li>
-    </ul>
-  </div>
-  <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0;">
-    <tr><td align="center">
-      <a href="${appUrl}" style="display:inline-block;background:#F2B045;color:#131316;font-size:15px;font-weight:700;text-decoration:none;padding:14px 44px;border-radius:10px;">
-        Ir a FB Core
-      </a>
-    </td></tr>
-  </table>
-  <p style="color:#919197;font-size:12px;line-height:1.6;border-top:1px solid #2C2C30;padding-top:16px;margin:0;">
-    ¿Quieres extender tu prueba o mejorar tu plan? <a href="https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hola, soy administrador de la empresa ${company_name} en FB Core ERP. Quiero solicitar información sobre planes.`)}" style="color:#F2B045;text-decoration:none;">Contáctanos por WhatsApp</a>.
-  </p>
-</td></tr>
-<tr><td style="background:#161618;border:1px solid #2C2C30;border-top:none;border-radius:0 0 16px 16px;padding:20px 48px;text-align:center;">
-  <p style="margin:0;font-size:11px;color:#555559;">© ${new Date().getFullYear()} <a href="https://fbsystems.cl" style="color:#919197;text-decoration:none;">FBSystems</a> · fbcore.cloud</p>
-</td></tr>
-</table></body></html>`;
-
+      const { subject, html } = welcomeEmail({
+        userName: user_name.trim(),
+        companyName: company_name.trim(),
+        mandatoryModules: mandatoryMods.map(m => m.name),
+        trialModules: trialModuleDetails.map(m => m.name),
+        appUrl: process.env.FRONTEND_URL || 'https://fbcore.cloud',
+        whatsappNumber: process.env.COMPANY_WHATSAPP_NUMBER || '56920023072',
+      });
       mailer.sendMail({
         from: process.env.SMTP_FROM || '"FB Core" <noreply@fbcore.cloud>',
         to: cleanEmail,
-        subject: `¡Bienvenido a FB Core! Tu empresa ${company_name} está lista`,
+        subject,
         html,
       }).catch(e => console.error('[REGISTER] Welcome email error:', e.message));
     }
