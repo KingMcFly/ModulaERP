@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Boxes, Eye, EyeOff } from 'lucide-react';
+import { Boxes, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { cleanRut, formatRut, looksLikeRut, validateRut } from '../utils/rut';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, sessionMessage } = useAuth();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword]     = useState('');
   const [show, setShow]             = useState(false);
@@ -73,6 +73,17 @@ export default function Login() {
           <h1 className="text-[24px] font-bold text-[#0A0A0F] tracking-[-0.03em]">FB Core</h1>
           <p className="text-[13px] text-[#9898A3] mt-1 font-medium">Ingresa a tu espacio de trabajo</p>
         </div>
+
+        {/* Session replaced banner */}
+        {sessionMessage && (
+          <div
+            className="mb-4 flex items-start gap-3 rounded-2xl p-4 text-[13px]"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)', color: '#ef4444' }}
+          >
+            <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+            <span>{sessionMessage}</span>
+          </div>
+        )}
 
         {/* Card */}
         <div
@@ -166,7 +177,18 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="text-center text-[#C3C3C8] text-[11.5px] mt-6 font-medium">
+        <p className="text-center text-[#9898A3] text-[12px] mt-5">
+          ¿No tienes cuenta?{' '}
+          <Link
+            to="/register"
+            className="font-semibold"
+            style={{ color: '#F2B045' }}
+          >
+            Crea tu empresa gratis
+          </Link>
+        </p>
+
+        <p className="text-center text-[#C3C3C8] text-[11.5px] mt-3 font-medium">
           FB Core · by FBSystems
         </p>
       </div>

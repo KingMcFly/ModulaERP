@@ -106,7 +106,9 @@ router.get('/plan', w(async (req, res) => {
   const tid = req.user.tenant_id;
 
   const [[tenant]] = await db.query(
-    'SELECT plan FROM tenants WHERE id = ?', [tid]
+    `SELECT plan, trial_ends_at, max_users, max_technicians, max_assets, status
+     FROM tenants WHERE id = ?`,
+    [tid]
   );
   const plan = tenant?.plan || 'starter';
 
@@ -117,20 +119,66 @@ router.get('/plan', w(async (req, res) => {
   const limitMap = {};
   for (const l of limits) limitMap[l.resource] = l.max_value;
 
+  // Tenant-level overrides take precedence over plan defaults
+  if (tenant?.max_assets      != null) limitMap.assets      = tenant.max_assets;
+  if (tenant?.max_users       != null) limitMap.users       = tenant.max_users;
+  if (tenant?.max_technicians != null) limitMap.technicians = tenant.max_technicians;
+
   const [[{ assets }]] = await db.query(
     'SELECT COUNT(*) AS assets FROM assets WHERE tenant_id = ? AND is_active = true', [tid]
   );
   const [[{ users }]] = await db.query(
     'SELECT COUNT(*) AS users FROM users WHERE tenant_id = ? AND is_active = true', [tid]
   );
+  const [[{ technicians }]] = await db.query(
+    'SELECT COUNT(*) AS technicians FROM users WHERE tenant_id = ? AND is_active = true AND is_technician = true', [tid]
+  ).catch(() => [[{ technicians: 0 }]]);
   const [[{ locations }]] = await db.query(
     'SELECT COUNT(*) AS locations FROM locations WHERE tenant_id = ? AND is_active = true', [tid]
   ).catch(() => [[{ locations: 0 }]]);
 
+  // Trial modules with expiry info
+  const [trialModules] = await db.query(
+    `SELECT m.code, m.name, m.icon, m.color,
+            tm.type, tm.status, tm.expires_at, tm.unlimited
+     FROM tenant_modules tm
+     JOIN modules m ON m.id = tm.module_id
+     WHERE tm.tenant_id = ? AND tm.is_active = true
+     ORDER BY m.sort_order`,
+    [tid]
+  );
+
+  const trialMods = trialModules
+    .filter(m => m.type === 'trial')
+    .map(m => ({
+      code: m.code,
+      name: m.name,
+      icon: m.icon,
+      color: m.color,
+      expires_at: m.expires_at,
+      days_left: m.expires_at
+        ? Math.max(0, Math.ceil((new Date(m.expires_at) - Date.now()) / 86400000))
+        : null,
+    }));
+
+  const trialEndsAt = tenant?.trial_ends_at || null;
+  const trialDaysLeft = trialEndsAt
+    ? Math.max(0, Math.ceil((new Date(trialEndsAt) - Date.now()) / 86400000))
+    : null;
+
   res.json({
     plan,
-    usage: { assets: Number(assets), users: Number(users), locations: Number(locations) },
+    plan_status: tenant?.status || 'active',
+    trial_ends_at: trialEndsAt,
+    trial_days_left: trialDaysLeft,
+    usage: {
+      assets: Number(assets),
+      users: Number(users),
+      technicians: Number(technicians),
+      locations: Number(locations),
+    },
     limits: limitMap,
+    trial_modules: trialMods,
   });
 }));
 

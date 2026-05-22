@@ -80,7 +80,11 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.status(403).json({ error: 'Cuenta suspendida. Contacte al administrador.' });
     }
 
-    await db.query('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
+    const sessionId = randomBytes(32).toString('hex');
+    await db.query(
+      'UPDATE users SET last_login = NOW(), active_session_id = ? WHERE id = ?',
+      [sessionId, user.id]
+    );
 
     const FULL_ACCESS = ['super_admin', 'admin', 'manager'];
     let modulesRows;
@@ -109,9 +113,9 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, tenant_id: user.tenant_id, role: user.role, email: user.email },
+      { id: user.id, tenant_id: user.tenant_id, role: user.role, email: user.email, session_id: sessionId },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '4h' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
     );
 
     console.info(`[${new Date().toISOString()}] LOGIN_OK user=${user.id} tenant=${user.tenant_id}`);

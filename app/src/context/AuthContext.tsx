@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 
 export interface AppModule {
   code: string; name: string; icon: string; color: string; sort_order: number;
@@ -16,7 +16,9 @@ const FULL_ACCESS_ROLES = ['super_admin', 'admin', 'manager'];
 interface AuthCtx {
   user: AuthUser | null;
   loading: boolean;
+  sessionMessage: string | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithToken: (token: string, userData: AuthUser) => void;
   logout: () => void;
   hasModule: (code: string) => boolean;
   canWrite:  (code: string) => boolean;
@@ -31,6 +33,36 @@ export const useAuth = () => useContext(Ctx);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionMessage, setSessionMessage] = useState<string | null>(null);
+  const interceptorRef = useRef(false);
+
+  const doLogout = useCallback((message?: string) => {
+    localStorage.removeItem('token');
+    setUser(null);
+    if (message) setSessionMessage(message);
+  }, []);
+
+  useEffect(() => {
+    if (interceptorRef.current) return;
+    interceptorRef.current = true;
+
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async (...args) => {
+      const res = await origFetch(...args);
+      if (res.status === 401 && !res.url.includes('/auth/login')) {
+        const clone = res.clone();
+        try {
+          const body = await clone.json();
+          if (body?.reason === 'session_replaced') {
+            doLogout('Tu sesión fue cerrada porque se inició sesión en otro dispositivo.');
+          } else if (body?.error === 'Token inválido o expirado') {
+            doLogout();
+          }
+        } catch { /* ignore parse errors */ }
+      }
+      return res;
+    };
+  }, [doLogout]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -51,10 +83,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error al iniciar sesión');
     localStorage.setItem('token', data.token);
+    setSessionMessage(null);
     setUser(data.user);
   }
 
-  function logout() { localStorage.removeItem('token'); setUser(null); }
+  function loginWithToken(token: string, userData: AuthUser) {
+    localStorage.setItem('token', token);
+    setSessionMessage(null);
+    setUser(userData);
+  }
+
+  function logout() { doLogout(); }
 
   function hasModule(code: string) {
     return user?.modules?.some(m => m.code === code) ?? false;
@@ -73,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <Ctx.Provider value={{ user, loading, login, logout, hasModule, canWrite, canDelete }}>
+    <Ctx.Provider value={{ user, loading, sessionMessage, login, loginWithToken, logout, hasModule, canWrite, canDelete }}>
       {children}
     </Ctx.Provider>
   );

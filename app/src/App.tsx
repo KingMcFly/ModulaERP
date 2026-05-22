@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { useAuth } from './context/AuthContext';
 import Shell from './components/Shell';
 import Login from './components/Login';
+import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword  from './components/ResetPassword';
 
@@ -83,6 +84,7 @@ export default function App() {
       <Toaster position="top-right" richColors />
       <Routes>
         <Route path="/login"                   element={user ? <Navigate to="/" replace /> : <Login />} />
+        <Route path="/register"               element={user ? <Navigate to="/" replace /> : <Register />} />
         <Route path="/forgot-password"         element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />
         <Route path="/reset-password/:token"   element={user ? <Navigate to="/" replace /> : <ResetPassword />} />
         <Route path="/*"                       element={user ? <AppRoutes /> : <Navigate to="/login" replace />} />

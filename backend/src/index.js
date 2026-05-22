@@ -30,6 +30,7 @@ import costCentersRouter   from './routes/cost-centers.js';
 import usersRouter         from './routes/users.js';
 import cronRouter          from './routes/cron.js';
 import lookupRouter        from './routes/lookup.js';
+import registerRouter      from './routes/register.js';
 
 const app = express();
 
@@ -116,6 +117,7 @@ app.use('/api/cost-centers',   costCentersRouter);
 app.use('/api/users',          usersRouter);
 app.use('/api/cron',           cronRouter);
 app.use('/api/lookup',         lookupRouter);
+app.use('/api/register',       registerRouter);
 
 // Health — sin información sensible del servidor (A05)
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

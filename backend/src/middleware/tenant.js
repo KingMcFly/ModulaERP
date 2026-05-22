@@ -7,21 +7,43 @@ export function requireModule(moduleCode) {
     try {
       if (req.user.role === 'super_admin') return next();
 
-      // Check tenant has the module enabled
       const [rows] = await db.query(
-        `SELECT tm.is_active FROM tenant_modules tm
+        `SELECT tm.is_active, tm.status, tm.expires_at, tm.unlimited, tm.type
+         FROM tenant_modules tm
          JOIN modules m ON m.id = tm.module_id
-         WHERE tm.tenant_id = ? AND m.code = ? AND tm.is_active = true`,
+         WHERE tm.tenant_id = ? AND m.code = ?`,
         [req.user.tenant_id, moduleCode]
       );
-      if (!rows.length) {
+
+      if (!rows.length || !rows[0].is_active) {
         return res.status(403).json({ error: `Módulo '${moduleCode}' no habilitado` });
       }
 
-      // Admin/manager have full access — skip user-level check
+      const mod = rows[0];
+
+      // Check expiry for trial/paid modules (required modules are always unlimited)
+      if (!mod.unlimited && mod.expires_at) {
+        const expired = new Date(mod.expires_at) < new Date();
+        if (expired || mod.status === 'expired') {
+          // Mark as expired in DB (async, don't block)
+          db.query(
+            `UPDATE tenant_modules tm
+             SET status = 'expired', is_active = false
+             FROM modules m
+             WHERE tm.module_id = m.id AND tm.tenant_id = ? AND m.code = ?`,
+            [req.user.tenant_id, moduleCode]
+          ).catch(() => {});
+
+          return res.status(403).json({
+            error: `El módulo '${moduleCode}' ha vencido. Contacta a FBSystems para extender tu prueba.`,
+            module_expired: true,
+            module_code: moduleCode,
+          });
+        }
+      }
+
       if (FULL_ACCESS_ROLES.includes(req.user.role)) return next();
 
-      // Regular user: must have explicit can_view permission
       const [perm] = await db.query(
         'SELECT can_view FROM user_module_permissions WHERE user_id=? AND module_code=? AND can_view=true',
         [req.user.id, moduleCode]

@@ -103,4 +103,90 @@ router.get('/daily-alerts', verifyCron, async (req, res) => {
   res.json({ ok: true, tenants_checked: tenants.length, alerts_sent: summary, ms: Date.now() - started });
 });
 
+// GET /api/cron/trial-alerts — runs daily, warns tenants whose trial modules expire in ≤15 or ≤7 days
+router.get('/trial-alerts', verifyCron, async (req, res) => {
+  const started = Date.now();
+  const mailer = getMailer();
+  const whatsappNumber = process.env.COMPANY_WHATSAPP_NUMBER || '56920023072';
+  const summary = [];
+
+  // Modules expiring in exactly 15 or 7 days (or if already within those windows and unsent)
+  const [expiringRows] = await db.query(
+    `SELECT tm.tenant_id, tm.expires_at,
+            t.name AS tenant_name, t.contact_email,
+            m.name AS module_name
+     FROM tenant_modules tm
+     JOIN tenants t ON t.id = tm.tenant_id
+     JOIN modules m ON m.id = tm.module_id
+     WHERE tm.type = 'trial'
+       AND tm.is_active = true
+       AND tm.unlimited = false
+       AND tm.expires_at IS NOT NULL
+       AND (
+         (tm.expires_at - NOW()) BETWEEN INTERVAL '6 days' AND INTERVAL '8 days'
+         OR (tm.expires_at - NOW()) BETWEEN INTERVAL '13 days' AND INTERVAL '16 days'
+       )
+       AND t.status = 'active'
+     ORDER BY tm.tenant_id`
+  );
+
+  // Group by tenant
+  const byTenant = {};
+  for (const row of expiringRows) {
+    if (!byTenant[row.tenant_id]) {
+      byTenant[row.tenant_id] = {
+        name: row.tenant_name,
+        email: row.contact_email,
+        modules: [],
+      };
+    }
+    const daysLeft = Math.ceil((new Date(row.expires_at) - Date.now()) / 86400000);
+    byTenant[row.tenant_id].modules.push({ name: row.module_name, daysLeft });
+  }
+
+  for (const [, info] of Object.entries(byTenant)) {
+    const modList = info.modules.map(m => `${m.name} (${m.daysLeft} días)`).join(', ');
+    const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hola, soy administrador de ${info.name} en FB Core. Quiero extender mi prueba de módulos: ${info.modules.map(m => m.name).join(', ')}.`)}`;
+
+    const urgent = info.modules.some(m => m.daysLeft <= 7);
+    const subject = urgent
+      ? `⚠️ Tu prueba de módulos vence pronto — FB Core`
+      : `Recordatorio: módulos de prueba por vencer — FB Core`;
+
+    const html = `<!DOCTYPE html><html lang="es"><body style="font-family:'Plus Jakarta Sans',sans-serif;background:#131316;margin:0;padding:40px 16px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
+<tr><td style="background:linear-gradient(135deg,#F2B045,#EDA135);border-radius:16px 16px 0 0;padding:24px 40px;">
+  <span style="font-size:18px;font-weight:700;color:#131316;">FB Core</span>
+  <span style="float:right;font-size:11px;color:#131316;opacity:0.6;margin-top:4px;">by FBSystems</span>
+</td></tr>
+<tr><td style="background:#1B1B1D;border:1px solid #2C2C30;border-top:none;padding:36px 48px;">
+  <h1 style="margin:0 0 12px;color:#F5F5F5;font-size:20px;">
+    ${urgent ? '⚠️ Tus módulos de prueba vencen pronto' : 'Tus módulos de prueba están por vencer'}
+  </h1>
+  <p style="color:#919197;font-size:14px;line-height:1.6;">Hola <strong style="color:#F5F5F5;">${info.name}</strong>, los siguientes módulos de prueba están próximos a expirar:</p>
+  <div style="background:#161618;border:1px solid #2C2C30;border-left:3px solid ${urgent ? '#ef4444' : '#F2B045'};border-radius:8px;padding:16px 20px;margin:20px 0;">
+    <p style="margin:0 0 8px;color:#F5F5F5;font-size:14px;font-weight:600;">Módulos por vencer:</p>
+    <p style="color:#919197;font-size:13px;margin:0;">${modList}</p>
+  </div>
+  <p style="color:#919197;font-size:13px;line-height:1.6;">Cuando expiren, perderás acceso a esos módulos pero tus datos se mantendrán seguros.</p>
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+    <tr><td align="center">
+      <a href="${waUrl}" style="display:inline-block;background:#F2B045;color:#131316;font-size:14px;font-weight:700;text-decoration:none;padding:13px 36px;border-radius:10px;">
+        Extender prueba por WhatsApp
+      </a>
+    </td></tr>
+  </table>
+</td></tr>
+<tr><td style="background:#161618;border:1px solid #2C2C30;border-top:none;border-radius:0 0 16px 16px;padding:16px 48px;text-align:center;">
+  <p style="margin:0;font-size:11px;color:#555559;">© ${new Date().getFullYear()} <a href="https://fbsystems.cl" style="color:#919197;text-decoration:none;">FBSystems</a> · fbcore.cloud</p>
+</td></tr>
+</table></body></html>`;
+
+    await sendAlert(mailer, info.email, info.name, subject, html);
+    summary.push({ tenant: info.name, modules: info.modules.length, urgent });
+  }
+
+  res.json({ ok: true, alerts_sent: summary, ms: Date.now() - started });
+});
+
 export default router;

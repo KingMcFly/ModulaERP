@@ -15,7 +15,6 @@
   --shadow-xl:      0 8px 30px rgba(0,0,0,0.10), 0 24px 64px rgba(0,0,0,0.08);
   --shadow-2xl:     0 16px 48px rgba(0,0,0,0.14), 0 40px 80px rgba(0,0,0,0.10);
 
-  /* Legacy compat */
   --shadow-soft:    var(--shadow-sm);
   --shadow-soft-md: var(--shadow-md);
   --shadow-soft-lg: var(--shadow-lg);
@@ -42,7 +41,7 @@
   }
 
   :focus         { outline: none; }
-  :focus-visible { outline: 2px solid rgba(99,102,241,0.55); outline-offset: 2px; border-radius: 8px; }
+  :focus-visible { outline: 2px solid rgba(242,176,69,0.60); outline-offset: 2px; border-radius: 8px; }
 
   h1, h2, h3, h4 { letter-spacing: -0.024em; }
 
@@ -75,11 +74,12 @@ body::after {
   .btn:active:not(:disabled) { transform: scale(0.97); }
 
   .btn-primary {
-    @apply btn bg-primary-500 text-white hover:bg-primary-600;
-    box-shadow: 0 1px 2px rgba(99,102,241,0.22), 0 4px 14px rgba(99,102,241,0.22);
+    @apply btn bg-primary-500 hover:bg-primary-600;
+    color: #131316;
+    box-shadow: 0 1px 2px rgba(242,176,69,0.22), 0 4px 14px rgba(242,176,69,0.22);
   }
   .btn-primary:not(:disabled):hover {
-    box-shadow: 0 2px 4px rgba(99,102,241,0.28), 0 8px 20px rgba(99,102,241,0.25);
+    box-shadow: 0 2px 4px rgba(242,176,69,0.28), 0 8px 20px rgba(242,176,69,0.25);
   }
   .btn-ghost {
     @apply btn text-[#65656E] hover:bg-black/[0.04] hover:text-[#0A0A0F];
@@ -100,7 +100,7 @@ body::after {
                 box-shadow 200ms var(--ease-spring);
   }
   .input:focus {
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    box-shadow: 0 0 0 3px rgba(242,176,69,0.15);
   }
 
   /* ── Labels ──────────────────────────────────────────────────────────── */
@@ -132,8 +132,8 @@ body::after {
   }
   .skip-link {
     @apply sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[9999]
-           focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white
-           focus:rounded-xl focus:text-sm focus:font-semibold;
+           focus:px-4 focus:py-2 focus:bg-primary-600 focus:rounded-xl focus:text-sm focus:font-semibold;
+    color: #131316;
   }
 
   /* ── Modal overlay ───────────────────────────────────────────────────── */

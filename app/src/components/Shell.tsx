@@ -4,9 +4,17 @@ import {
   Menu, X, LogOut, Bell, ChevronDown, Boxes, Package, ArrowRightLeft,
   Wrench, Users, Activity, LayoutDashboard, Settings, BarChart2,
   AlertCircle, AlertTriangle, CheckCircle, Truck, ClipboardList,
-  FileCheck, LifeBuoy, PieChart, ShoppingCart,
+  FileCheck, LifeBuoy, PieChart, ShoppingCart, Zap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+interface PlanInfo {
+  plan: string;
+  trial_days_left: number | null;
+  usage: { assets: number; users: number; technicians: number; };
+  limits: Record<string, number>;
+  trial_modules: { code: string; name: string; days_left: number | null; }[];
+}
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -54,16 +62,133 @@ const NOTIF_ICONS: Record<string, React.ReactNode> = {
   ticket:      <AlertCircle   size={13} className="text-red-400 flex-shrink-0" />,
 };
 
+const WHATSAPP_NUMBER = '56920023072';
+
+function getWhatsappUrl(tenantName: string) {
+  const msg = `Hola, soy administrador de la empresa ${tenantName} en FB Core ERP. Quiero solicitar información sobre planes.`;
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+}
+
+function PlanBanner({
+  plan, tenantName, dismissed, onDismiss,
+}: {
+  plan: PlanInfo | null; tenantName: string; dismissed: boolean; onDismiss: () => void;
+}) {
+  if (!plan || dismissed) return null;
+
+  const isStarterFree = plan.plan === 'starter_free';
+  const trialDays = plan.trial_days_left;
+  const urgentTrial = trialDays !== null && trialDays <= 7;
+  const warnTrial   = trialDays !== null && trialDays <= 15 && !urgentTrial;
+
+  const assetsLimit  = plan.limits.assets  ?? -1;
+  const usersLimit   = plan.limits.users   ?? -1;
+  const nearAssets   = assetsLimit > 0 && plan.usage.assets  >= assetsLimit * 0.8;
+  const nearUsers    = usersLimit  > 0 && plan.usage.users   >= usersLimit  * 0.8;
+  const nearLimit    = nearAssets || nearUsers;
+
+  const expiringMods = plan.trial_modules.filter(m => m.days_left !== null && m.days_left <= 7);
+
+  if (!urgentTrial && !warnTrial && !nearLimit && expiringMods.length === 0 && !isStarterFree) return null;
+
+  const waUrl = getWhatsappUrl(tenantName);
+
+  if (urgentTrial) {
+    return (
+      <div
+        className="flex items-center justify-between gap-4 rounded-2xl px-5 py-3.5 mb-5 text-[13px]"
+        style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)' }}
+      >
+        <div className="flex items-center gap-3">
+          <AlertTriangle size={15} className="text-red-500 shrink-0" />
+          <span className="font-semibold text-red-600">
+            Tu prueba vence en {trialDays} día{trialDays !== 1 ? 's' : ''}.
+          </span>
+          <span className="text-[#65656E] hidden sm:inline">No pierdas acceso a tus módulos.</span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold"
+            style={{ background: '#F2B045', color: '#131316' }}
+          >
+            <Zap size={12} /> Extender ahora
+          </a>
+          <button onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none">&times;</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (warnTrial || expiringMods.length > 0) {
+    const modNames = expiringMods.map(m => m.name).join(', ');
+    return (
+      <div
+        className="flex items-center justify-between gap-4 rounded-2xl px-5 py-3.5 mb-5 text-[13px]"
+        style={{ background: 'rgba(242,176,69,0.08)', border: '1px solid rgba(242,176,69,0.20)' }}
+      >
+        <div className="flex items-center gap-3">
+          <AlertTriangle size={15} style={{ color: '#F2B045' }} className="shrink-0" />
+          <span style={{ color: '#65656E' }}>
+            {warnTrial
+              ? <><strong className="text-[#0A0A0F]">Tu prueba vence en {trialDays} días.</strong> Mejora tu plan para no perder acceso.</>
+              : <><strong className="text-[#0A0A0F]">Módulos por vencer:</strong> {modNames} — menos de 7 días.</>
+            }
+          </span>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold"
+            style={{ background: 'rgba(242,176,69,0.15)', color: '#D4940B', border: '1px solid rgba(242,176,69,0.30)' }}
+          >
+            Ver planes
+          </a>
+          <button onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none">&times;</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (nearLimit && isStarterFree) {
+    const what = nearAssets ? `activos (${plan.usage.assets}/${assetsLimit})` : `usuarios (${plan.usage.users}/${usersLimit})`;
+    return (
+      <div
+        className="flex items-center justify-between gap-4 rounded-2xl px-5 py-3 mb-5 text-[12.5px]"
+        style={{ background: 'rgba(242,176,69,0.06)', border: '1px solid rgba(242,176,69,0.15)' }}
+      >
+        <span style={{ color: '#9898A3' }}>
+          Estás al límite de tu plan en <strong className="text-[#0A0A0F]">{what}</strong>.{' '}
+          <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#F2B045', fontWeight: 600 }}>
+            Vuélvete Plus →
+          </a>
+        </span>
+        <button onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none shrink-0">&times;</button>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 export default function Shell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen]     = useState(false);
   const [notifs, setNotifs]           = useState<NotifSummary>({ total: 0, items: [] });
+  const [plan, setPlan]               = useState<PlanInfo | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState(() =>
+    localStorage.getItem('plan_banner_dismissed') === new Date().toDateString()
+  );
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const primaryColor = user?.tenant?.primary_color || '#6366F1';
+  const primaryColor = user?.tenant?.primary_color || '#F2B045';
 
   function handleLogout() { logout(); navigate('/login'); }
 
@@ -79,6 +204,15 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     fetchNotifs();
     const id = setInterval(fetchNotifs, 60_000);
     return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${API}/dashboard/plan`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setPlan(d); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -398,6 +532,15 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
         {/* Content */}
         <main id="main-content" className="flex-1 overflow-y-auto p-6" tabIndex={-1}>
+          <PlanBanner
+            plan={plan}
+            tenantName={user?.tenant?.name || 'tu empresa'}
+            dismissed={bannerDismissed}
+            onDismiss={() => {
+              localStorage.setItem('plan_banner_dismissed', new Date().toDateString());
+              setBannerDismissed(true);
+            }}
+          />
           {children}
         </main>
       </div>
