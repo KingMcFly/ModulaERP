@@ -10,6 +10,7 @@ export interface LookupResult {
   description: string | null;
   confidence: 'high' | 'medium' | 'low';
   manufacturer: string;
+  support_url?: string | null;
 }
 
 interface Props {
@@ -151,11 +152,23 @@ export default function AssetLookup({ serial, onSerialChange, onResult }: Props)
               {result.asset_type && <span className="ml-2 text-slate-400 font-normal">· {result.asset_type}</span>}
             </p>
             {result.description && (
-              <p className="text-[11px] text-slate-500 mt-0.5 truncate">{result.description}</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">{result.description}</p>
             )}
-            <p className={`text-[10px] mt-1 font-medium ${confidenceColor}`}>
-              Confianza: {confidenceLabel} · campos pre-rellenados automáticamente
-            </p>
+            <div className="flex items-center gap-3 mt-1">
+              <p className={`text-[10px] font-medium ${confidenceColor}`}>
+                Confianza: {confidenceLabel}
+              </p>
+              {result.support_url && (
+                <a
+                  href={result.support_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-semibold text-indigo-600 hover:underline"
+                >
+                  Verificar modelo →
+                </a>
+              )}
+            </div>
           </div>
         </div>
       )}

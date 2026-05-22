@@ -196,43 +196,49 @@ router.get('/', async (req, res) => {
 
     switch (mfr) {
       case 'apple': {
-        const model = guessAppleModel(q);
-        result.brand      = 'Apple';
-        result.model      = model;
-        result.confidence = model ? 'high' : 'medium';
-        result.asset_type = !model                                   ? 'Dispositivo Apple'
-          : model.toLowerCase().includes('iphone')                   ? 'Smartphone'
-          : model.toLowerCase().includes('ipad')                     ? 'Tablet'
-          : model.toLowerCase().includes('watch')                    ? 'Smartwatch'
-          : model.toLowerCase().includes('macbook')                  ? 'Laptop'
-          : model.toLowerCase().includes('imac') || model === 'Mac Pro' || model === 'MacMini' || model === 'MacStudio' ? 'Desktop'
+        const appleModel = guessAppleModel(q);
+        result.brand       = 'Apple';
+        result.model       = appleModel;
+        result.confidence  = appleModel ? 'high' : 'medium';
+        result.asset_type  = !appleModel                                      ? 'Dispositivo Apple'
+          : appleModel.toLowerCase().includes('iphone')                       ? 'Smartphone'
+          : appleModel.toLowerCase().includes('ipad')                         ? 'Tablet'
+          : appleModel.toLowerCase().includes('watch')                        ? 'Smartwatch'
+          : appleModel.toLowerCase().includes('macbook')                      ? 'Laptop'
+          : (appleModel.includes('iMac') || appleModel.includes('Mac Pro') || appleModel.includes('MacMini') || appleModel.includes('MacStudio')) ? 'Desktop'
           : 'Dispositivo Apple';
+        result.support_url = `https://checkcoverage.apple.com/?sn=${q}`;
         break;
       }
       case 'dell':
-        result.brand      = 'Dell';
-        result.asset_type = 'Computador';
-        result.description = `Service Tag Dell: ${q}`;
+        result.brand       = 'Dell';
+        result.asset_type  = 'Computador';
+        result.description = 'Marca detectada: Dell. Verifica el modelo exacto en el soporte de Dell.';
         result.confidence  = 'medium';
+        result.support_url = `https://www.dell.com/support/home/es-mx/product-support/servicetag/${q}`;
         break;
 
       case 'hp': {
-        const model = guessHPModel(q);
-        result.brand      = 'HP';
-        result.model      = model;
-        result.asset_type = model?.includes('Server') ? 'Servidor' : 'Computador';
+        const hpModel = guessHPModel(q);
+        result.brand       = 'HP';
+        result.model       = hpModel;
+        result.asset_type  = hpModel?.includes('Server') ? 'Servidor' : 'Computador';
+        result.description = 'Marca detectada: HP. Verifica el modelo exacto en el soporte de HP.';
         result.confidence  = 'medium';
+        result.support_url = `https://support.hp.com/us-en/checkwarranty?serialnumber=${q}`;
         break;
       }
       case 'lenovo': {
-        const model = guessLenovoModel(q);
-        result.brand      = 'Lenovo';
-        result.model      = model;
-        result.confidence  = model ? 'medium' : 'low';
-        result.asset_type = !model ? 'Computador'
-          : model === 'Legion'     ? 'Laptop'
-          : model.includes('Think') ? 'Computador'
+        const lenovoSeries = guessLenovoModel(q);
+        result.brand       = 'Lenovo';
+        result.asset_type  = !lenovoSeries ? 'Computador'
+          : lenovoSeries === 'Legion'        ? 'Laptop'
           : 'Computador';
+        result.description = lenovoSeries
+          ? `Serie ${lenovoSeries} detectada. Verifica el modelo exacto (ej. V14 G4, E14, T14) en soporte Lenovo.`
+          : 'Marca Lenovo detectada. Ingresa el modelo manualmente o verifica en soporte Lenovo.';
+        result.confidence  = lenovoSeries ? 'medium' : 'low';
+        result.support_url = `https://pcsupport.lenovo.com/products/${q}`;
         break;
       }
       case 'samsung': {
