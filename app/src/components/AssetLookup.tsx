@@ -25,6 +25,7 @@ export default function AssetLookup({ serial, onSerialChange, onResult }: Props)
   const [scanning, setScanning]   = useState(false);
   const scannerRef                = useRef<HTMLDivElement>(null);
   const html5QrRef                = useRef<any>(null);
+  const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function doLookup(q: string) {
     if (q.length < 4) return;
@@ -39,8 +40,10 @@ export default function AssetLookup({ serial, onSerialChange, onResult }: Props)
       setResult(data);
       if (data.brand || data.model || data.asset_type) {
         onResult(data);
+      } else {
+        setError('Sin resultados para este serial');
       }
-    } catch (e: any) {
+    } catch {
       setError('Sin resultados para este serial');
     } finally {
       setLoading(false);
@@ -78,7 +81,10 @@ export default function AssetLookup({ serial, onSerialChange, onResult }: Props)
     setScanning(false);
   }
 
-  useEffect(() => () => { stopScanner(); }, []);
+  useEffect(() => () => {
+    stopScanner();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+  }, []);
 
   const confidenceColor = result?.confidence === 'high' ? 'text-emerald-600'
     : result?.confidence === 'medium' ? 'text-amber-600' : 'text-slate-400';
@@ -93,7 +99,16 @@ export default function AssetLookup({ serial, onSerialChange, onResult }: Props)
           id="asset-serial"
           className="input flex-1"
           value={serial}
-          onChange={e => { onSerialChange(e.target.value); setResult(null); setError(null); }}
+          onChange={e => {
+            const v = e.target.value;
+            onSerialChange(v);
+            setResult(null);
+            setError(null);
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+            if (v.length >= 4) {
+              debounceRef.current = setTimeout(() => doLookup(v), 700);
+            }
+          }}
           placeholder="Escribe o escanea el serial…"
         />
         <button

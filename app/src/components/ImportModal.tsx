@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
-import writeXlsxFile from 'write-excel-file';
-import readXlsxFile from 'read-excel-file';
+import * as XLSX from '@e965/xlsx';
 import { X, Upload, CheckCircle, AlertTriangle, Download, FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -58,13 +57,11 @@ export default function ImportModal({ type, onClose, onImported }: ImportModalPr
 
   const tpl = TEMPLATES[type];
 
-  async function downloadTemplate() {
-    const schema = tpl.columns.map(key => ({
-      column: key,
-      width: 22,
-      value: (row: Record<string, string | number>) => row[key] as string | number,
-    }));
-    await writeXlsxFile([tpl.example], { schema, fileName: `plantilla_${type}.xlsx` });
+  function downloadTemplate() {
+    const ws = XLSX.utils.json_to_sheet([tpl.example], { header: tpl.columns });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
+    XLSX.writeFile(wb, `plantilla_${type}.xlsx`);
   }
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -72,14 +69,15 @@ export default function ImportModal({ type, onClose, onImported }: ImportModalPr
     if (!file) return;
     setFileName(file.name);
     setResult(null);
-    readXlsxFile(file).then((rows) => {
-      if (rows.length < 2) { setRows([]); return; }
-      const headers = rows[0].map(h => String(h ?? ''));
-      const json: Record<string, any>[] = rows.slice(1).map(row =>
-        Object.fromEntries(headers.map((h, i) => [h, row[i] ?? '']))
-      );
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const data = new Uint8Array(ev.target!.result as ArrayBuffer);
+      const wb   = XLSX.read(data, { type: 'array', cellDates: true });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const json: Record<string, unknown>[] = XLSX.utils.sheet_to_json(ws, { defval: '' });
       setRows(json.slice(0, 500));
-    });
+    };
+    reader.readAsArrayBuffer(file);
   }
 
   async function handleImport() {
