@@ -415,9 +415,9 @@ export default function Dashboard() {
                   >
                     <div
                       className="w-8 h-8 rounded-xl flex items-center justify-center"
-                      style={{ background: `${m.color || '#6366f1'}14` }}
+                      style={{ background: `${m.color || '#F2B045'}14` }}
                     >
-                      <AlertCircle size={14} style={{ color: m.color || '#6366f1' }} aria-hidden="true" />
+                      <AlertCircle size={14} style={{ color: m.color || '#F2B045' }} aria-hidden="true" />
                     </div>
                     <span className="text-[11px] font-semibold text-[#9898A3] leading-tight">{m.name}</span>
                   </Link>

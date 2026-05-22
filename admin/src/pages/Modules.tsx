@@ -95,7 +95,7 @@ export default function Modules() {
                     <div className="flex gap-2">
                       <input
                         type="color"
-                        value={form.color || '#6366f1'}
+                        value={form.color || '#F2B045'}
                         onChange={e => setForm(p => ({ ...p, color: e.target.value }))}
                         className="h-10 w-12 rounded-xl border border-slate-200 cursor-pointer p-0.5"
                       />
@@ -103,7 +103,7 @@ export default function Modules() {
                         className="input flex-1"
                         value={form.color || ''}
                         onChange={e => setForm(p => ({ ...p, color: e.target.value }))}
-                        placeholder="#6366f1"
+                        placeholder="#F2B045"
                       />
                     </div>
                   </div>
@@ -123,7 +123,7 @@ export default function Modules() {
                       className="w-11 h-11 rounded-2xl flex items-center justify-center"
                       style={{
                         background: `linear-gradient(135deg, ${m.color}22, ${m.color}0E)`,
-                        color: m.color || '#6366f1',
+                        color: m.color || '#F2B045',
                       }}
                     >
                       {ICONS[m.icon] || <Package size={20} />}

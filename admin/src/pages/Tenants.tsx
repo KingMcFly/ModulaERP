@@ -20,7 +20,7 @@ const PLAN_LABELS: Record<string, string> = {
   starter: 'Starter', professional: 'Professional', enterprise: 'Enterprise',
 };
 const PLAN_COLORS: Record<string, string> = {
-  starter: '#6366f1', professional: '#0ea5e9', enterprise: '#10b981',
+  starter: '#F2B045', professional: '#0ea5e9', enterprise: '#10b981',
 };
 
 const MANDATORY_MODULES = [
@@ -139,7 +139,7 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
                 <div
                   key={m.code}
                   className="flex items-center gap-2 p-2.5 rounded-xl"
-                  style={{ border: '1.5px solid rgba(99,102,241,0.30)', background: 'rgba(99,102,241,0.06)' }}
+                  style={{ border: '1.5px solid rgba(242,176,69,0.30)', background: 'rgba(242,176,69,0.06)' }}
                 >
                   <input type="checkbox" checked readOnly className="rounded w-3.5 h-3.5" />
                   <span className="text-[13px] font-semibold text-slate-700 flex-1">{m.label}</span>
@@ -155,8 +155,8 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
                   key={m.code}
                   className="flex items-center gap-2 p-2.5 rounded-xl cursor-pointer"
                   style={{
-                    border: `1.5px solid ${modules.includes(m.code) ? 'rgba(99,102,241,0.30)' : 'rgba(0,0,0,0.08)'}`,
-                    background: modules.includes(m.code) ? 'rgba(99,102,241,0.06)' : 'white',
+                    border: `1.5px solid ${modules.includes(m.code) ? 'rgba(242,176,69,0.30)' : 'rgba(0,0,0,0.08)'}`,
+                    background: modules.includes(m.code) ? 'rgba(242,176,69,0.06)' : 'white',
                     transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)',
                   }}
                 >
@@ -293,7 +293,7 @@ export default function Tenants() {
               </tr>
             ) : filtered.map((t, rowIdx) => {
               const s = STATUS_LABELS[t.status];
-              const planColor = PLAN_COLORS[t.plan] || '#6366f1';
+              const planColor = PLAN_COLORS[t.plan] || '#F2B045';
               return (
                 <tr
                   key={t.id}
@@ -307,10 +307,11 @@ export default function Tenants() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-[13px] flex-shrink-0"
+                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-[13px] flex-shrink-0"
                         style={{
-                          background: `linear-gradient(135deg, #6366f1, #4f46e5)`,
-                          boxShadow: '0 2px 6px rgba(99,102,241,0.28)',
+                          background: `linear-gradient(135deg, #F2B045, #EDA135)`,
+                          boxShadow: '0 2px 6px rgba(242,176,69,0.28)',
+                          color: '#131316',
                         }}
                       >
                         {t.name[0]?.toUpperCase()}

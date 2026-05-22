@@ -546,7 +546,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
                       onClick={() => toggle(m.code, field)}
                       className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
                         m[field]
-                          ? 'bg-primary-500 text-white shadow-[0_1px_4px_rgba(99,102,241,0.3)]'
+                          ? 'bg-primary-500 text-white shadow-[0_1px_4px_rgba(242,176,69,0.3)]'
                           : 'bg-white text-[#AEAEB2] border border-black/[0.07]'
                       }`}
                     >

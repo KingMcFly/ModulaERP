@@ -29,7 +29,7 @@ export default function Login({ onLogin }: Props) {
         aria-hidden="true"
         style={{
           background: [
-            'radial-gradient(ellipse at 50% 115%, rgba(99,102,241,0.42) 0%, transparent 55%)',
+            'radial-gradient(ellipse at 50% 115%, rgba(242,176,69,0.35) 0%, transparent 55%)',
             'radial-gradient(ellipse at 82% -8%,  rgba(139,92,246,0.22) 0%, transparent 45%)',
             'radial-gradient(ellipse at 12% 92%,  rgba(59,130,246,0.14) 0%, transparent 42%)',
           ].join(','),
@@ -53,14 +53,14 @@ export default function Login({ onLogin }: Props) {
           <div
             className="inline-flex items-center justify-center w-[60px] h-[60px] rounded-[18px] mb-4"
             style={{
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-              boxShadow: '0 8px 32px rgba(99,102,241,0.55), inset 0 1px 0 rgba(255,255,255,0.22)',
+              background: 'linear-gradient(135deg, #F2B045 0%, #EDA135 100%)',
+              boxShadow: '0 8px 32px rgba(242,176,69,0.55), inset 0 1px 0 rgba(255,255,255,0.22)',
             }}
             aria-hidden="true"
           >
-            <Boxes size={27} className="text-white" />
+            <Boxes size={27} style={{ color: '#131316' }} />
           </div>
-          <h1 className="text-[24px] font-bold text-white tracking-[-0.03em]">ModulaERP</h1>
+          <h1 className="text-[24px] font-bold text-white tracking-[-0.03em]">FB Core</h1>
           <p
             className="text-[13px] mt-1 font-medium"
             style={{ color: 'rgba(255,255,255,0.38)' }}
@@ -95,7 +95,7 @@ export default function Login({ onLogin }: Props) {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="admin@modulaerp.com"
+                placeholder="admin@fbcore.cloud"
                 required
                 autoComplete="email"
                 className="w-full px-4 py-2.5 rounded-xl text-[13px] text-white placeholder-[rgba(255,255,255,0.22)] focus:outline-none"
@@ -106,8 +106,8 @@ export default function Login({ onLogin }: Props) {
                 }}
                 onFocus={e => {
                   e.target.style.background = 'rgba(255,255,255,0.10)';
-                  e.target.style.borderColor = 'rgba(99,102,241,0.60)';
-                  e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.18)';
+                  e.target.style.borderColor = 'rgba(242,176,69,0.60)';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(242,176,69,0.18)';
                 }}
                 onBlur={e => {
                   e.target.style.background = 'rgba(255,255,255,0.07)';
@@ -141,8 +141,8 @@ export default function Login({ onLogin }: Props) {
                   }}
                   onFocus={e => {
                     e.target.style.background = 'rgba(255,255,255,0.10)';
-                    e.target.style.borderColor = 'rgba(99,102,241,0.60)';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.18)';
+                    e.target.style.borderColor = 'rgba(242,176,69,0.60)';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(242,176,69,0.18)';
                   }}
                   onBlur={e => {
                     e.target.style.background = 'rgba(255,255,255,0.07)';
@@ -172,20 +172,21 @@ export default function Login({ onLogin }: Props) {
               type="submit"
               disabled={loading}
               aria-disabled={loading}
-              className="w-full py-3 text-white font-bold rounded-xl text-[13px] disabled:opacity-50"
+              className="w-full py-3 font-bold rounded-xl text-[13px] disabled:opacity-50"
               style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                boxShadow: '0 2px 8px rgba(99,102,241,0.38), 0 8px 24px rgba(99,102,241,0.20)',
+                background: 'linear-gradient(135deg, #F2B045 0%, #EDA135 100%)',
+                color: '#131316',
+                boxShadow: '0 2px 8px rgba(242,176,69,0.38), 0 8px 24px rgba(242,176,69,0.20)',
                 transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)',
               }}
               onMouseEnter={e => {
                 const btn = e.currentTarget as HTMLButtonElement;
-                btn.style.boxShadow = '0 4px 14px rgba(99,102,241,0.48), 0 12px 32px rgba(99,102,241,0.25)';
+                btn.style.boxShadow = '0 4px 14px rgba(242,176,69,0.48), 0 12px 32px rgba(242,176,69,0.25)';
                 btn.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={e => {
                 const btn = e.currentTarget as HTMLButtonElement;
-                btn.style.boxShadow = '0 2px 8px rgba(99,102,241,0.38), 0 8px 24px rgba(99,102,241,0.20)';
+                btn.style.boxShadow = '0 2px 8px rgba(242,176,69,0.38), 0 8px 24px rgba(242,176,69,0.20)';
                 btn.style.transform = '';
               }}
               onMouseDown={e => {
@@ -204,7 +205,7 @@ export default function Login({ onLogin }: Props) {
           className="text-center text-[11.5px] mt-6 font-medium"
           style={{ color: 'rgba(255,255,255,0.22)' }}
         >
-          ModulaERP v1.0 · Panel Super Admin
+          FB Core v1.0 · Panel Super Admin · FBSystems
         </p>
       </div>
     </div>

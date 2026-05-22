@@ -19,7 +19,7 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Activo', trial: 'Prueba', suspended: 'Suspendido', cancelled: 'Cancelado',
 };
 
-const PLAN_COLORS = ['#6366f1', '#0ea5e9', '#10b981'];
+const PLAN_COLORS = ['#F2B045', '#0ea5e9', '#10b981'];
 
 function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse bg-slate-100 rounded-xl ${className}`} />;
@@ -51,8 +51,8 @@ export default function Dashboard() {
       label: 'Total empresas',
       value: tenants.length,
       icon: Building2,
-      color: '#6366f1',
-      bg: 'rgba(99,102,241,0.10)',
+      color: '#F2B045',
+      bg: 'rgba(242,176,69,0.10)',
       delta: `${active} activas`,
     },
     {
@@ -104,7 +104,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="animate-fade-up">
         <h1 className="text-[26px] font-bold text-slate-900 tracking-[-0.03em] leading-tight">Dashboard</h1>
-        <p className="text-slate-400 text-[13px] mt-1 font-medium">Vista general de la plataforma ModulaERP</p>
+        <p className="text-slate-400 text-[13px] mt-1 font-medium">Vista general de la plataforma FB Core</p>
       </div>
 
       {/* Stats */}
@@ -244,10 +244,11 @@ export default function Dashboard() {
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-[13px] text-white flex-shrink-0"
+                      className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-[13px] flex-shrink-0"
                       style={{
-                        background: `linear-gradient(135deg, #6366f1, #4f46e5)`,
-                        boxShadow: '0 2px 6px rgba(99,102,241,0.3)',
+                        background: `linear-gradient(135deg, #F2B045, #EDA135)`,
+                        boxShadow: '0 2px 6px rgba(242,176,69,0.3)',
+                        color: '#131316',
                       }}
                     >
                       {t.name[0]?.toUpperCase()}

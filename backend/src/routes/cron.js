@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import nodemailer from 'nodemailer';
 import db from '../db.js';
+import { dailyAlertsEmail } from '../utils/emailTemplates.js';
 
 const router = Router();
 
@@ -30,9 +31,9 @@ async function sendAlert(mailer, to, tenantName, subject, html) {
     return;
   }
   await mailer.sendMail({
-    from: process.env.SMTP_FROM || `"ModulaERP" <${process.env.SMTP_USER}>`,
+    from: process.env.SMTP_FROM || `"FB Core" <${process.env.SMTP_USER}>`,
     to,
-    subject: `[ModulaERP] ${subject}`,
+    subject,
     html,
   });
 }
@@ -86,20 +87,16 @@ router.get('/daily-alerts', verifyCron, async (req, res) => {
 
     if (alerts.length === 0) continue;
 
-    const html = `
-      <div style="font-family:sans-serif;max-width:520px;margin:0 auto">
-        <div style="background:#6366f1;padding:20px 24px;border-radius:12px 12px 0 0">
-          <h2 style="color:#fff;margin:0;font-size:18px">Resumen diario — ${tenant.name}</h2>
-          <p style="color:rgba(255,255,255,0.75);margin:4px 0 0;font-size:13px">${new Date().toLocaleDateString('es-CL',{dateStyle:'full'})}</p>
-        </div>
-        <div style="background:#f8fafc;padding:24px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px">
-          <p style="margin:0 0 12px;color:#334155;font-size:14px">Se detectaron los siguientes elementos que requieren atención:</p>
-          <ul style="color:#475569;font-size:14px;line-height:1.8;padding-left:20px">${alerts.join('')}</ul>
-          <p style="margin:20px 0 0;font-size:12px;color:#94a3b8">Este reporte se genera automáticamente cada día. Ingresa a ModulaERP para gestionar estos elementos.</p>
-        </div>
-      </div>`;
+    const alertItems = [];
+    if (overdue_loans > 0)  alertItems.push({ icon: '📦', label: `Préstamo${overdue_loans > 1 ? 's' : ''} vencido${overdue_loans > 1 ? 's' : ''}`, count: overdue_loans });
+    if (low_stock > 0)      alertItems.push({ icon: '🔻', label: `Insumo${low_stock > 1 ? 's' : ''} con stock bajo o agotado`, count: low_stock });
+    if (overdue_maint > 0)  alertItems.push({ icon: '🔧', label: `Mantenimiento${overdue_maint > 1 ? 's' : ''} vencido${overdue_maint > 1 ? 's' : ''}`, count: overdue_maint });
+    if (expiring > 0)       alertItems.push({ icon: '📄', label: `Contrato${expiring > 1 ? 's' : ''} próximo${expiring > 1 ? 's' : ''} a vencer`, detail: 'Dentro de los próximos 30 días', count: expiring });
 
-    await sendAlert(mailer, tenant.contact_email, tenant.name, `Resumen diario — ${alerts.length} alerta${alerts.length > 1 ? 's' : ''}`, html);
+    const date = new Date().toLocaleDateString('es-CL', { dateStyle: 'full' });
+    const { subject, html } = dailyAlertsEmail({ tenantName: tenant.name, date, alertItems });
+
+    await sendAlert(mailer, tenant.contact_email, tenant.name, subject, html);
     summary.push({ tenant: tenant.name, alerts: alerts.length });
   }
 

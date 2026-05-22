@@ -115,7 +115,7 @@ export default function TenantDetail() {
               )}
               <span
                 className="text-[11px] font-bold px-2 py-0.5 rounded-lg"
-                style={{ background: 'rgba(99,102,241,0.08)', color: '#6366f1' }}
+                style={{ background: 'rgba(242,176,69,0.10)', color: '#EDA135' }}
               >
                 {PLAN_LABELS[tenant.plan] || tenant.plan}
               </span>
@@ -139,8 +139,8 @@ export default function TenantDetail() {
               key={mod.id}
               className="flex items-center justify-between p-4 rounded-2xl"
               style={{
-                border: `1.5px solid ${mod.enabled ? 'rgba(99,102,241,0.20)' : 'rgba(0,0,0,0.07)'}`,
-                background: mod.enabled ? 'rgba(99,102,241,0.04)' : 'rgba(0,0,0,0.015)',
+                border: `1.5px solid ${mod.enabled ? 'rgba(242,176,69,0.20)' : 'rgba(0,0,0,0.07)'}`,
+                background: mod.enabled ? 'rgba(242,176,69,0.04)' : 'rgba(0,0,0,0.015)',
                 opacity: mod.enabled ? 1 : 0.65,
                 transition: 'all 200ms cubic-bezier(0.23, 1, 0.32, 1)',
                 animationDelay: `${idx * 40 + 80}ms`,
@@ -150,8 +150,8 @@ export default function TenantDetail() {
                 <div
                   className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{
-                    background: mod.enabled ? 'rgba(99,102,241,0.12)' : 'rgba(0,0,0,0.06)',
-                    color: mod.enabled ? '#6366f1' : '#94a3b8',
+                    background: mod.enabled ? 'rgba(242,176,69,0.12)' : 'rgba(0,0,0,0.06)',
+                    color: mod.enabled ? '#EDA135' : '#94a3b8',
                   }}
                 >
                   {MODULE_ICONS[mod.code] || <Package size={16} />}
@@ -177,7 +177,7 @@ export default function TenantDetail() {
                 {mod.is_mandatory ? (
                   <div
                     className="relative inline-flex h-6 w-11 items-center rounded-full cursor-not-allowed opacity-80"
-                    style={{ background: '#6366f1' }}
+                    style={{ background: '#F2B045' }}
                     title="Módulo obligatorio"
                   >
                     <span className="inline-block h-4 w-4 translate-x-6 transform rounded-full bg-white shadow" />
@@ -189,8 +189,8 @@ export default function TenantDetail() {
                     aria-label={`${mod.enabled ? 'Deshabilitar' : 'Habilitar'} ${mod.name}`}
                     className="relative inline-flex h-6 w-11 items-center rounded-full"
                     style={{
-                      background: mod.enabled ? '#6366f1' : '#e2e8f0',
-                      boxShadow: mod.enabled ? '0 2px 6px rgba(99,102,241,0.35)' : 'none',
+                      background: mod.enabled ? '#F2B045' : '#e2e8f0',
+                      boxShadow: mod.enabled ? '0 2px 6px rgba(242,176,69,0.35)' : 'none',
                       transition: 'all 200ms cubic-bezier(0.23, 1, 0.32, 1)',
                     }}
                   >

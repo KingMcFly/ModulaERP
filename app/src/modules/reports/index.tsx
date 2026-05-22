@@ -27,7 +27,7 @@ const STATUS_LABELS: Record<string, string> = {
   retired:     'Retirado',
 };
 
-const PIE_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const PIE_COLORS = ['#F2B045', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 interface KPI { label: string; value: string | number; sub?: string; icon: React.ReactNode; color: string; }
 
@@ -203,7 +203,7 @@ export default function ReportsModule() {
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="ordenes" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="ordenes" fill="#F2B045" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

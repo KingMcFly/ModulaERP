@@ -45,15 +45,15 @@ export default function Login() {
       <div aria-hidden="true" className="fixed inset-0 overflow-hidden pointer-events-none">
         <div
           className="absolute -top-60 -right-60 w-[600px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 65%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(242,176,69,0.10) 0%, transparent 65%)' }}
         />
         <div
           className="absolute -bottom-60 -left-60 w-[500px] h-[500px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 65%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(242,176,69,0.07) 0%, transparent 65%)' }}
         />
         <div
           className="absolute top-1/3 left-1/3 w-[400px] h-[400px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 65%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(237,161,53,0.05) 0%, transparent 65%)' }}
         />
       </div>
 
@@ -63,14 +63,14 @@ export default function Login() {
           <div
             className="w-[64px] h-[64px] rounded-[20px] flex items-center justify-center mb-5"
             style={{
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-              boxShadow: '0 8px 28px rgba(99,102,241,0.40), inset 0 1px 0 rgba(255,255,255,0.22)',
+              background: 'linear-gradient(135deg, #F2B045 0%, #EDA135 100%)',
+              boxShadow: '0 8px 28px rgba(242,176,69,0.40), inset 0 1px 0 rgba(255,255,255,0.22)',
             }}
             aria-hidden="true"
           >
-            <Boxes size={28} className="text-white" />
+            <Boxes size={28} style={{ color: '#131316' }} />
           </div>
-          <h1 className="text-[24px] font-bold text-[#0A0A0F] tracking-[-0.03em]">ModulaERP</h1>
+          <h1 className="text-[24px] font-bold text-[#0A0A0F] tracking-[-0.03em]">FB Core</h1>
           <p className="text-[13px] text-[#9898A3] mt-1 font-medium">Ingresa a tu espacio de trabajo</p>
         </div>
 
@@ -137,20 +137,21 @@ export default function Login() {
               type="submit"
               disabled={loading}
               aria-disabled={loading}
-              className="w-full py-3 font-bold rounded-xl text-[13px] text-white disabled:opacity-50"
+              className="w-full py-3 font-bold rounded-xl text-[13px] disabled:opacity-50"
               style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                boxShadow: '0 2px 8px rgba(99,102,241,0.32), 0 8px 24px rgba(99,102,241,0.18)',
+                background: 'linear-gradient(135deg, #F2B045 0%, #EDA135 100%)',
+                color: '#131316',
+                boxShadow: '0 2px 8px rgba(242,176,69,0.32), 0 8px 24px rgba(242,176,69,0.18)',
                 transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)',
               }}
               onMouseEnter={e => {
                 const btn = e.currentTarget as HTMLButtonElement;
-                btn.style.boxShadow = '0 4px 14px rgba(99,102,241,0.42), 0 12px 32px rgba(99,102,241,0.22)';
+                btn.style.boxShadow = '0 4px 14px rgba(242,176,69,0.42), 0 12px 32px rgba(242,176,69,0.22)';
                 btn.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={e => {
                 const btn = e.currentTarget as HTMLButtonElement;
-                btn.style.boxShadow = '0 2px 8px rgba(99,102,241,0.32), 0 8px 24px rgba(99,102,241,0.18)';
+                btn.style.boxShadow = '0 2px 8px rgba(242,176,69,0.32), 0 8px 24px rgba(242,176,69,0.18)';
                 btn.style.transform = '';
               }}
               onMouseDown={e => {
@@ -166,7 +167,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-[#C3C3C8] text-[11.5px] mt-6 font-medium">
-          ModulaERP · Gestión empresarial modular
+          FB Core · by FBSystems
         </p>
       </div>
     </div>

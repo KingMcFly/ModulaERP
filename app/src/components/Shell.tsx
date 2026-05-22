@@ -154,7 +154,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           {sidebarOpen && (
             <div className="min-w-0 flex-1 relative z-10">
               <p className="font-bold text-[#0A0A0F] text-[13px] truncate leading-tight tracking-[-0.02em]">
-                {user?.tenant?.name || 'ModulaERP'}
+                {user?.tenant?.name || 'FB Core'}
               </p>
               <p className="text-[10.5px] text-[#AEAEB2] truncate font-medium mt-0.5">Sistema de gestión</p>
             </div>

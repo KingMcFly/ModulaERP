@@ -80,7 +80,7 @@ export default function Users() {
         <div>
           <h1 className="text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Usuarios del panel</h1>
           <p className="text-slate-400 text-[13px] mt-0.5 font-medium">
-            Administradores con acceso a ModulaERP Admin
+            Administradores con acceso a FB Core Admin
           </p>
         </div>
         <button onClick={openCreate} className="btn-primary">
@@ -93,8 +93,8 @@ export default function Users() {
         <div
           className="bg-white rounded-2xl p-6 animate-fade-up"
           style={{
-            border: '1.5px solid rgba(99,102,241,0.20)',
-            boxShadow: '0 2px 8px rgba(99,102,241,0.08), 0 1px 3px rgba(0,0,0,0.05)',
+            border: '1.5px solid rgba(242,176,69,0.20)',
+            boxShadow: '0 2px 8px rgba(242,176,69,0.08), 0 1px 3px rgba(0,0,0,0.05)',
           }}
         >
           <h2 className="font-bold text-slate-900 text-[14px] mb-4 tracking-[-0.02em]">
@@ -224,8 +224,9 @@ export default function Users() {
                       <div
                         className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-[13px] text-white flex-shrink-0"
                         style={{
-                          background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-                          boxShadow: '0 2px 6px rgba(99,102,241,0.28)',
+                          background: 'linear-gradient(135deg, #F2B045, #EDA135)',
+                          boxShadow: '0 2px 6px rgba(242,176,69,0.28)',
+                          color: '#131316',
                         }}
                       >
                         {u.name[0]?.toUpperCase()}

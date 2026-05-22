@@ -122,7 +122,7 @@ export function generateLoanPDF({ loan, tenantName, tenantColor = '#6366F1', isR
   const pageH = doc.internal.pageSize.height;
   doc.setFontSize(7);
   doc.setTextColor('#94A3B8');
-  doc.text('Documento generado por ModulaERP · ' + tenantName, 105, pageH - 8, { align: 'center' });
+  doc.text('Documento generado por FB Core · ' + tenantName, 105, pageH - 8, { align: 'center' });
 
   const filename = `${isReturn ? 'devolucion' : 'prestamo'}_${loan.id}_${Date.now()}.pdf`;
   doc.save(filename);

@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
 import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
+import { resetPasswordEmail } from '../utils/emailTemplates.js';
 
 const router = Router();
 
@@ -257,12 +258,13 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
 
     const mailer = getMailer();
     if (mailer) {
+      const { subject, html, text } = resetPasswordEmail({ name: user.name, resetUrl });
       await mailer.sendMail({
-        from: process.env.SMTP_FROM || `"ModulaERP" <${process.env.SMTP_USER}>`,
+        from: process.env.SMTP_FROM || `"FB Core" <${process.env.SMTP_USER}>`,
         to: user.email,
-        subject: 'Recuperación de contraseña — ModulaERP',
-        text: `Hola ${user.name},\n\nHaz clic en el siguiente enlace para restablecer tu contraseña (válido 1 hora):\n\n${resetUrl}\n\nSi no solicitaste esto, ignora este correo.`,
-        html: `<p>Hola <b>${user.name}</b>,</p><p>Haz clic aquí para restablecer tu contraseña (válido 1 hora):</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Si no solicitaste esto, ignora este correo.</p>`,
+        subject,
+        html,
+        text,
       });
     } else {
       // Dev fallback: log link so the flow can be tested without SMTP

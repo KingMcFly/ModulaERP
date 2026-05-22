@@ -33,7 +33,7 @@ const sections = [
 ];
 
 const sysInfo = [
-  { icon: Terminal, label: 'Versión',        value: '1.0.0',          color: '#6366f1' },
+  { icon: Terminal, label: 'Versión',        value: '1.0.0',          color: '#F2B045' },
   { icon: Server,   label: 'Entorno',        value: 'Producción',     color: '#10b981' },
   { icon: Database, label: 'Base de datos',  value: 'MySQL / MariaDB',color: '#0ea5e9' },
   { icon: Cpu,      label: 'Node.js',        value: 'v24',            color: '#f59e0b' },
@@ -44,7 +44,7 @@ export default function AdminSettings() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="animate-fade-up">
         <h1 className="text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Configuración del sistema</h1>
-        <p className="text-slate-400 text-[13px] mt-0.5 font-medium">Ajustes globales de la plataforma ModulaERP</p>
+        <p className="text-slate-400 text-[13px] mt-0.5 font-medium">Ajustes globales de la plataforma FB Core</p>
       </div>
 
       {/* Settings cards */}

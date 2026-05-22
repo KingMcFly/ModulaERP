@@ -209,7 +209,7 @@ export default function LoansModule() {
                       <button
                         onClick={() => generateLoanPDF({
                           loan: l,
-                          tenantName: user?.tenant?.name || 'ModulaERP',
+                          tenantName: user?.tenant?.name || 'FB Core',
                           tenantColor: user?.tenant?.primary_color,
                           isReturn: l.status === 'returned',
                         })}

@@ -45,25 +45,25 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
           className="flex items-center gap-3 px-4 h-[58px] flex-shrink-0 relative overflow-hidden"
           style={{
             borderBottom: '1px solid rgba(255,255,255,0.065)',
-            background: 'linear-gradient(180deg, rgba(99,102,241,0.14) 0%, transparent 100%)',
+            background: 'linear-gradient(180deg, rgba(242,176,69,0.14) 0%, transparent 100%)',
           }}
         >
           <div
             className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 relative z-10"
             style={{
-              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-              boxShadow: '0 4px 12px rgba(99,102,241,0.55), inset 0 1px 0 rgba(255,255,255,0.22)',
+              background: 'linear-gradient(135deg, #F2B045, #EDA135)',
+              boxShadow: '0 4px 12px rgba(242,176,69,0.55), inset 0 1px 0 rgba(255,255,255,0.22)',
             }}
             aria-hidden="true"
           >
-            <Boxes size={15} className="text-white" />
+            <Boxes size={15} style={{ color: '#131316' }} />
           </div>
           {open && (
             <div className="flex flex-col min-w-0 relative z-10">
               <span
                 className="font-bold text-white text-[13px] tracking-[-0.02em] leading-tight"
               >
-                ModulaERP
+                FB Core
               </span>
               <span className="text-[10.5px] font-medium" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 Super Admin
@@ -121,10 +121,11 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
             }}
           >
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
+              className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
               style={{
-                background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-                boxShadow: '0 2px 6px rgba(99,102,241,0.4)',
+                background: 'linear-gradient(135deg, #F2B045, #EDA135)',
+                boxShadow: '0 2px 6px rgba(242,176,69,0.4)',
+                color: '#131316',
               }}
               aria-hidden="true"
             >
@@ -201,9 +202,9 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
             <div
               className="px-3 py-1.5 rounded-lg text-[11px] font-semibold"
               style={{
-                background: 'rgba(99,102,241,0.08)',
-                color: '#6366f1',
-                border: '1px solid rgba(99,102,241,0.12)',
+                background: 'rgba(242,176,69,0.10)',
+                color: '#EDA135',
+                border: '1px solid rgba(242,176,69,0.20)',
               }}
             >
               Admin Panel
