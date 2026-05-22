@@ -19,32 +19,32 @@ interface Props {
 }
 
 export default function AssetLookup({ serial, onSerialChange, onResult }: Props) {
-  const [loading, setLoading]     = useState(false);
-  const [result, setResult]       = useState<LookupResult | null>(null);
-  const [error, setError]         = useState<string | null>(null);
-  const [scanning, setScanning]   = useState(false);
-  const scannerRef                = useRef<HTMLDivElement>(null);
-  const html5QrRef                = useRef<any>(null);
-  const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const [result, setResult]     = useState<LookupResult | null>(null);
+  const [error, setError]       = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const scannerRef              = useRef<HTMLDivElement>(null);
+  const html5QrRef              = useRef<any>(null);
 
   async function doLookup(q: string) {
-    if (q.length < 4) return;
+    const trimmed = q.trim();
+    if (trimmed.length < 3) return;
     setLoading(true); setError(null); setResult(null);
     try {
       const token = localStorage.getItem('token');
-      const r = await fetch(`${API}/lookup?q=${encodeURIComponent(q)}`, {
+      const r = await fetch(`${API}/lookup?q=${encodeURIComponent(trimmed)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!r.ok) throw new Error('No se pudo consultar');
+      if (!r.ok) throw new Error();
       const data: LookupResult = await r.json();
       setResult(data);
       if (data.brand || data.model || data.asset_type) {
         onResult(data);
       } else {
-        setError('Sin resultados para este serial');
+        setError('No se encontró información para este serial. Puedes completar los datos manualmente.');
       }
     } catch {
-      setError('Sin resultados para este serial');
+      setError('No se pudo consultar el serial. Verifica la conexión e intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -81,40 +81,35 @@ export default function AssetLookup({ serial, onSerialChange, onResult }: Props)
     setScanning(false);
   }
 
-  useEffect(() => () => {
-    stopScanner();
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-  }, []);
+  useEffect(() => () => { stopScanner(); }, []);
 
   const confidenceColor = result?.confidence === 'high' ? 'text-emerald-600'
     : result?.confidence === 'medium' ? 'text-amber-600' : 'text-slate-400';
+
+  const confidenceLabel = result?.confidence === 'high' ? 'Alta'
+    : result?.confidence === 'medium' ? 'Media' : 'Baja';
 
   return (
     <div className="space-y-2">
       <label htmlFor="asset-serial" className="label">N° Serie / Código de barras</label>
 
-      {/* Input row */}
       <div className="flex gap-2">
         <input
           id="asset-serial"
           className="input flex-1"
           value={serial}
           onChange={e => {
-            const v = e.target.value;
-            onSerialChange(v);
+            onSerialChange(e.target.value);
             setResult(null);
             setError(null);
-            if (debounceRef.current) clearTimeout(debounceRef.current);
-            if (v.length >= 4) {
-              debounceRef.current = setTimeout(() => doLookup(v), 700);
-            }
           }}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); doLookup(serial); } }}
           placeholder="Escribe o escanea el serial…"
         />
         <button
           type="button"
           onClick={() => doLookup(serial)}
-          disabled={loading || serial.length < 4}
+          disabled={loading || serial.trim().length < 3}
           className="btn-ghost px-3 flex-shrink-0"
           title="Buscar información del dispositivo"
         >
@@ -135,12 +130,8 @@ export default function AssetLookup({ serial, onSerialChange, onResult }: Props)
         </button>
       </div>
 
-      {/* Camera viewer */}
       {scanning && (
-        <div
-          className="rounded-2xl overflow-hidden border border-indigo-200"
-          style={{ background: '#000' }}
-        >
+        <div className="rounded-2xl overflow-hidden border border-indigo-200" style={{ background: '#000' }}>
           <div id="asset-qr-reader" ref={scannerRef} />
           <p className="text-center text-white text-[12px] py-2 bg-black/80">
             Apunta al código de barras o QR del dispositivo
@@ -148,7 +139,6 @@ export default function AssetLookup({ serial, onSerialChange, onResult }: Props)
         </div>
       )}
 
-      {/* Result */}
       {result && (result.brand || result.model || result.asset_type) && (
         <div
           className="rounded-xl p-3 flex items-start gap-2.5 animate-fade-up"
@@ -164,18 +154,19 @@ export default function AssetLookup({ serial, onSerialChange, onResult }: Props)
               <p className="text-[11px] text-slate-500 mt-0.5 truncate">{result.description}</p>
             )}
             <p className={`text-[10px] mt-1 font-medium ${confidenceColor}`}>
-              Confianza: {result.confidence === 'high' ? 'Alta' : result.confidence === 'medium' ? 'Media' : 'Baja'}
-              {' · '}campos pre-rellenados automáticamente
+              Confianza: {confidenceLabel} · campos pre-rellenados automáticamente
             </p>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="rounded-xl p-3 flex items-center gap-2 text-[12px] text-amber-700"
-          style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)' }}>
-          <AlertCircle size={14} className="flex-shrink-0" />
-          {error} — puedes ingresar los datos manualmente.
+        <div
+          className="rounded-xl p-3 flex items-start gap-2 text-[12px] text-amber-700"
+          style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)' }}
+        >
+          <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
+          <span>{error}</span>
         </div>
       )}
     </div>
