@@ -80,6 +80,13 @@ app.use('/uploads', express.static(process.env.UPLOAD_DIR || './uploads', {
   index: false,
 }));
 
+// ── Assets públicos (logo, etc.) ──────────────────────────────────────────
+app.use('/public', express.static(new URL('../public', import.meta.url).pathname, {
+  dotfiles: 'deny',
+  index: false,
+  maxAge: '7d',
+}));
+
 // ── Rate limiting global (A07) ─────────────────────────────────────────────
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
