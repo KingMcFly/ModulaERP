@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import nodemailer from 'nodemailer';
 import db from '../db.js';
-import { dailyAlertsEmail } from '../utils/emailTemplates.js';
+import { dailyAlertsEmail, trialExpiryEmail } from '../utils/emailTemplates.js';
 
 const router = Router();
 
@@ -145,42 +145,14 @@ router.get('/trial-alerts', verifyCron, async (req, res) => {
   }
 
   for (const [, info] of Object.entries(byTenant)) {
-    const modList = info.modules.map(m => `${m.name} (${m.daysLeft} días)`).join(', ');
     const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Hola, soy administrador de ${info.name} en FB Core. Quiero extender mi prueba de módulos: ${info.modules.map(m => m.name).join(', ')}.`)}`;
-
     const urgent = info.modules.some(m => m.daysLeft <= 7);
-    const subject = urgent
-      ? `⚠️ Tu prueba de módulos vence pronto — FB Core`
-      : `Recordatorio: módulos de prueba por vencer — FB Core`;
 
-    const html = `<!DOCTYPE html><html lang="es"><body style="font-family:'Plus Jakarta Sans',sans-serif;background:#131316;margin:0;padding:40px 16px;">
-<table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
-<tr><td style="background:linear-gradient(135deg,#F2B045,#EDA135);border-radius:16px 16px 0 0;padding:24px 40px;">
-  <span style="font-size:18px;font-weight:700;color:#131316;">FB Core</span>
-  <span style="float:right;font-size:11px;color:#131316;opacity:0.6;margin-top:4px;">by FBSystems</span>
-</td></tr>
-<tr><td style="background:#1B1B1D;border:1px solid #2C2C30;border-top:none;padding:36px 48px;">
-  <h1 style="margin:0 0 12px;color:#F5F5F5;font-size:20px;">
-    ${urgent ? '⚠️ Tus módulos de prueba vencen pronto' : 'Tus módulos de prueba están por vencer'}
-  </h1>
-  <p style="color:#919197;font-size:14px;line-height:1.6;">Hola <strong style="color:#F5F5F5;">${info.name}</strong>, los siguientes módulos de prueba están próximos a expirar:</p>
-  <div style="background:#161618;border:1px solid #2C2C30;border-left:3px solid ${urgent ? '#ef4444' : '#F2B045'};border-radius:8px;padding:16px 20px;margin:20px 0;">
-    <p style="margin:0 0 8px;color:#F5F5F5;font-size:14px;font-weight:600;">Módulos por vencer:</p>
-    <p style="color:#919197;font-size:13px;margin:0;">${modList}</p>
-  </div>
-  <p style="color:#919197;font-size:13px;line-height:1.6;">Cuando expiren, perderás acceso a esos módulos pero tus datos se mantendrán seguros.</p>
-  <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
-    <tr><td align="center">
-      <a href="${waUrl}" style="display:inline-block;background:#F2B045;color:#131316;font-size:14px;font-weight:700;text-decoration:none;padding:13px 36px;border-radius:10px;">
-        Extender prueba por WhatsApp
-      </a>
-    </td></tr>
-  </table>
-</td></tr>
-<tr><td style="background:#161618;border:1px solid #2C2C30;border-top:none;border-radius:0 0 16px 16px;padding:16px 48px;text-align:center;">
-  <p style="margin:0;font-size:11px;color:#555559;">© ${new Date().getFullYear()} <a href="https://fbsystems.cl" style="color:#919197;text-decoration:none;">FBSystems</a> · fbcore.cloud</p>
-</td></tr>
-</table></body></html>`;
+    const { subject, html } = trialExpiryEmail({
+      tenantName: info.name,
+      modules: info.modules,
+      waUrl,
+    });
 
     await sendAlert(mailer, info.email, info.name, subject, html);
     summary.push({ tenant: info.name, modules: info.modules.length, urgent });
