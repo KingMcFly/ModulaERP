@@ -168,7 +168,7 @@ function SidePanel({ dark }: ThemeProps) {
 
   return (
     <aside
-      className="hidden rounded-3xl border p-8 lg:flex lg:min-h-[590px] lg:flex-col"
+      className="hidden rounded-3xl border p-8 lg:flex lg:min-h-[560px] lg:flex-col lg:justify-center"
       style={{
         background: c.cardAlt,
         borderColor: c.border,
@@ -178,7 +178,7 @@ function SidePanel({ dark }: ThemeProps) {
       <div>
         <Brand dark={dark} />
 
-        <div className="mt-16 max-w-[440px]">
+        <div className="mt-14 max-w-[440px]">
           <div
             className="mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em]"
             style={{
@@ -439,20 +439,20 @@ export default function Login() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
+    <main className="relative min-h-[100dvh] overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
       <PageBackground dark={dark} />
       <ThemeToggle dark={dark} onClick={toggle} />
 
-      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-2.5rem)] w-full max-w-6xl items-center gap-6 lg:grid-cols-[1fr_480px]">
+      <section className="relative z-10 mx-auto grid min-h-[calc(100dvh-2.5rem)] w-full max-w-6xl items-center gap-6 lg:grid-cols-2 lg:gap-10">
         <SidePanel dark={dark} />
 
-        <div className="mx-auto flex w-full max-w-[440px] flex-col">
+        <div className="mx-auto flex w-full max-w-[520px] flex-col lg:max-w-none">
           <div className="mb-7 flex items-center justify-between gap-4 lg:hidden">
             <Brand dark={dark} />
           </div>
 
           <div
-            className="rounded-3xl border p-6 sm:p-8"
+            className="rounded-3xl border p-6 sm:p-8 lg:flex lg:min-h-[560px] lg:flex-col lg:justify-center"
             style={{
               background: c.card,
               borderColor: c.border,
@@ -463,7 +463,7 @@ export default function Login() {
               <Brand dark={dark} />
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8 lg:mt-12">
               <p
                 className="mb-3 text-[11px] font-black uppercase tracking-[0.18em]"
                 style={{ color: c.accent }}
