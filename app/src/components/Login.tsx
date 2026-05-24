@@ -102,31 +102,42 @@ function PasswordField({
   );
 }
 
-// ── Logo with blend ───────────────────────────────────────────────────────────
+// ── Logo recreado en HTML — sin imagen, sin seams ─────────────────────────────
 function Logo() {
   return (
-    <div className="relative flex items-center justify-center">
-      {/* Amber glow behind the logo so las letras brillen */}
-      <div
-        aria-hidden="true"
-        className="absolute"
-        style={{
-          width: 320, height: 120,
-          background: 'radial-gradient(ellipse, rgba(242,176,69,0.18) 0%, transparent 70%)',
-          filter: 'blur(12px)',
-        }}
-      />
-      <img
-        src="/logo.png"
-        alt="FB Core"
-        draggable={false}
-        style={{
-          width: 220,
-          position: 'relative',
-          mixBlendMode: 'lighten',
-          userSelect: 'none',
-        }}
-      />
+    <div className="flex flex-col items-center gap-2 select-none">
+      {/* Wordmark */}
+      <div className="flex items-baseline" style={{ letterSpacing: '-0.03em', lineHeight: 1 }}>
+        <span
+          style={{
+            fontSize: 54,
+            fontWeight: 900,
+            color: '#F2B045',
+            textShadow: '0 0 48px rgba(242,176,69,0.50), 0 0 16px rgba(242,176,69,0.30)',
+          }}
+        >
+          FB
+        </span>
+        <span
+          style={{
+            fontSize: 54,
+            fontWeight: 300,
+            color: 'rgba(255,255,255,0.92)',
+            marginLeft: 10,
+          }}
+        >
+          Core
+        </span>
+      </div>
+
+      {/* Byline */}
+      <div className="flex items-center gap-2.5">
+        <div style={{ width: 28, height: 1.5, background: 'linear-gradient(90deg, transparent, #F2B045)', opacity: 0.6 }} />
+        <span style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.40)', textTransform: 'uppercase' }}>
+          by <strong style={{ color: '#F2B045', fontWeight: 700 }}>FB</strong> Systems
+        </span>
+        <div style={{ width: 28, height: 1.5, background: 'linear-gradient(90deg, #F2B045, transparent)', opacity: 0.6 }} />
+      </div>
     </div>
   );
 }
