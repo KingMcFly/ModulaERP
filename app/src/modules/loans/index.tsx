@@ -9,6 +9,7 @@ function authFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem('token');
   return fetch(`${API}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts?.headers || {}) } });
 }
+const isDark = () => document.documentElement.classList.contains('dark');
 
 interface Loan {
   id: number; asset_id: number; serial_number: string; brand: string; model: string; asset_type: string;
@@ -17,11 +18,13 @@ interface Loan {
   status: 'active' | 'returned' | 'overdue'; notes: string;
 }
 
-const STATUS_CONFIG = {
-  active:   { label: 'Activo',    cls: 'bg-sky-100 text-sky-700' },
-  returned: { label: 'Devuelto',  cls: 'bg-emerald-100 text-emerald-700' },
-  overdue:  { label: 'Vencido',   cls: 'bg-red-100 text-red-700' },
+const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
+  active:   { label: 'Activo',   bg: 'rgba(14,165,233,0.12)',  color: '#0EA5E9' },
+  returned: { label: 'Devuelto', bg: 'rgba(16,185,129,0.12)', color: '#10B981' },
+  overdue:  { label: 'Vencido',  bg: 'rgba(239,68,68,0.12)',  color: '#EF4444' },
 };
+
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
 
 function NewLoanModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [assets, setAssets]     = useState<{id: number; serial_number: string; brand: string; model: string; asset_type: string}[]>([]);
@@ -55,9 +58,9 @@ function NewLoanModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nuevo Préstamo</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-md p-6" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>Nuevo Préstamo</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="loan-asset" className="label">Activo *</label>
@@ -132,8 +135,8 @@ export default function LoansModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Préstamos</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Control de préstamo y devolución</p>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Préstamos</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Control de préstamo y devolución</p>
         </div>
         {canWrite('loans') && (
           <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary">
@@ -143,15 +146,15 @@ export default function LoansModule() {
       </div>
 
       {overdue.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+        <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.2)' }}>
           <Clock size={18} className="text-red-500 flex-shrink-0" />
-          <p className="text-sm text-red-700 font-medium">{overdue.length} préstamo{overdue.length !== 1 ? 's' : ''} con devolución vencida</p>
+          <p className="text-sm font-medium text-red-500">{overdue.length} préstamo{overdue.length !== 1 ? 's' : ''} con devolución vencida</p>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-4 shadow-soft flex gap-3">
+      <div className="rounded-2xl p-4 shadow-soft flex gap-3" style={cardStyle}>
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ds-text-muted)' }} />
           <input className="input pl-9" placeholder="Buscar por activo o persona…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input w-36" value={statusFilter} onChange={e => setStatus(e.target.value)}>
@@ -161,48 +164,59 @@ export default function LoansModule() {
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
+      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
         <table className="w-full">
           <thead>
-            <tr className="bg-[#FAFAFA] border-b border-black/[0.04]">
+            <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
               {['Activo', 'Responsable', 'Emisión', 'Devolución', 'Estado', ''].map(h => (
-                <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
+                <th key={h} className="text-left text-xs font-semibold uppercase tracking-wider px-5 py-3" style={{ color: 'var(--ds-text-muted)' }}>{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="text-center py-12 text-slate-400">Cargando…</td></tr>
+              <tr><td colSpan={6} className="text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-12 text-slate-400">Sin préstamos</td></tr>
-            ) : filtered.map(l => {
+              <tr><td colSpan={6} className="text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Sin préstamos</td></tr>
+            ) : filtered.map((l, i) => {
               const sc = STATUS_CONFIG[l.status];
               const isOverdue = l.status === 'active' && l.expected_return && new Date(l.expected_return) < new Date();
               return (
-                <tr key={l.id} className={`hover:bg-slate-50 transition-colors ${isOverdue ? 'bg-red-50/30' : ''}`}>
+                <tr
+                  key={l.id}
+                  style={{
+                    borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none',
+                    background: isOverdue ? 'rgba(239,68,68,0.04)' : '',
+                    transition: 'background 120ms',
+                  }}
+                  onMouseEnter={e => { if (!isOverdue) (e.currentTarget as HTMLTableRowElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = isOverdue ? 'rgba(239,68,68,0.04)' : ''; }}
+                >
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <ArrowRightLeft size={15} className="text-slate-400" />
+                      <ArrowRightLeft size={15} style={{ color: 'var(--ds-text-subtle)' }} />
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{l.asset_type}</p>
-                        <p className="text-xs text-slate-400">{l.brand} {l.model} · {l.serial_number}</p>
+                        <p className="text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{l.asset_type}</p>
+                        <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>{l.brand} {l.model} · {l.serial_number}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-sm text-slate-700">{l.borrower_name_rel || l.borrower_name}</td>
-                  <td className="px-5 py-3.5 text-sm text-slate-500">{new Date(l.issued_at).toLocaleDateString('es')}</td>
+                  <td className="px-5 py-3.5 text-sm" style={{ color: 'var(--ds-text)' }}>{l.borrower_name_rel || l.borrower_name}</td>
+                  <td className="px-5 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{new Date(l.issued_at).toLocaleDateString('es')}</td>
                   <td className="px-5 py-3.5">
-                    <span className={`text-sm ${isOverdue ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>
+                    <span className="text-sm" style={{ color: isOverdue ? '#EF4444' : 'var(--ds-text-muted)', fontWeight: isOverdue ? 600 : 400 }}>
                       {l.actual_return ? new Date(l.actual_return).toLocaleDateString('es') : l.expected_return ? new Date(l.expected_return).toLocaleDateString('es') : '—'}
                     </span>
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className={`badge ${sc?.cls}`}>{sc?.label}</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: sc?.bg, color: sc?.color }}>
+                      {sc?.label}
+                    </span>
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-1.5">
                       {l.status === 'active' && canWrite('loans') && (
-                        <button type="button" onClick={() => returnLoan(l.id)} className="btn btn-ghost text-xs py-1.5 px-2.5 text-emerald-600 hover:bg-emerald-50">
+                        <button type="button" onClick={() => returnLoan(l.id)} className="btn btn-ghost text-xs py-1.5 px-2.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
                           <RotateCcw size={13} /> Devolver
                         </button>
                       )}
@@ -215,7 +229,8 @@ export default function LoansModule() {
                         })}
                         aria-label={`Descargar PDF préstamo ${l.id}`}
                         title="Descargar PDF"
-                        className="p-1.5 text-slate-400 hover:text-primary-600 rounded-lg transition-colors"
+                        className="p-1.5 rounded-lg transition-colors hover:text-primary-600"
+                        style={{ color: 'var(--ds-text-subtle)' }}
                       >
                         <FileDown size={14} aria-hidden="true" />
                       </button>

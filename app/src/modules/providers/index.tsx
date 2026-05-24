@@ -8,6 +8,7 @@ function authFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem('token');
   return fetch(`${API}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts?.headers||{}) } });
 }
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
 
 interface Provider { id: number; name: string; rut: string; contact_name: string; email: string; phone: string; address: string; category: string; notes: string; }
 
@@ -26,9 +27,9 @@ function ProviderForm({ item, onClose, onSaved }: { item?: Provider|null; onClos
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-semibold text-slate-900 mb-5">{item ? 'Editar Proveedor' : 'Nuevo Proveedor'}</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>{item ? 'Editar Proveedor' : 'Nuevo Proveedor'}</h2>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><label htmlFor="prov-name" className="label">Nombre *</label><input id="prov-name" className="input" value={f.name} onChange={e => set('name', e.target.value)} required /></div>
@@ -69,33 +70,44 @@ export default function ProvidersModule() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-semibold text-slate-900">Proveedores</h1><p className="text-slate-500 text-sm mt-0.5">Gestión de proveedores y contactos</p></div>
+        <div>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Proveedores</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Gestión de proveedores y contactos</p>
+        </div>
         {canWrite('providers') && <button type="button" onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Proveedor</button>}
       </div>
-      <div className="bg-white rounded-2xl p-4 shadow-soft">
-        <div className="relative"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input className="input pl-9" placeholder="Buscar por nombre, RUT o contacto…" value={search} onChange={e => setSearch(e.target.value)} /></div>
+      <div className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
+        <div className="relative">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ds-text-subtle)' }} />
+          <input className="input pl-9" placeholder="Buscar por nombre, RUT o contacto…" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
-          <p className="text-slate-400 text-sm col-span-3 text-center py-12">Cargando…</p>
+          <p className="text-sm col-span-3 text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</p>
         ) : items.length === 0 ? (
-          <div className="col-span-3 py-16 flex flex-col items-center gap-2 text-slate-400"><Truck size={32} className="text-slate-200" /><p className="text-sm">Sin proveedores. Haz clic en "Nuevo Proveedor".</p></div>
+          <div className="col-span-3 py-16 flex flex-col items-center gap-2" style={{ color: 'var(--ds-text-muted)' }}>
+            <Truck size={32} style={{ color: 'var(--ds-border)' }} />
+            <p className="text-sm">Sin proveedores. Haz clic en "Nuevo Proveedor".</p>
+          </div>
         ) : items.map(p => (
-          <div key={p.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+          <div key={p.id} className="rounded-2xl shadow-sm p-5 transition-shadow hover:shadow-md" style={cardStyle}>
             <div className="flex items-start justify-between mb-3">
-              <div className="size-10 bg-violet-50 rounded-xl flex items-center justify-center flex-shrink-0"><Truck size={18} className="text-violet-500" aria-hidden="true" /></div>
+              <div className="size-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(168,85,247,0.12)' }}>
+                <Truck size={18} className="text-violet-500" aria-hidden="true" />
+              </div>
               <div className="flex gap-1">
-                {canWrite('providers') && <button type="button" onClick={() => setEditing(p)} className="p-1.5 text-slate-400 hover:text-primary-700 rounded-lg transition-colors"><Edit2 size={14} aria-hidden="true" /></button>}
-                {canDelete('providers') && <button type="button" onClick={() => del(p.id)} className="p-1.5 text-slate-400 hover:text-red-700 rounded-lg transition-colors"><Trash2 size={14} aria-hidden="true" /></button>}
+                {canWrite('providers') && <button type="button" onClick={() => setEditing(p)} className="p-1.5 rounded-lg transition-colors hover:text-primary-700" style={{ color: 'var(--ds-text-subtle)' }}><Edit2 size={14} /></button>}
+                {canDelete('providers') && <button type="button" onClick={() => del(p.id)} className="p-1.5 rounded-lg transition-colors text-red-400 hover:text-red-600"><Trash2 size={14} /></button>}
               </div>
             </div>
-            <h3 className="font-semibold text-slate-900 text-sm mb-0.5 truncate">{p.name}</h3>
-            {p.rut && <p className="text-xs text-slate-500 mb-2">RUT: {p.rut}</p>}
-            {p.category && <span className="inline-block text-[10px] font-semibold bg-violet-50 text-violet-700 px-2 py-0.5 rounded-full mb-2">{p.category}</span>}
+            <h3 className="font-semibold text-sm mb-0.5 truncate" style={{ color: 'var(--ds-text)' }}>{p.name}</h3>
+            {p.rut && <p className="text-xs mb-2" style={{ color: 'var(--ds-text-muted)' }}>RUT: {p.rut}</p>}
+            {p.category && <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mb-2" style={{ background: 'rgba(168,85,247,0.12)', color: '#A855F7' }}>{p.category}</span>}
             <div className="space-y-1 mt-2">
-              {p.contact_name && <p className="text-xs text-slate-500 flex items-center gap-1.5"><Building2 size={11} aria-hidden="true" />{p.contact_name}</p>}
-              {p.email && <p className="text-xs text-slate-500 flex items-center gap-1.5"><Mail size={11} aria-hidden="true" />{p.email}</p>}
-              {p.phone && <p className="text-xs text-slate-500 flex items-center gap-1.5"><Phone size={11} aria-hidden="true" />{p.phone}</p>}
+              {p.contact_name && <p className="text-xs flex items-center gap-1.5" style={{ color: 'var(--ds-text-muted)' }}><Building2 size={11} aria-hidden="true" />{p.contact_name}</p>}
+              {p.email && <p className="text-xs flex items-center gap-1.5" style={{ color: 'var(--ds-text-muted)' }}><Mail size={11} aria-hidden="true" />{p.email}</p>}
+              {p.phone && <p className="text-xs flex items-center gap-1.5" style={{ color: 'var(--ds-text-muted)' }}><Phone size={11} aria-hidden="true" />{p.phone}</p>}
             </div>
           </div>
         ))}

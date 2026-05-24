@@ -8,6 +8,8 @@ function authFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem('token');
   return fetch(`${API}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts?.headers || {}) } });
 }
+const isDark = () => document.documentElement.classList.contains('dark');
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
 
 interface Maintenance {
   id: number; asset_id: number; serial_number: string; brand: string; model: string;
@@ -16,15 +18,15 @@ interface Maintenance {
 }
 
 const TYPE_CFG = {
-  preventive: { label: 'Preventivo', cls: 'bg-sky-100 text-sky-700',    dot: 'bg-sky-500' },
-  corrective:  { label: 'Correctivo', cls: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
-  emergency:   { label: 'Emergencia', cls: 'bg-red-100 text-red-700',    dot: 'bg-red-500' },
+  preventive: { label: 'Preventivo', bg: 'rgba(14,165,233,0.12)',  color: '#0EA5E9', dotColor: '#0EA5E9' },
+  corrective:  { label: 'Correctivo', bg: 'rgba(245,158,11,0.12)', color: '#F59E0B', dotColor: '#F59E0B' },
+  emergency:   { label: 'Emergencia', bg: 'rgba(239,68,68,0.12)',  color: '#EF4444', dotColor: '#EF4444' },
 };
 const STATUS_CFG = {
-  pending:     { label: 'Pendiente',    cls: 'bg-slate-100 text-slate-600',       icon: Clock },
-  in_progress: { label: 'En Proceso',   cls: 'bg-amber-100 text-amber-700',      icon: AlertCircle },
-  completed:   { label: 'Completado',   cls: 'bg-emerald-100 text-emerald-700',   icon: CheckCircle2 },
-  cancelled:   { label: 'Cancelado',    cls: 'bg-red-100 text-red-600',           icon: AlertCircle },
+  pending:     { label: 'Pendiente',  bg: 'var(--ds-card-alt)',    color: 'var(--ds-text-muted)', icon: Clock },
+  in_progress: { label: 'En Proceso', bg: 'rgba(245,158,11,0.12)', color: '#F59E0B',              icon: AlertCircle },
+  completed:   { label: 'Completado', bg: 'rgba(16,185,129,0.12)', color: '#10B981',              icon: CheckCircle2 },
+  cancelled:   { label: 'Cancelado',  bg: 'rgba(239,68,68,0.12)',  color: '#EF4444',              icon: AlertCircle },
 };
 
 const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -62,9 +64,9 @@ function NewMaintenanceModal({ onClose, onCreated }: { onClose: () => void; onCr
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nuevo Mantenimiento</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-md p-6" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>Nuevo Mantenimiento</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="maint-asset" className="label">Activo *</label>
@@ -138,25 +140,28 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
   const todayStr = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')}`;
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-        <button type="button" onClick={prev} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"><ChevronLeft size={18} /></button>
-        <h2 className="text-base font-semibold text-slate-900">{MONTHS[month]} {year}</h2>
-        <button type="button" onClick={next} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"><ChevronRight size={18} /></button>
+    <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--ds-border)' }}>
+        <button type="button" onClick={prev} className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--ds-text-subtle)' }}
+          onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
+          onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = ''}
+        ><ChevronLeft size={18} /></button>
+        <h2 className="text-base font-semibold" style={{ color: 'var(--ds-text)' }}>{MONTHS[month]} {year}</h2>
+        <button type="button" onClick={next} className="p-1.5 rounded-lg transition-colors" style={{ color: 'var(--ds-text-subtle)' }}
+          onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)'}
+          onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = ''}
+        ><ChevronRight size={18} /></button>
       </div>
 
-      {/* Day headers */}
-      <div className="grid grid-cols-7 border-b border-slate-100">
+      <div className="grid grid-cols-7" style={{ borderBottom: '1px solid var(--ds-border)', background: 'var(--ds-card-alt)' }}>
         {DAYS.map(d => (
-          <div key={d} className="py-2 text-center text-xs font-semibold text-slate-400 uppercase">{d}</div>
+          <div key={d} className="py-2 text-center text-xs font-semibold uppercase" style={{ color: 'var(--ds-text-subtle)' }}>{d}</div>
         ))}
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-7 divide-x divide-slate-50">
+      <div className="grid grid-cols-7">
         {cells.map((day, i) => {
-          if (!day) return <div key={`pad-${i}`} className="min-h-[88px] bg-slate-50/50" />;
+          if (!day) return <div key={`pad-${i}`} className="min-h-[88px]" style={{ background: 'var(--ds-surface)', borderBottom: '1px solid var(--ds-border)' }} />;
           const key = day.toString();
           const dayRecords = byDate[key] || [];
           const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
@@ -164,24 +169,33 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
           return (
             <div
               key={dateStr}
-              className={`min-h-[88px] p-1.5 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors ${isToday ? 'bg-primary-50/40' : ''}`}
+              className="min-h-[88px] p-1.5 cursor-pointer transition-colors"
+              style={{ borderBottom: '1px solid var(--ds-border)', background: isToday ? 'rgba(178,120,20,0.06)' : 'transparent' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : isToday ? 'rgba(178,120,20,0.09)' : 'rgba(0,0,0,0.02)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = isToday ? 'rgba(178,120,20,0.06)' : 'transparent'; }}
               onClick={() => dayRecords.length > 0 ? setSelected(dayRecords) : null}
             >
-              <span className={`text-xs font-medium size-6 flex items-center justify-center rounded-full mb-1 ${isToday ? 'bg-primary-600 text-white' : 'text-slate-500'}`}>
+              <span
+                className="text-xs font-medium size-6 flex items-center justify-center rounded-full mb-1"
+                style={isToday ? { background: 'var(--ds-accent)', color: '#fff' } : { color: 'var(--ds-text-muted)' }}
+              >
                 {day}
               </span>
               <div className="space-y-0.5">
                 {dayRecords.slice(0, 3).map(r => {
                   const tc = TYPE_CFG[r.maint_type as keyof typeof TYPE_CFG];
                   return (
-                    <div key={r.id} className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight truncate ${tc?.cls || 'bg-slate-100 text-slate-600'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${tc?.dot || 'bg-slate-400'}`} />
+                    <div key={r.id}
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
+                      style={{ background: tc?.bg || 'var(--ds-card-alt)', color: tc?.color || 'var(--ds-text-muted)' }}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: tc?.dotColor || 'var(--ds-text-muted)' }} />
                       <span className="truncate">{r.brand} {r.model}</span>
                     </div>
                   );
                 })}
                 {dayRecords.length > 3 && (
-                  <p className="text-[10px] text-slate-400 pl-1">+{dayRecords.length - 3} más</p>
+                  <p className="text-[10px] pl-1" style={{ color: 'var(--ds-text-subtle)' }}>+{dayRecords.length - 3} más</p>
                 )}
               </div>
             </div>
@@ -189,23 +203,21 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
         })}
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 px-5 py-3 border-t border-slate-100">
+      <div className="flex items-center gap-4 px-5 py-3" style={{ borderTop: '1px solid var(--ds-border)' }}>
         {Object.entries(TYPE_CFG).map(([, v]) => (
           <div key={v.label} className="flex items-center gap-1.5">
-            <span className={`size-2 rounded-full ${v.dot}`} />
-            <span className="text-xs text-slate-500">{v.label}</span>
+            <span className="size-2 rounded-full" style={{ backgroundColor: v.dotColor }} />
+            <span className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>{v.label}</span>
           </div>
         ))}
       </div>
 
-      {/* Day detail popover */}
       {selected && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelected(null)}>
-          <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelected(null)}>
+          <div className="rounded-3xl shadow-soft-xl w-full max-w-sm p-5" style={cardStyle} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-slate-900">Mantenimientos del día</h3>
-              <button type="button" onClick={() => setSelected(null)} className="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
+              <h3 className="font-semibold" style={{ color: 'var(--ds-text)' }}>Mantenimientos del día</h3>
+              <button type="button" onClick={() => setSelected(null)} className="text-lg leading-none" style={{ color: 'var(--ds-text-subtle)' }}>&times;</button>
             </div>
             <div className="space-y-3">
               {selected.map(r => {
@@ -213,15 +225,17 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
                 const sc = STATUS_CFG[r.status as keyof typeof STATUS_CFG];
                 const StatusIcon = sc?.icon || Clock;
                 return (
-                  <div key={r.id} className="border border-slate-100 rounded-xl p-3">
+                  <div key={r.id} className="rounded-xl p-3" style={{ border: '1px solid var(--ds-border)' }}>
                     <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm font-medium text-slate-900">{r.brand} {r.model}</p>
-                      <span className={`badge ${tc?.cls}`}>{tc?.label}</span>
+                      <p className="text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{r.brand} {r.model}</p>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: tc?.bg, color: tc?.color }}>{tc?.label}</span>
                     </div>
-                    <p className="text-xs text-slate-500 mb-2">{r.technician_name || 'Sin técnico'}</p>
-                    <p className="text-xs text-slate-400 mb-3 line-clamp-2">{r.description || 'Sin descripción'}</p>
+                    <p className="text-xs mb-2" style={{ color: 'var(--ds-text-muted)' }}>{r.technician_name || 'Sin técnico'}</p>
+                    <p className="text-xs mb-3 line-clamp-2" style={{ color: 'var(--ds-text-subtle)' }}>{r.description || 'Sin descripción'}</p>
                     <div className="flex items-center justify-between">
-                      <span className={`badge ${sc?.cls} flex items-center gap-1`}><StatusIcon size={10} />{sc?.label}</span>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: sc?.bg, color: sc?.color }}>
+                        <StatusIcon size={10} />{sc?.label}
+                      </span>
                       <div className="flex gap-1">
                         {r.status === 'pending' && canWrite('maintenance') && (
                           <button type="button" onClick={() => { onStatusChange(r.id, 'in_progress'); setSelected(null); }} className="btn btn-ghost text-xs py-1 px-2">Iniciar</button>
@@ -243,7 +257,7 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
 }
 
 export default function MaintenanceModule() {
-  const { canWrite, canDelete } = useAuth();
+  const { canWrite } = useAuth();
   const [records, setRecords]   = useState<Maintenance[]>([]);
   const [search, setSearch]     = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -276,8 +290,8 @@ export default function MaintenanceModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Mantenimientos</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Programación y seguimiento de mantenimientos</p>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Mantenimientos</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Programación y seguimiento de mantenimientos</p>
         </div>
         {canWrite('maintenance') && (
           <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary">
@@ -286,10 +300,10 @@ export default function MaintenanceModule() {
         )}
       </div>
 
-      <div className="bg-white rounded-2xl p-4 shadow-soft flex gap-3 items-center">
+      <div className="rounded-2xl p-4 shadow-soft flex gap-3 items-center" style={cardStyle}>
         {view === 'list' && (
           <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ds-text-subtle)' }} />
             <input className="input pl-9" placeholder="Buscar…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         )}
@@ -303,20 +317,19 @@ export default function MaintenanceModule() {
           </select>
         )}
         {view === 'calendar' && <div className="flex-1" />}
-        {/* View toggle */}
-        <div className="flex bg-slate-100 rounded-lg p-1 gap-1 flex-shrink-0">
-          <button
-            type="button" onClick={() => setView('list')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${view === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            <List size={13} /> Lista
-          </button>
-          <button
-            type="button" onClick={() => setView('calendar')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${view === 'calendar' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            <Calendar size={13} /> Calendario
-          </button>
+        <div className="flex rounded-lg p-1 gap-1 flex-shrink-0" style={{ background: 'var(--ds-surface)' }}>
+          {(['list', 'calendar'] as const).map(v => (
+            <button key={v} type="button" onClick={() => setView(v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+              style={{
+                background: view === v ? 'var(--ds-card)' : 'transparent',
+                color: view === v ? 'var(--ds-text)' : 'var(--ds-text-muted)',
+                boxShadow: view === v ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              }}
+            >
+              {v === 'list' ? <><List size={13} /> Lista</> : <><Calendar size={13} /> Calendario</>}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -325,31 +338,31 @@ export default function MaintenanceModule() {
       ) : (
         <div className="space-y-3">
           {loading ? (
-            <div className="text-center py-12 text-slate-400">Cargando…</div>
+            <div className="text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</div>
           ) : filtered.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-100 text-center py-12 text-slate-400">Sin registros</div>
+            <div className="rounded-2xl text-center py-12" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>Sin registros</div>
           ) : filtered.map(r => {
             const tc = TYPE_CFG[r.maint_type as keyof typeof TYPE_CFG];
             const sc = STATUS_CFG[r.status as keyof typeof STATUS_CFG];
             const StatusIcon = sc?.icon || Clock;
             return (
-              <div key={r.id} className="bg-white rounded-2xl p-5 shadow-soft flex items-center gap-4">
-                <div className="size-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div key={r.id} className="rounded-2xl p-5 shadow-soft flex items-center gap-4" style={cardStyle}>
+                <div className="size-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(245,158,11,0.12)' }}>
                   <Wrench size={18} className="text-amber-500" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold text-slate-900">{r.brand} {r.model} · {r.serial_number || 'sin serie'}</p>
-                    <span className={`badge ${tc?.cls}`}>{tc?.label}</span>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--ds-text)' }}>{r.brand} {r.model} · {r.serial_number || 'sin serie'}</p>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: tc?.bg, color: tc?.color }}>{tc?.label}</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5 truncate">{r.description || 'Sin descripción'}</p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--ds-text-muted)' }}>{r.description || 'Sin descripción'}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--ds-text-subtle)' }}>
                     {r.technician_name || 'Sin técnico'} ·
                     {r.scheduled_at ? ` ${new Date(r.scheduled_at).toLocaleDateString('es')}` : ' Sin fecha'}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className={`badge ${sc?.cls} flex items-center gap-1`}>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: sc?.bg, color: sc?.color }}>
                     <StatusIcon size={11} /> {sc?.label}
                   </span>
                   {r.status === 'pending' && canWrite('maintenance') && (

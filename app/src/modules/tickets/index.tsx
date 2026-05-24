@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Plus, LifeBuoy, Clock, CheckCircle, AlertCircle, MessageSquare, ChevronRight } from 'lucide-react';
+import { Plus, LifeBuoy, Clock, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,19 +8,25 @@ function authFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem('token');
   return fetch(`${API}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts?.headers||{}) } });
 }
+const isDark = () => document.documentElement.classList.contains('dark');
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
 
 interface Ticket { id: number; title: string; description: string; status: string; priority: string; category: string; reporter_name: string; assignee_name: string; asset_type: string; brand: string; model: string; created_at: string; age_hours: number; sla_hours: number; }
 
-const STATUS_CFG: Record<string, { label: string; cls: string; icon: React.ElementType }> = {
-  open:        { label: 'Abierto',      cls: 'bg-blue-100 text-blue-700',    icon: AlertCircle },
-  in_progress: { label: 'En progreso',  cls: 'bg-amber-100 text-amber-700',  icon: Clock },
-  waiting:     { label: 'En espera',    cls: 'bg-slate-100 text-slate-600',  icon: Clock },
-  resolved:    { label: 'Resuelto',     cls: 'bg-emerald-100 text-emerald-700', icon: CheckCircle },
-  closed:      { label: 'Cerrado',      cls: 'bg-slate-100 text-slate-500',  icon: CheckCircle },
+const STATUS_CFG: Record<string, { label: string; bg: string; color: string; icon: React.ElementType }> = {
+  open:        { label: 'Abierto',     bg: 'rgba(59,130,246,0.12)',  color: '#3B82F6',              icon: AlertCircle },
+  in_progress: { label: 'En progreso', bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B',              icon: Clock },
+  waiting:     { label: 'En espera',   bg: 'var(--ds-card-alt)',     color: 'var(--ds-text-muted)', icon: Clock },
+  resolved:    { label: 'Resuelto',    bg: 'rgba(16,185,129,0.12)',  color: '#10B981',              icon: CheckCircle },
+  closed:      { label: 'Cerrado',     bg: 'var(--ds-card-alt)',     color: 'var(--ds-text-subtle)', icon: CheckCircle },
 };
 
-const PRIORITY_COLORS: Record<string, string> = { low: 'bg-slate-100 text-slate-500', medium: 'bg-blue-100 text-blue-700', high: 'bg-orange-100 text-orange-700', critical: 'bg-red-100 text-red-700' };
-const PRIORITY_LABELS: Record<string, string> = { low: 'Baja', medium: 'Media', high: 'Alta', critical: 'Crítica' };
+const PRIORITY_CFG: Record<string, { label: string; color: string }> = {
+  low:      { label: 'Baja',    color: 'var(--ds-text-muted)' },
+  medium:   { label: 'Media',   color: '#3B82F6' },
+  high:     { label: 'Alta',    color: '#F97316' },
+  critical: { label: 'Crítica', color: '#EF4444' },
+};
 
 function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [f, setF] = useState({ title: '', description: '', priority: 'medium', category: '', sla_hours: '24' });
@@ -37,15 +43,15 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nuevo Ticket</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-md p-6" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>Nuevo Ticket</h2>
         <form onSubmit={submit} className="space-y-4">
           <div><label htmlFor="tkt-title" className="label">Título *</label><input id="tkt-title" className="input" value={f.title} onChange={e => set('title', e.target.value)} required /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><label htmlFor="tkt-priority" className="label">Prioridad</label>
               <select id="tkt-priority" className="input" value={f.priority} onChange={e => set('priority', e.target.value)}>
-                {Object.entries(PRIORITY_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
+                {Object.entries(PRIORITY_CFG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
               </select></div>
             <div><label htmlFor="tkt-category" className="label">Categoría</label><input id="tkt-category" className="input" value={f.category} onChange={e => set('category', e.target.value)} placeholder="HW, SW, Red…" /></div>
             <div className="col-span-2"><label htmlFor="tkt-sla" className="label">SLA (horas)</label><input id="tkt-sla" className="input" type="number" min="1" value={f.sla_hours} onChange={e => set('sla_hours', e.target.value)} /></div>
@@ -59,7 +65,7 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
 }
 
 export default function TicketsModule() {
-  const { user, canWrite, canDelete } = useAuth();
+  const { user, canWrite } = useAuth();
   const [items, setItems] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatus] = useState('');
@@ -83,78 +89,97 @@ export default function TicketsModule() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-semibold text-slate-900">Mesa de Ayuda</h1><p className="text-slate-500 text-sm mt-0.5">Tickets y soporte técnico interno</p></div>
+        <div>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Mesa de Ayuda</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Tickets y soporte técnico interno</p>
+        </div>
         {canWrite('tickets') && <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary"><Plus size={16} /> Nuevo Ticket</button>}
       </div>
 
       {overSla.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+        <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.2)' }}>
           <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
-          <p className="text-sm text-red-700 font-medium">{overSla.length} ticket{overSla.length > 1 ? 's' : ''} superando SLA</p>
+          <p className="text-sm font-medium text-red-500">{overSla.length} ticket{overSla.length > 1 ? 's' : ''} superando SLA</p>
         </div>
       )}
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Abiertos',     value: items.filter(i=>i.status==='open').length,        color: '#3B82F6' },
-          { label: 'En progreso',  value: items.filter(i=>i.status==='in_progress').length, color: '#F59E0B' },
-          { label: 'Críticos',     value: items.filter(i=>i.priority==='critical').length,  color: '#EF4444' },
-          { label: 'Resueltos',    value: items.filter(i=>i.status==='resolved').length,    color: '#10B981' },
+          { label: 'Abiertos',    value: items.filter(i=>i.status==='open').length,        color: '#3B82F6' },
+          { label: 'En progreso', value: items.filter(i=>i.status==='in_progress').length, color: '#F59E0B' },
+          { label: 'Críticos',    value: items.filter(i=>i.priority==='critical').length,  color: '#EF4444' },
+          { label: 'Resueltos',   value: items.filter(i=>i.status==='resolved').length,    color: '#10B981' },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft text-center">
+          <div key={s.label} className="rounded-2xl p-4 shadow-soft text-center" style={cardStyle}>
             <p className="text-2xl font-semibold" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>{s.label}</p>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl p-4 shadow-soft">
+      <div className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
         <select className="input max-w-xs" value={statusFilter} onChange={e => setStatus(e.target.value)}>
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_CFG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
+      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
         <table className="w-full">
-          <thead><tr className="bg-[#FAFAFA] border-b border-black/[0.04]">
-            {['Ticket','Prioridad','Categoría','Reportado por','Antigüedad','Estado',''].map(h => (
-              <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">{h}</th>
-            ))}
-          </tr></thead>
-          <tbody className="divide-y divide-slate-50">
+          <thead>
+            <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
+              {['Ticket','Prioridad','Categoría','Reportado por','Antigüedad','Estado',''].map(h => (
+                <th key={h} className="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3" style={{ color: 'var(--ds-text-muted)' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando…</td></tr>
+              <tr><td colSpan={7} className="text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={7} className="py-12 text-center"><LifeBuoy size={32} className="mx-auto text-slate-200 mb-2" /><p className="text-slate-400 text-sm">Sin tickets</p></td></tr>
-            ) : items.map(t => {
+              <tr><td colSpan={7} className="py-12 text-center">
+                <LifeBuoy size={32} className="mx-auto mb-2" style={{ color: 'var(--ds-border)' }} />
+                <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Sin tickets</p>
+              </td></tr>
+            ) : items.map((t, i) => {
               const sc = STATUS_CFG[t.status] || STATUS_CFG.open;
               const StatusIcon = sc.icon;
-              const isOverSla = t.age_hours > t.sla_hours;
+              const isOverSla = t.age_hours > t.sla_hours && ['open','in_progress','waiting'].includes(t.status);
               const age = t.age_hours < 24 ? `${t.age_hours}h` : `${Math.floor(t.age_hours/24)}d`;
+              const pc = PRIORITY_CFG[t.priority];
               return (
-                <tr key={t.id} className={`hover:bg-slate-50 transition-colors ${isOverSla && ['open','in_progress','waiting'].includes(t.status) ? 'bg-red-50/20' : ''}`}>
+                <tr key={t.id}
+                  style={{
+                    borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none',
+                    background: isOverSla ? 'rgba(239,68,68,0.04)' : '',
+                    transition: 'background 120ms',
+                  }}
+                  onMouseEnter={e => { if (!isOverSla) (e.currentTarget as HTMLTableRowElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = isOverSla ? 'rgba(239,68,68,0.04)' : ''; }}
+                >
                   <td className="px-4 py-3.5">
-                    <p className="text-sm font-medium text-slate-900">{t.title}</p>
-                    {t.asset_type && <p className="text-xs text-slate-400">{t.asset_type} {t.brand} {t.model}</p>}
+                    <p className="text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{t.title}</p>
+                    {t.asset_type && <p className="text-xs" style={{ color: 'var(--ds-text-subtle)' }}>{t.asset_type} {t.brand} {t.model}</p>}
                   </td>
-                  <td className="px-4 py-3.5"><span className={`badge ${PRIORITY_COLORS[t.priority]}`}>{PRIORITY_LABELS[t.priority]}</span></td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">{t.category || '—'}</td>
-                  <td className="px-4 py-3.5 text-sm text-slate-600">{t.reporter_name || '—'}</td>
                   <td className="px-4 py-3.5">
-                    <span className={`text-sm ${isOverSla && ['open','in_progress','waiting'].includes(t.status) ? 'text-red-600 font-semibold' : 'text-slate-500'}`}>{age}</span>
+                    <span className="text-xs font-semibold" style={{ color: pc?.color }}>{pc?.label}</span>
+                  </td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{t.category || '—'}</td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text)' }}>{t.reporter_name || '—'}</td>
+                  <td className="px-4 py-3.5">
+                    <span className="text-sm" style={{ color: isOverSla ? '#EF4444' : 'var(--ds-text-muted)', fontWeight: isOverSla ? 600 : 400 }}>{age}</span>
                   </td>
                   <td className="px-4 py-3.5">
                     {canManage ? (
-                      <select className="input text-xs py-1 px-2 h-auto" value={t.status}
-                        onChange={e => changeStatus(t.id, e.target.value)}>
+                      <select className="input text-xs py-1 px-2 h-auto" value={t.status} onChange={e => changeStatus(t.id, e.target.value)}>
                         {Object.entries(STATUS_CFG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
                       </select>
-                    ) : <span className={`badge ${sc.cls}`}>{sc.label}</span>}
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3.5">
-                    <ChevronRight size={15} className="text-slate-300" />
+                    <ChevronRight size={15} style={{ color: 'var(--ds-border)' }} />
                   </td>
                 </tr>
               );

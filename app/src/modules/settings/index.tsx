@@ -12,6 +12,9 @@ function authFetch(path: string, opts?: RequestInit) {
   });
 }
 
+const isDark = () => document.documentElement.classList.contains('dark');
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
+
 // ── Generic simple catalog section ────────────────────────────────────────────
 
 interface CatalogItem { id: number; name: string; }
@@ -52,14 +55,14 @@ function SimpleCatalog({ title, icon: Icon, apiPath }: { title: string; icon: Re
   }
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+    <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--ds-border)' }}>
         <div className="flex items-center gap-2.5">
           <div className="size-8 bg-primary-50 rounded-lg flex items-center justify-center">
             <Icon size={16} className="text-primary-500" />
           </div>
-          <h3 className="font-semibold text-slate-900">{title}</h3>
-          <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{items.length}</span>
+          <h3 className="font-semibold" style={{ color: 'var(--ds-text)' }}>{title}</h3>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-subtle)' }}>{items.length}</span>
         </div>
         <button type="button" onClick={() => { setAdding(true); setNewName(''); }} className="btn btn-primary text-xs py-1.5 px-3">
           <Plus size={13} /> Agregar
@@ -67,7 +70,7 @@ function SimpleCatalog({ title, icon: Icon, apiPath }: { title: string; icon: Re
       </div>
 
       {adding && (
-        <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
+        <div className="px-5 py-3 flex items-center gap-2" style={{ background: 'var(--ds-surface)', borderBottom: '1px solid var(--ds-border)' }}>
           <input
             className="input flex-1 text-sm"
             placeholder={`Nuevo ${title.toLowerCase().replace('categorías de ', '')}…`}
@@ -75,32 +78,38 @@ function SimpleCatalog({ title, icon: Icon, apiPath }: { title: string; icon: Re
             onKeyDown={e => { if (e.key === 'Enter') add(); if (e.key === 'Escape') setAdding(false); }}
           />
           <button type="button" onClick={add} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg"><Check size={16} /></button>
-          <button type="button" onClick={() => setAdding(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg"><X size={16} /></button>
+          <button type="button" onClick={() => setAdding(false)} className="p-2 rounded-lg" style={{ color: 'var(--ds-text-subtle)' }}><X size={16} /></button>
         </div>
       )}
 
       {loading ? (
-        <div className="py-10 text-center text-slate-400 text-sm">Cargando…</div>
+        <div className="py-10 text-center text-sm" style={{ color: 'var(--ds-text-subtle)' }}>Cargando…</div>
       ) : items.length === 0 ? (
         <div className="py-10 text-center">
-          <Icon size={28} className="mx-auto text-slate-200 mb-2" />
-          <p className="text-slate-400 text-sm">Sin registros. Haz clic en "Agregar" para comenzar.</p>
+          <Icon size={28} className="mx-auto mb-2" style={{ color: 'var(--ds-border)' }} />
+          <p className="text-sm" style={{ color: 'var(--ds-text-subtle)' }}>Sin registros. Haz clic en "Agregar" para comenzar.</p>
         </div>
       ) : (
-        <ul className="divide-y divide-slate-50">
-          {items.map(item => (
-            <li key={item.id} className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50 group">
+        <ul>
+          {items.map((item, i) => (
+            <li
+              key={item.id}
+              className="flex items-center gap-3 px-5 py-3 group"
+              style={{ borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none', transition: 'background 120ms' }}
+              onMouseEnter={e => (e.currentTarget as HTMLLIElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'}
+              onMouseLeave={e => (e.currentTarget as HTMLLIElement).style.background = ''}
+            >
               {editId === item.id ? (
                 <>
                   <input autoFocus className="input flex-1 text-sm" value={editName}
                     onChange={e => setEditName(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') save(item.id); if (e.key === 'Escape') setEditId(null); }} />
                   <button type="button" onClick={() => save(item.id)} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"><Check size={14} /></button>
-                  <button type="button" onClick={() => setEditId(null)} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg"><X size={14} /></button>
+                  <button type="button" onClick={() => setEditId(null)} className="p-1.5 rounded-lg" style={{ color: 'var(--ds-text-subtle)' }}><X size={14} /></button>
                 </>
               ) : (
                 <>
-                  <span className="flex-1 text-sm text-slate-800">{item.name}</span>
+                  <span className="flex-1 text-sm" style={{ color: 'var(--ds-text)' }}>{item.name}</span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button type="button" onClick={() => { setEditId(item.id); setEditName(item.name); }}
                       className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg">
@@ -128,10 +137,10 @@ interface Location {
   floor_level: number; color: string; criticality: string;
 }
 
-const CRITICALITY: Record<string, { label: string; cls: string }> = {
-  low:    { label: 'Baja',  cls: 'bg-slate-100 text-slate-600' },
-  medium: { label: 'Media', cls: 'bg-amber-100 text-amber-700' },
-  high:   { label: 'Alta',  cls: 'bg-red-100 text-red-700' },
+const CRITICALITY: Record<string, { label: string; bg: string; color: string }> = {
+  low:    { label: 'Baja',  bg: 'var(--ds-card-alt)',        color: 'var(--ds-text-muted)' },
+  medium: { label: 'Media', bg: 'rgba(245,158,11,0.12)',     color: '#F59E0B' },
+  high:   { label: 'Alta',  bg: 'rgba(239,68,68,0.12)',      color: '#EF4444' },
 };
 
 function LocationForm({ loc, onClose, onSaved }: { loc: Location | null; onClose: () => void; onSaved: () => void }) {
@@ -161,9 +170,9 @@ function LocationForm({ loc, onClose, onSaved }: { loc: Location | null; onClose
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold mb-5">{loc ? 'Editar Ubicación' : 'Nueva Ubicación'}</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-md p-6" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>{loc ? 'Editar Ubicación' : 'Nueva Ubicación'}</h2>
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label htmlFor="loc-name" className="label">Nombre *</label>
@@ -220,14 +229,14 @@ function LocationsCatalog() {
   }
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+    <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--ds-border)' }}>
         <div className="flex items-center gap-2.5">
           <div className="size-8 bg-primary-50 rounded-lg flex items-center justify-center">
             <MapPin size={16} className="text-primary-500" />
           </div>
-          <h3 className="font-semibold text-slate-900">Ubicaciones</h3>
-          <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{items.length}</span>
+          <h3 className="font-semibold" style={{ color: 'var(--ds-text)' }}>Ubicaciones</h3>
+          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-subtle)' }}>{items.length}</span>
         </div>
         <button type="button" onClick={() => setEditing(null)} className="btn btn-primary text-xs py-1.5 px-3">
           <Plus size={13} /> Agregar
@@ -235,35 +244,43 @@ function LocationsCatalog() {
       </div>
 
       {loading ? (
-        <div className="py-10 text-center text-slate-400 text-sm">Cargando…</div>
+        <div className="py-10 text-center text-sm" style={{ color: 'var(--ds-text-subtle)' }}>Cargando…</div>
       ) : items.length === 0 ? (
         <div className="py-10 text-center">
-          <MapPin size={28} className="mx-auto text-slate-200 mb-2" />
-          <p className="text-slate-400 text-sm">Sin ubicaciones. Agrega bodegas, pisos o áreas.</p>
+          <MapPin size={28} className="mx-auto mb-2" style={{ color: 'var(--ds-border)' }} />
+          <p className="text-sm" style={{ color: 'var(--ds-text-subtle)' }}>Sin ubicaciones. Agrega bodegas, pisos o áreas.</p>
         </div>
       ) : (
         <table className="w-full">
           <thead>
-            <tr className="bg-[#FAFAFA] border-b border-black/[0.04]">
+            <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
               {['Nombre', 'Descripción', 'Piso', 'Criticidad', ''].map(h => (
-                <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-5 py-3">{h}</th>
+                <th key={h} className="text-left text-xs font-semibold uppercase tracking-wider px-5 py-3" style={{ color: 'var(--ds-text-muted)' }}>{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
-            {items.map(loc => {
+          <tbody>
+            {items.map((loc, i) => {
               const cc = CRITICALITY[loc.criticality] || CRITICALITY.low;
               return (
-                <tr key={loc.id} className="hover:bg-slate-50 group">
+                <tr
+                  key={loc.id}
+                  className="group"
+                  style={{ borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none', transition: 'background 120ms' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}
+                >
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
                       <div className="size-3 rounded-full flex-shrink-0" style={{ backgroundColor: loc.color }} />
-                      <span className="text-sm font-medium text-slate-900">{loc.name}</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{loc.name}</span>
                     </div>
                   </td>
-                  <td className="px-5 py-3.5 text-sm text-slate-500 max-w-[200px] truncate">{loc.description || '—'}</td>
-                  <td className="px-5 py-3.5 text-sm text-slate-500">Piso {loc.floor_level}</td>
-                  <td className="px-5 py-3.5"><span className={`badge ${cc.cls}`}>{cc.label}</span></td>
+                  <td className="px-5 py-3.5 text-sm max-w-[200px] truncate" style={{ color: 'var(--ds-text-muted)' }}>{loc.description || '—'}</td>
+                  <td className="px-5 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>Piso {loc.floor_level}</td>
+                  <td className="px-5 py-3.5">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: cc.bg, color: cc.color }}>{cc.label}</span>
+                  </td>
                   <td className="px-5 py-3.5">
                     <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                       <button type="button" onClick={() => setEditing(loc)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"><Edit2 size={13} /></button>
@@ -309,34 +326,34 @@ function UsageBar({ used, max, label, icon: Icon }: { used: number; max: number;
   const over = !unlimited && pct >= 100;
 
   return (
-    <div className="bg-white border border-slate-100 rounded-xl p-4">
+    <div className="rounded-xl p-4" style={cardStyle}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className={`size-8 rounded-lg flex items-center justify-center ${near ? 'bg-red-50' : 'bg-primary-50'}`}>
             <Icon size={15} className={near ? 'text-red-500' : 'text-primary-500'} />
           </div>
-          <span className="text-sm font-medium text-slate-700">{label}</span>
+          <span className="text-sm font-medium" style={{ color: 'var(--ds-text-muted)' }}>{label}</span>
         </div>
-        <span className={`text-sm font-bold ${over ? 'text-red-600' : near ? 'text-amber-600' : 'text-slate-900'}`}>
+        <span className="text-sm font-bold" style={{ color: over ? '#EF4444' : near ? '#F59E0B' : 'var(--ds-text)' }}>
           {used} {unlimited ? '' : `/ ${max}`}
         </span>
       </div>
       {!unlimited && (
         <>
-          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--ds-border)' }}>
             <div
               className={`h-full rounded-full transition-all ${over ? 'bg-red-500' : near ? 'bg-amber-500' : 'bg-primary-500'}`}
               style={{ width: `${pct}%` }}
             />
           </div>
           <div className="flex justify-between mt-1.5">
-            <span className="text-xs text-slate-400">{pct}% utilizado</span>
+            <span className="text-xs" style={{ color: 'var(--ds-text-subtle)' }}>{pct}% utilizado</span>
             {near && !over && <span className="text-xs text-amber-600 font-medium">Cerca del límite</span>}
             {over && <span className="text-xs text-red-600 font-medium">Límite alcanzado</span>}
           </div>
         </>
       )}
-      {unlimited && <p className="text-xs text-slate-400">Sin límite</p>}
+      {unlimited && <p className="text-xs" style={{ color: 'var(--ds-text-subtle)' }}>Sin límite</p>}
     </div>
   );
 }
@@ -359,8 +376,8 @@ function PlanTab() {
     authFetch('/dashboard/plan').then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="py-12 text-center text-slate-400">Cargando…</div>;
-  if (!data) return <div className="py-12 text-center text-slate-400">No disponible</div>;
+  if (loading) return <div className="py-12 text-center" style={{ color: 'var(--ds-text-subtle)' }}>Cargando…</div>;
+  if (!data) return <div className="py-12 text-center" style={{ color: 'var(--ds-text-subtle)' }}>No disponible</div>;
 
   const planCfg = PLAN_LABELS[data.plan] || PLAN_LABELS.starter;
   const isStarterFree = data.plan === 'starter_free';
@@ -377,16 +394,15 @@ function PlanTab() {
 
   return (
     <div className="space-y-5">
-      {/* Plan card */}
-      <div className="bg-white border border-slate-100 rounded-2xl p-5">
+      <div className="rounded-2xl p-5" style={cardStyle}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Zap size={15} style={{ color: planCfg.color }} />
               <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: planCfg.color }}>Plan actual</span>
             </div>
-            <h2 className="text-[22px] font-bold text-slate-900">{planCfg.label}</h2>
-            <p className="text-[13px] text-slate-500 mt-0.5">{planCfg.description}</p>
+            <h2 className="text-[22px] font-bold" style={{ color: 'var(--ds-text)' }}>{planCfg.label}</h2>
+            <p className="text-[13px] mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>{planCfg.description}</p>
             {data.trial_days_left !== null && (
               <div className="flex items-center gap-1.5 mt-2">
                 <Clock size={13} className={data.trial_days_left <= 7 ? 'text-red-500' : 'text-amber-500'} />
@@ -406,7 +422,6 @@ function PlanTab() {
         </div>
       </div>
 
-      {/* Approaching limits alert */}
       {anyNear && (
         <div className="rounded-xl p-4 flex items-center gap-3"
           style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.25)' }}>
@@ -421,9 +436,8 @@ function PlanTab() {
         </div>
       )}
 
-      {/* Usage bars */}
       <div>
-        <h3 className="text-[13px] font-semibold text-slate-700 mb-3">Uso actual</h3>
+        <h3 className="text-[13px] font-semibold mb-3" style={{ color: 'var(--ds-text-muted)' }}>Uso actual</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {Object.entries(RESOURCE_LABELS).map(([key, cfg]) => {
             const limit = data.limits[key] ?? -1;
@@ -436,29 +450,29 @@ function PlanTab() {
         </div>
       </div>
 
-      {/* Trial modules */}
       {data.trial_modules.length > 0 && (
-        <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-900 text-[14px]">Módulos en período de prueba</h3>
-            <span className="text-[11px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
+        <div className="rounded-2xl overflow-hidden" style={cardStyle}>
+          <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--ds-border)' }}>
+            <h3 className="font-semibold text-[14px]" style={{ color: 'var(--ds-text)' }}>Módulos en período de prueba</h3>
+            <span className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-subtle)' }}>
               {data.trial_modules.length} módulo{data.trial_modules.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div className="divide-y divide-slate-50">
-            {data.trial_modules.map(m => {
+          <div>
+            {data.trial_modules.map((m, i) => {
               const urgent = m.days_left !== null && m.days_left <= 7;
               const warn   = m.days_left !== null && m.days_left <= 15 && !urgent;
               const expired = m.days_left !== null && m.days_left <= 0;
               const modWaText = `Hola, soy administrador de ${tenantName} en FB Core. Quiero extender la prueba del módulo ${m.name}.`;
               const modWaUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(modWaText)}`;
               return (
-                <div key={m.code} className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap">
+                <div key={m.code} className="flex items-center justify-between px-5 py-4 gap-4 flex-wrap"
+                  style={{ borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none' }}>
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`w-2 h-8 rounded-full shrink-0 ${expired ? 'bg-red-400' : urgent ? 'bg-red-400' : warn ? 'bg-amber-400' : 'bg-emerald-400'}`} />
                     <div>
-                      <p className="text-[13px] font-semibold text-slate-800">{m.name}</p>
-                      <p className="text-[11.5px] text-slate-400 mt-0.5">
+                      <p className="text-[13px] font-semibold" style={{ color: 'var(--ds-text)' }}>{m.name}</p>
+                      <p className="text-[11.5px] mt-0.5" style={{ color: 'var(--ds-text-subtle)' }}>
                         {expired
                           ? <span className="text-red-500 font-medium">Prueba vencida</span>
                           : m.expires_at
@@ -483,8 +497,8 @@ function PlanTab() {
               );
             })}
           </div>
-          <div className="px-5 py-3 bg-slate-50 border-t border-slate-100">
-            <p className="text-[11.5px] text-slate-400">
+          <div className="px-5 py-3" style={{ background: 'var(--ds-surface)', borderTop: '1px solid var(--ds-border)' }}>
+            <p className="text-[11.5px]" style={{ color: 'var(--ds-text-subtle)' }}>
               Al vencer, los datos se conservan pero perderás acceso al módulo.{' '}
               <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#F2B045', fontWeight: 600 }}>
                 Contáctanos para extender o mejorar tu plan →
@@ -494,13 +508,12 @@ function PlanTab() {
         </div>
       )}
 
-      {/* Upgrade CTA for free plan */}
       {isStarterFree && (
         <div className="rounded-2xl p-5 flex items-center justify-between gap-4 flex-wrap"
           style={{ background: 'linear-gradient(135deg, rgba(242,176,69,0.08), rgba(237,161,53,0.04))', border: '1px solid rgba(242,176,69,0.20)' }}>
           <div>
-            <p className="text-[14px] font-bold text-slate-800">¿Listo para crecer?</p>
-            <p className="text-[12.5px] text-slate-500 mt-0.5">Más usuarios, activos ilimitados y módulos sin fecha de vencimiento.</p>
+            <p className="text-[14px] font-bold" style={{ color: 'var(--ds-text)' }}>¿Listo para crecer?</p>
+            <p className="text-[12.5px] mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Más usuarios, activos ilimitados y módulos sin fecha de vencimiento.</p>
           </div>
           <a href={waUrl} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold shrink-0"
@@ -518,10 +531,10 @@ function PlanTab() {
 interface TenantUser { id: number; name: string; email: string; role: string; is_active: number; last_login: string | null; }
 interface ModulePerm { code: string; name: string; color: string; can_view: number; can_write: number; can_delete: number; }
 
-const ROLE_LABELS: Record<string, { label: string; cls: string }> = {
-  admin:   { label: 'Admin',    cls: 'bg-purple-100 text-purple-700' },
-  manager: { label: 'Gerente',  cls: 'bg-blue-100 text-blue-700' },
-  user:    { label: 'Usuario',  cls: 'bg-slate-100 text-slate-600' },
+const ROLE_LABELS: Record<string, { label: string; bg: string; color: string }> = {
+  admin:   { label: 'Admin',    bg: 'rgba(168,85,247,0.12)', color: '#A855F7' },
+  manager: { label: 'Gerente',  bg: 'rgba(59,130,246,0.12)', color: '#3B82F6' },
+  user:    { label: 'Usuario',  bg: 'var(--ds-card-alt)',    color: 'var(--ds-text-muted)' },
 };
 
 function PermissionsModal({ userId, userName, onClose }: { userId: number; userName: string; onClose: () => void }) {
@@ -540,11 +553,9 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
         modules: d.modules.map(m => {
           if (m.code !== code) return m;
           const next = { ...m, [field]: m[field] ? 0 : 1 };
-          // can_write/can_delete require can_view
           if (field === 'can_view' && !next.can_view) {
             next.can_write = 0; next.can_delete = 0;
           }
-          // enabling write/delete auto-enables view
           if ((field === 'can_write' || field === 'can_delete') && next[field]) {
             next.can_view = 1;
           }
@@ -570,42 +581,41 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
   const isFullAccess = data && ['admin', 'manager', 'super_admin'].includes(data.role);
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[85vh] flex flex-col" style={cardStyle}>
         <div className="flex items-center gap-3 mb-5">
           <div className="size-10 rounded-2xl bg-primary-50 flex items-center justify-center">
             <ShieldCheck size={18} className="text-primary-500" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-[#1D1D1F]">Permisos de módulo</h2>
-            <p className="text-xs text-[#6E6E73]">{userName}</p>
+            <h2 className="text-base font-bold" style={{ color: 'var(--ds-text)' }}>Permisos de módulo</h2>
+            <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>{userName}</p>
           </div>
         </div>
 
         {!data ? (
-          <div className="flex-1 flex items-center justify-center text-[#AEAEB2] text-sm">Cargando…</div>
+          <div className="flex-1 flex items-center justify-center text-sm" style={{ color: 'var(--ds-text-subtle)' }}>Cargando…</div>
         ) : isFullAccess ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 py-8 text-center">
             <ShieldCheck size={32} className="text-emerald-400" />
-            <p className="text-sm font-semibold text-[#1D1D1F]">Acceso completo</p>
-            <p className="text-xs text-[#6E6E73]">
+            <p className="text-sm font-semibold" style={{ color: 'var(--ds-text)' }}>Acceso completo</p>
+            <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>
               Los roles Admin y Gerente tienen acceso total a todos los módulos habilitados del tenant.
             </p>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto space-y-2">
-            {/* Header row */}
             <div className="grid grid-cols-[1fr_60px_60px_60px] gap-2 px-3 pb-1">
-              <span className="text-[10px] font-semibold text-[#AEAEB2] uppercase tracking-wide">Módulo</span>
-              <span className="text-[10px] font-semibold text-[#AEAEB2] uppercase tracking-wide text-center">Ver</span>
-              <span className="text-[10px] font-semibold text-[#AEAEB2] uppercase tracking-wide text-center">Crear/Editar</span>
-              <span className="text-[10px] font-semibold text-[#AEAEB2] uppercase tracking-wide text-center">Eliminar</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'var(--ds-text-subtle)' }}>Módulo</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-center" style={{ color: 'var(--ds-text-subtle)' }}>Ver</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-center" style={{ color: 'var(--ds-text-subtle)' }}>Crear/Editar</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-center" style={{ color: 'var(--ds-text-subtle)' }}>Eliminar</span>
             </div>
             {data.modules.map(m => (
-              <div key={m.code} className="grid grid-cols-[1fr_60px_60px_60px] gap-2 items-center bg-[#F5F5F7] rounded-xl px-3 py-2.5">
+              <div key={m.code} className="grid grid-cols-[1fr_60px_60px_60px] gap-2 items-center rounded-xl px-3 py-2.5" style={{ background: 'var(--ds-surface)' }}>
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="size-2 rounded-full flex-shrink-0" style={{ background: m.color }} />
-                  <span className="text-sm font-medium text-[#1D1D1F] truncate">{m.name}</span>
+                  <span className="text-sm font-medium truncate" style={{ color: 'var(--ds-text)' }}>{m.name}</span>
                 </div>
                 {(['can_view', 'can_write', 'can_delete'] as const).map(field => (
                   <div key={field} className="flex justify-center">
@@ -615,8 +625,9 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
                       className={`size-8 rounded-xl flex items-center justify-center transition-all ${
                         m[field]
                           ? 'bg-primary-500 text-white shadow-[0_1px_4px_rgba(242,176,69,0.3)]'
-                          : 'bg-white text-[#AEAEB2] border border-black/[0.07]'
+                          : 'text-[#AEAEB2]'
                       }`}
+                      style={!m[field] ? { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' } : {}}
                     >
                       {field === 'can_view'   && <Eye    size={13} />}
                       {field === 'can_write'  && <Pencil size={13} />}
@@ -629,7 +640,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
           </div>
         )}
 
-        <div className="flex gap-3 pt-4 mt-2 border-t border-black/[0.05]">
+        <div className="flex gap-3 pt-4 mt-2" style={{ borderTop: '1px solid var(--ds-border)' }}>
           <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
           {!isFullAccess && (
             <button type="button" onClick={save} disabled={saving} className="flex-1 btn btn-primary">
@@ -674,9 +685,9 @@ function UserForm({ item, onClose, onSaved }: { item?: TenantUser | null; onClos
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-base font-bold text-[#1D1D1F] mb-5">{item ? 'Editar usuario' : 'Nuevo usuario'}</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-md p-6" style={cardStyle}>
+        <h2 className="text-base font-bold mb-5" style={{ color: 'var(--ds-text)' }}>{item ? 'Editar usuario' : 'Nuevo usuario'}</h2>
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label htmlFor="u-name" className="label">Nombre *</label>
@@ -700,7 +711,7 @@ function UserForm({ item, onClose, onSaved }: { item?: TenantUser | null; onClos
               <option value="admin">Admin — acceso completo + configuración</option>
             </select>
             {f.role === 'user' && !item && (
-              <p className="text-[11px] text-[#6E6E73] mt-1.5">
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--ds-text-muted)' }}>
                 Se asignará acceso a <strong>Solicitudes</strong> por defecto. Puedes editar los permisos después.
               </p>
             )}
@@ -735,13 +746,13 @@ function ResetPasswordModal({ userId, userName, onClose }: { userId: number; use
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-sm p-6">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-sm p-6" style={cardStyle}>
         <div className="flex items-center gap-3 mb-5">
           <KeyRound size={18} className="text-primary-500" />
           <div>
-            <h2 className="text-base font-bold text-[#1D1D1F]">Restablecer contraseña</h2>
-            <p className="text-xs text-[#6E6E73]">{userName}</p>
+            <h2 className="text-base font-bold" style={{ color: 'var(--ds-text)' }}>Restablecer contraseña</h2>
+            <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>{userName}</p>
           </div>
         </div>
         <form onSubmit={submit} className="space-y-4">
@@ -779,14 +790,14 @@ function UsersTab() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
-      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+    <div className="rounded-2xl shadow-soft overflow-hidden" style={cardStyle}>
+      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--ds-border)' }}>
         <div className="flex items-center gap-2.5">
           <div className="size-8 bg-primary-50 rounded-xl flex items-center justify-center">
             <Users size={16} className="text-primary-500" />
           </div>
-          <h3 className="font-semibold text-[#1D1D1F]">Usuarios</h3>
-          <span className="text-[11px] text-[#AEAEB2] bg-[#F5F5F7] px-2 py-0.5 rounded-full font-medium">{users.length}</span>
+          <h3 className="font-semibold" style={{ color: 'var(--ds-text)' }}>Usuarios</h3>
+          <span className="text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-subtle)' }}>{users.length}</span>
         </div>
         <button type="button" onClick={() => setEditing(null)} className="btn btn-primary text-xs py-1.5 px-3">
           <UserPlus size={13} /> Nuevo usuario
@@ -794,52 +805,58 @@ function UsersTab() {
       </div>
 
       {loading ? (
-        <div className="py-12 text-center text-[#AEAEB2] text-sm">Cargando…</div>
+        <div className="py-12 text-center text-sm" style={{ color: 'var(--ds-text-subtle)' }}>Cargando…</div>
       ) : users.length === 0 ? (
         <div className="py-12 text-center">
-          <Users size={28} className="mx-auto text-[#E5E5EA] mb-2" />
-          <p className="text-[#AEAEB2] text-sm">Sin usuarios registrados</p>
+          <Users size={28} className="mx-auto mb-2" style={{ color: 'var(--ds-border)' }} />
+          <p className="text-sm" style={{ color: 'var(--ds-text-subtle)' }}>Sin usuarios registrados</p>
         </div>
       ) : (
         <table className="w-full">
           <thead>
-            <tr className="bg-[#FAFAFA]" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+            <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
               {['Usuario', 'Rol', 'Último acceso', 'Estado', ''].map(h => (
-                <th key={h} className="text-left text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wide px-5 py-3">{h}</th>
+                <th key={h} className="text-left text-[11px] font-semibold uppercase tracking-wide px-5 py-3" style={{ color: 'var(--ds-text-muted)' }}>{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-black/[0.04]">
-            {users.map(u => {
+          <tbody>
+            {users.map((u, i) => {
               const rc = ROLE_LABELS[u.role] || ROLE_LABELS.user;
               const isSelf = u.id === me?.id;
               return (
-                <tr key={u.id} className="hover:bg-[#FAFAFA] transition-colors group">
+                <tr
+                  key={u.id}
+                  className="group"
+                  style={{ borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none', transition: 'background 120ms' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}
+                >
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="size-8 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
                         <span className="text-xs font-bold text-primary-600">{u.name[0].toUpperCase()}</span>
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-[#1D1D1F]">{u.name} {isSelf && <span className="text-[10px] text-[#AEAEB2]">(tú)</span>}</p>
-                        <p className="text-xs text-[#6E6E73]">{u.email}</p>
+                        <p className="text-sm font-semibold" style={{ color: 'var(--ds-text)' }}>
+                          {u.name} {isSelf && <span className="text-[10px]" style={{ color: 'var(--ds-text-subtle)' }}>(tú)</span>}
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--ds-text-muted)' }}>{u.email}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className={`badge ${rc.cls}`}>{rc.label}</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: rc.bg, color: rc.color }}>{rc.label}</span>
                   </td>
-                  <td className="px-5 py-3.5 text-xs text-[#6E6E73]">
+                  <td className="px-5 py-3.5 text-xs" style={{ color: 'var(--ds-text-muted)' }}>
                     {u.last_login ? new Date(u.last_login).toLocaleDateString('es-CL') : 'Nunca'}
                   </td>
                   <td className="px-5 py-3.5">
                     <button
                       type="button" onClick={() => !isSelf && toggleActive(u)}
                       disabled={isSelf}
-                      className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
-                        isSelf ? 'opacity-40 cursor-default' :
-                        u.is_active ? 'text-emerald-600 hover:text-emerald-800' : 'text-[#AEAEB2] hover:text-[#6E6E73]'
-                      }`}
+                      className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${isSelf ? 'opacity-40 cursor-default' : ''}`}
+                      style={{ color: isSelf ? 'var(--ds-text-subtle)' : u.is_active ? '#10B981' : 'var(--ds-text-subtle)' }}
                     >
                       {u.is_active
                         ? <><ToggleRight size={16} /> Activo</>
@@ -851,21 +868,26 @@ function UsersTab() {
                       <button
                         type="button" onClick={() => setPermUser(u)}
                         title="Permisos de módulo"
-                        className="p-1.5 text-[#AEAEB2] hover:text-primary-500 hover:bg-primary-50 rounded-lg"
+                        className="p-1.5 hover:text-primary-500 hover:bg-primary-50 rounded-lg"
+                        style={{ color: 'var(--ds-text-subtle)' }}
                       >
                         <ShieldCheck size={14} />
                       </button>
                       <button
                         type="button" onClick={() => setEditing(u)}
                         title="Editar"
-                        className="p-1.5 text-[#AEAEB2] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] rounded-lg"
+                        className="p-1.5 rounded-lg"
+                        style={{ color: 'var(--ds-text-subtle)' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--ds-text)'; (e.currentTarget as HTMLButtonElement).style.background = 'var(--ds-surface)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--ds-text-subtle)'; (e.currentTarget as HTMLButtonElement).style.background = ''; }}
                       >
                         <Edit2 size={13} />
                       </button>
                       <button
                         type="button" onClick={() => setResetUser(u)}
                         title="Cambiar contraseña"
-                        className="p-1.5 text-[#AEAEB2] hover:text-amber-500 hover:bg-amber-50 rounded-lg"
+                        className="p-1.5 hover:text-amber-500 hover:bg-amber-50 rounded-lg"
+                        style={{ color: 'var(--ds-text-subtle)' }}
                       >
                         <KeyRound size={13} />
                       </button>
@@ -908,22 +930,25 @@ export default function SettingsModule() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Configuración</h1>
-        <p className="text-slate-500 text-sm mt-0.5">Datos maestros y catálogos del sistema</p>
+        <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Configuración</h1>
+        <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Datos maestros y catálogos del sistema</p>
       </div>
 
       <div className="flex gap-5 items-start">
-        {/* Vertical tab list */}
-        <div className="w-52 flex-shrink-0 bg-white rounded-2xl border border-slate-100 p-2">
+        <div className="w-52 flex-shrink-0 rounded-2xl p-2" style={cardStyle}>
           {TABS.map(t => {
             const Icon = t.icon;
+            const active = tab === t.id;
             return (
               <button type="button" key={t.id} onClick={() => setTab(t.id)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                  tab === t.id
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
-                }`}>
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+                style={{
+                  background: active ? 'rgba(242,176,69,0.10)' : 'transparent',
+                  color: active ? '#F2B045' : 'var(--ds-text-muted)',
+                }}
+                onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'var(--ds-surface)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ds-text)'; } }}
+                onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ds-text-muted)'; } }}
+              >
                 <Icon size={16} className="flex-shrink-0" />
                 <span className="truncate">{t.label}</span>
               </button>
@@ -931,7 +956,6 @@ export default function SettingsModule() {
           })}
         </div>
 
-        {/* Content panel */}
         <div className="flex-1 min-w-0">
           {tab === 'locations'         && <LocationsCatalog />}
           {tab === 'asset-types'       && <SimpleCatalog title="Tipos de Activo"     icon={Tag}      apiPath="/asset-types" />}
@@ -939,6 +963,7 @@ export default function SettingsModule() {
           {tab === 'shifts'            && <SimpleCatalog title="Turnos"               icon={Clock}    apiPath="/shifts" />}
           {tab === 'supply-categories' && <SimpleCatalog title="Categorías de Insumos" icon={Layers}  apiPath="/supply-categories" />}
           {tab === 'plan'              && <PlanTab />}
+          {tab === 'users'             && <UsersTab />}
         </div>
       </div>
     </div>

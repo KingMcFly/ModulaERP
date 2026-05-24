@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Plus, ShoppingCart, Package, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
+import { Plus, ShoppingCart, ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 
@@ -8,6 +8,8 @@ function authFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem('token');
   return fetch(`${API}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts?.headers || {}) } });
 }
+const isDark = () => document.documentElement.classList.contains('dark');
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
 
 interface PurchaseItem { description: string; quantity: number; unit_price: number; }
 interface Purchase {
@@ -19,12 +21,12 @@ interface Purchase {
   items?: (PurchaseItem & { id: number; subtotal: number })[];
 }
 
-const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-  draft:    { label: 'Borrador',   cls: 'bg-slate-100 text-slate-500' },
-  approved: { label: 'Aprobada',   cls: 'bg-emerald-100 text-emerald-700' },
-  ordered:  { label: 'Pedida',     cls: 'bg-blue-100 text-blue-700' },
-  received: { label: 'Recibida',   cls: 'bg-teal-100 text-teal-700' },
-  cancelled:{ label: 'Cancelada',  cls: 'bg-red-100 text-red-600' },
+const STATUS_CFG: Record<string, { label: string; bg: string; color: string }> = {
+  draft:     { label: 'Borrador',  bg: 'var(--ds-card-alt)',    color: 'var(--ds-text-subtle)' },
+  approved:  { label: 'Aprobada',  bg: 'rgba(16,185,129,0.12)', color: '#10B981' },
+  ordered:   { label: 'Pedida',    bg: 'rgba(59,130,246,0.12)', color: '#3B82F6' },
+  received:  { label: 'Recibida',  bg: 'rgba(20,184,166,0.12)', color: '#14B8A6' },
+  cancelled: { label: 'Cancelada', bg: 'rgba(239,68,68,0.12)',  color: '#EF4444' },
 };
 
 const CLP_FMT = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
@@ -75,9 +77,9 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nueva Orden de Compra</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>Nueva Orden de Compra</h2>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -108,7 +110,6 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
             </div>
           </div>
 
-          {/* Items */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="label mb-0">Ítems *</label>
@@ -116,18 +117,20 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
                 <Plus size={12} /> Agregar ítem
               </button>
             </div>
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--ds-border)' }}>
               <table className="w-full text-sm">
-                <thead><tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-slate-500">Descripción</th>
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-slate-500 w-20">Cantidad</th>
-                  <th className="text-left px-3 py-2 text-xs font-semibold text-slate-500 w-28">Precio unit.</th>
-                  <th className="text-right px-3 py-2 text-xs font-semibold text-slate-500 w-28">Subtotal</th>
-                  <th className="w-8" />
-                </tr></thead>
-                <tbody className="divide-y divide-slate-100">
+                <thead>
+                  <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
+                    <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: 'var(--ds-text-muted)' }}>Descripción</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold w-20" style={{ color: 'var(--ds-text-muted)' }}>Cantidad</th>
+                    <th className="text-left px-3 py-2 text-xs font-semibold w-28" style={{ color: 'var(--ds-text-muted)' }}>Precio unit.</th>
+                    <th className="text-right px-3 py-2 text-xs font-semibold w-28" style={{ color: 'var(--ds-text-muted)' }}>Subtotal</th>
+                    <th className="w-8" />
+                  </tr>
+                </thead>
+                <tbody>
                   {items.map((it, i) => (
-                    <tr key={it._key}>
+                    <tr key={it._key} style={{ borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none' }}>
                       <td className="px-2 py-1.5">
                         <input className="input text-sm py-1" value={it.description} onChange={e => setItem(i, 'description', e.target.value)} placeholder="Descripción del ítem" />
                       </td>
@@ -137,12 +140,12 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
                       <td className="px-2 py-1.5">
                         <input className="input text-sm py-1" type="number" min="0" value={it.unit_price} onChange={e => setItem(i, 'unit_price', e.target.value)} placeholder="0" />
                       </td>
-                      <td className="px-3 py-1.5 text-right text-slate-700 font-medium text-xs">
+                      <td className="px-3 py-1.5 text-right text-xs font-medium" style={{ color: 'var(--ds-text)' }}>
                         {fmtMoney((parseFloat(it.quantity) || 0) * (parseFloat(it.unit_price) || 0))}
                       </td>
                       <td className="px-1 py-1.5">
                         {items.length > 1 && (
-                          <button type="button" onClick={() => removeItem(i)} className="p-1 text-slate-300 hover:text-red-500 rounded">
+                          <button type="button" onClick={() => removeItem(i)} className="p-1 rounded text-red-400 hover:text-red-600">
                             <Trash2 size={12} />
                           </button>
                         )}
@@ -151,9 +154,9 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="bg-slate-50 border-t border-slate-200">
-                    <td colSpan={3} className="px-3 py-2 text-xs font-semibold text-slate-500 text-right">Total</td>
-                    <td className="px-3 py-2 text-right font-bold text-slate-900">{fmtMoney(total)}</td>
+                  <tr style={{ background: 'var(--ds-card-alt)', borderTop: '1px solid var(--ds-border)' }}>
+                    <td colSpan={3} className="px-3 py-2 text-xs font-semibold text-right" style={{ color: 'var(--ds-text-muted)' }}>Total</td>
+                    <td className="px-3 py-2 text-right font-bold" style={{ color: 'var(--ds-text)' }}>{fmtMoney(total)}</td>
                     <td />
                   </tr>
                 </tfoot>
@@ -194,56 +197,58 @@ function PurchaseRow({ po, onStatusChange }: { po: Purchase; onStatusChange: () 
 
   return (
     <>
-      <tr className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={toggle}>
+      <tr className="cursor-pointer transition-colors" style={{ transition: 'background 120ms' }}
+        onClick={toggle}
+        onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'}
+        onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}
+      >
         <td className="px-4 py-3.5">
           <div className="flex items-center gap-2">
-            {expanded ? <ChevronDown size={14} className="text-slate-400" /> : <ChevronRight size={14} className="text-slate-400" />}
+            {expanded ? <ChevronDown size={14} style={{ color: 'var(--ds-text-subtle)' }} /> : <ChevronRight size={14} style={{ color: 'var(--ds-text-subtle)' }} />}
             <div>
-              <p className="text-sm font-medium text-slate-900">{po.title}</p>
-              {po.po_number && <p className="text-xs text-slate-400">#{po.po_number}</p>}
+              <p className="text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{po.title}</p>
+              {po.po_number && <p className="text-xs" style={{ color: 'var(--ds-text-subtle)' }}>#{po.po_number}</p>}
             </div>
           </div>
         </td>
-        <td className="px-4 py-3.5 text-sm text-slate-500">{po.provider_name || '—'}</td>
-        <td className="px-4 py-3.5 text-sm text-slate-500">{po.cost_center_name || '—'}</td>
-        <td className="px-4 py-3.5 text-sm font-medium text-slate-900">{fmtMoney(po.total)}</td>
-        <td className="px-4 py-3.5 text-sm text-slate-400">{fmt(po.created_at)}</td>
+        <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{po.provider_name || '—'}</td>
+        <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{po.cost_center_name || '—'}</td>
+        <td className="px-4 py-3.5 text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{fmtMoney(po.total)}</td>
+        <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-subtle)' }}>{fmt(po.created_at)}</td>
         <td className="px-4 py-3.5" onClick={e => e.stopPropagation()}>
-          <select
-            className="input text-xs py-1 px-2 h-auto"
-            value={po.status}
-            onChange={e => changeStatus(e.target.value)}
-          >
+          <select className="input text-xs py-1 px-2 h-auto" value={po.status} onChange={e => changeStatus(e.target.value)}>
             {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </select>
         </td>
       </tr>
       {expanded && (
         <tr>
-          <td colSpan={6} className="px-6 pb-4 bg-slate-50/50">
+          <td colSpan={6} className="px-6 pb-4" style={{ background: 'var(--ds-surface)' }}>
             {loadingDetail ? (
-              <p className="text-xs text-slate-400 py-2">Cargando ítems…</p>
+              <p className="text-xs py-2" style={{ color: 'var(--ds-text-subtle)' }}>Cargando ítems…</p>
             ) : detail?.items && detail.items.length > 0 ? (
-              <table className="w-full text-xs mt-2 border border-slate-100 rounded-lg overflow-hidden">
-                <thead><tr className="bg-white border-b border-slate-100">
-                  <th className="text-left px-3 py-2 text-slate-500 font-semibold">Descripción</th>
-                  <th className="text-center px-3 py-2 text-slate-500 font-semibold w-20">Cantidad</th>
-                  <th className="text-right px-3 py-2 text-slate-500 font-semibold w-28">Precio unit.</th>
-                  <th className="text-right px-3 py-2 text-slate-500 font-semibold w-28">Subtotal</th>
-                </tr></thead>
-                <tbody className="divide-y divide-slate-50 bg-white">
-                  {detail.items.map(it => (
-                    <tr key={it.id}>
-                      <td className="px-3 py-2 text-slate-700">{it.description}</td>
-                      <td className="px-3 py-2 text-center text-slate-500">{it.quantity}</td>
-                      <td className="px-3 py-2 text-right text-slate-500">{fmtMoney(it.unit_price)}</td>
-                      <td className="px-3 py-2 text-right font-medium text-slate-700">{fmtMoney(it.subtotal)}</td>
+              <table className="w-full text-xs mt-2 rounded-lg overflow-hidden" style={{ border: '1px solid var(--ds-border)' }}>
+                <thead>
+                  <tr style={{ background: 'var(--ds-card)', borderBottom: '1px solid var(--ds-border)' }}>
+                    <th className="text-left px-3 py-2 font-semibold" style={{ color: 'var(--ds-text-muted)' }}>Descripción</th>
+                    <th className="text-center px-3 py-2 font-semibold w-20" style={{ color: 'var(--ds-text-muted)' }}>Cantidad</th>
+                    <th className="text-right px-3 py-2 font-semibold w-28" style={{ color: 'var(--ds-text-muted)' }}>Precio unit.</th>
+                    <th className="text-right px-3 py-2 font-semibold w-28" style={{ color: 'var(--ds-text-muted)' }}>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody style={{ background: 'var(--ds-card)' }}>
+                  {detail.items.map((it, i) => (
+                    <tr key={it.id} style={{ borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none' }}>
+                      <td className="px-3 py-2" style={{ color: 'var(--ds-text)' }}>{it.description}</td>
+                      <td className="px-3 py-2 text-center" style={{ color: 'var(--ds-text-muted)' }}>{it.quantity}</td>
+                      <td className="px-3 py-2 text-right" style={{ color: 'var(--ds-text-muted)' }}>{fmtMoney(it.unit_price)}</td>
+                      <td className="px-3 py-2 text-right font-medium" style={{ color: 'var(--ds-text)' }}>{fmtMoney(it.subtotal)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <p className="text-xs text-slate-400 py-2">Sin ítems registrados.</p>
+              <p className="text-xs py-2" style={{ color: 'var(--ds-text-subtle)' }}>Sin ítems registrados.</p>
             )}
           </td>
         </tr>
@@ -253,7 +258,7 @@ function PurchaseRow({ po, onStatusChange }: { po: Purchase; onStatusChange: () 
 }
 
 export default function PurchasesModule() {
-  const { canWrite, canDelete } = useAuth();
+  const { canWrite } = useAuth();
   const [items, setItems]   = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -272,8 +277,8 @@ export default function PurchasesModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Órdenes de Compra</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Gestión de compras y proveedores</p>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Órdenes de Compra</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Gestión de compras y proveedores</p>
         </div>
         {canWrite('purchases') && (
           <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary">
@@ -282,42 +287,43 @@ export default function PurchasesModule() {
         )}
       </div>
 
-      {/* Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Total órdenes', value: items.length, color: '#6366F1' },
           { label: 'Pendientes',    value: items.filter(i => i.status === 'draft' || i.status === 'approved').length, color: '#F59E0B' },
           { label: 'En tránsito',   value: items.filter(i => i.status === 'ordered').length, color: '#3B82F6' },
-          { label: 'Valor total',   value: fmtMoney(totalValue), color: '#10B981', isText: true },
+          { label: 'Valor total',   value: fmtMoney(totalValue), color: '#10B981' },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft">
+          <div key={s.label} className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
             <p className="text-2xl font-semibold" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>{s.label}</p>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-2xl p-4 shadow-soft">
+      <div className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
         <select className="input max-w-xs" value={statusFilter} onChange={e => setStatus(e.target.value)}>
           <option value="">Todos los estados</option>
           {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
+      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
         <table className="w-full">
-          <thead><tr className="bg-[#FAFAFA] border-b border-black/[0.04]">
-            {['Orden', 'Proveedor', 'Centro de costo', 'Total', 'Fecha', 'Estado'].map(h => (
-              <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">{h}</th>
-            ))}
-          </tr></thead>
-          <tbody className="divide-y divide-slate-50">
+          <thead>
+            <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
+              {['Orden', 'Proveedor', 'Centro de costo', 'Total', 'Fecha', 'Estado'].map(h => (
+                <th key={h} className="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3" style={{ color: 'var(--ds-text-muted)' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="text-center py-12 text-slate-400">Cargando…</td></tr>
+              <tr><td colSpan={6} className="text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</td></tr>
             ) : items.length === 0 ? (
               <tr><td colSpan={6} className="py-12 text-center">
-                <ShoppingCart size={32} className="mx-auto text-slate-200 mb-2" />
-                <p className="text-slate-400 text-sm">Sin órdenes de compra</p>
+                <ShoppingCart size={32} className="mx-auto mb-2" style={{ color: 'var(--ds-border)' }} />
+                <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Sin órdenes de compra</p>
               </td></tr>
             ) : items.map(po => (
               <PurchaseRow key={po.id} po={po} onStatusChange={load} />

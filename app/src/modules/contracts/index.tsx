@@ -10,17 +10,20 @@ function authFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem('token');
   return fetch(`${API}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts?.headers||{}) } });
 }
+const isDark = () => document.documentElement.classList.contains('dark');
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
 
 interface Contract { id: number; title: string; contract_number: string; contract_type: string; provider_name: string; start_date: string; end_date: string; value: number; status: string; days_remaining: number; alert_days: number; description: string; }
 
-const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-  active:    { label: 'Activo',    cls: 'bg-emerald-100 text-emerald-700' },
-  expired:   { label: 'Vencido',   cls: 'bg-red-100 text-red-700' },
-  pending:   { label: 'Pendiente', cls: 'bg-amber-100 text-amber-700' },
-  cancelled: { label: 'Cancelado', cls: 'bg-slate-100 text-slate-500' },
+const STATUS_CFG: Record<string, { label: string; bg: string; color: string }> = {
+  active:    { label: 'Activo',    bg: 'rgba(16,185,129,0.12)',  color: '#10B981' },
+  expired:   { label: 'Vencido',   bg: 'rgba(239,68,68,0.12)',   color: '#EF4444' },
+  pending:   { label: 'Pendiente', bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B' },
+  cancelled: { label: 'Cancelado', bg: 'var(--ds-card-alt)',     color: 'var(--ds-text-subtle)' },
 };
 
 function fmt(d?: string) { return d ? new Date(d).toLocaleDateString('es-CL') : '—'; }
+
 function ContractForm({ item, onClose, onSaved }: { item?: Contract|null; onClose: () => void; onSaved: () => void }) {
   const [f, setF] = useState({
     title: item?.title||'', contract_number: item?.contract_number||'', contract_type: item?.contract_type||'',
@@ -41,9 +44,9 @@ function ContractForm({ item, onClose, onSaved }: { item?: Contract|null; onClos
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-semibold text-slate-900 mb-5">{item ? 'Editar Contrato' : 'Nuevo Contrato'}</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>{item ? 'Editar Contrato' : 'Nuevo Contrato'}</h2>
         <form onSubmit={submit} className="space-y-4">
           <div><label htmlFor="cont-title" className="label">Título *</label><input id="cont-title" className="input" value={f.title} onChange={e => set('title', e.target.value)} required /></div>
           <div className="grid grid-cols-2 gap-3">
@@ -85,59 +88,80 @@ export default function ContractsModule() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-semibold text-slate-900">Contratos</h1><p className="text-slate-500 text-sm mt-0.5">Gestión de contratos y seguimiento de vencimientos</p></div>
+        <div>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Contratos</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Gestión de contratos y seguimiento de vencimientos</p>
+        </div>
         {canWrite('contracts') && <button type="button" onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Contrato</button>}
       </div>
 
       {expiring.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="rounded-xl p-4 flex items-start gap-3" style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)' }}>
+          <AlertTriangle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-amber-800">{expiring.length} contrato{expiring.length > 1 ? 's' : ''} por vencer</p>
-            <p className="text-xs text-amber-600 mt-0.5">{expiring.map(c => `${c.title} (${c.days_remaining}d)`).join(' · ')}</p>
+            <p className="text-sm font-semibold" style={{ color: '#F59E0B' }}>{expiring.length} contrato{expiring.length > 1 ? 's' : ''} por vencer</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>{expiring.map(c => `${c.title} (${c.days_remaining}d)`).join(' · ')}</p>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
+      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
         <table className="w-full">
-          <thead><tr className="bg-[#FAFAFA] border-b border-black/[0.04]">
-            {['Contrato','Proveedor','Tipo','Inicio','Vencimiento','Valor','Estado',''].map(h => (
-              <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">{h}</th>
-            ))}
-          </tr></thead>
-          <tbody className="divide-y divide-slate-50">
+          <thead>
+            <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
+              {['Contrato','Proveedor','Tipo','Inicio','Vencimiento','Valor','Estado',''].map(h => (
+                <th key={h} className="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3" style={{ color: 'var(--ds-text-muted)' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
             {loading ? (
-              <tr><td colSpan={8} className="text-center py-12 text-slate-400">Cargando…</td></tr>
+              <tr><td colSpan={8} className="text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={8} className="py-12 text-center"><FileCheck size={32} className="mx-auto text-slate-200 mb-2" /><p className="text-slate-400 text-sm">Sin contratos</p></td></tr>
-            ) : items.map(c => {
+              <tr><td colSpan={8} className="py-12 text-center">
+                <FileCheck size={32} className="mx-auto mb-2" style={{ color: 'var(--ds-border)' }} />
+                <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Sin contratos</p>
+              </td></tr>
+            ) : items.map((c, i) => {
               const sc = STATUS_CFG[c.status] || STATUS_CFG.active;
               const isExpiring = c.status === 'active' && c.days_remaining !== null && c.days_remaining <= c.alert_days && c.days_remaining >= 0;
               return (
-                <tr key={c.id} className={`hover:bg-slate-50 transition-colors ${isExpiring ? 'bg-amber-50/30' : ''}`}>
+                <tr key={c.id}
+                  style={{
+                    borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none',
+                    background: isExpiring ? 'rgba(245,158,11,0.04)' : '',
+                    transition: 'background 120ms',
+                  }}
+                  onMouseEnter={e => { if (!isExpiring) (e.currentTarget as HTMLTableRowElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLTableRowElement).style.background = isExpiring ? 'rgba(245,158,11,0.04)' : ''; }}
+                >
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2">
                       <FileCheck size={15} className="text-teal-500 flex-shrink-0" />
-                      <div><p className="text-sm font-medium text-slate-900">{c.title}</p>{c.contract_number && <p className="text-xs text-slate-400">#{c.contract_number}</p>}</div>
+                      <div>
+                        <p className="text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{c.title}</p>
+                        {c.contract_number && <p className="text-xs" style={{ color: 'var(--ds-text-subtle)' }}>#{c.contract_number}</p>}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">{c.provider_name || '—'}</td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">{c.contract_type || '—'}</td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">{fmt(c.start_date)}</td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{c.provider_name || '—'}</td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{c.contract_type || '—'}</td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{fmt(c.start_date)}</td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1.5">
-                      <Calendar size={12} className={isExpiring ? 'text-amber-500' : 'text-slate-400'} />
-                      <span className={`text-sm ${isExpiring ? 'text-amber-700 font-semibold' : 'text-slate-600'}`}>{fmt(c.end_date)}</span>
-                      {isExpiring && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 rounded-full font-medium">{c.days_remaining}d</span>}
+                      <Calendar size={12} style={{ color: isExpiring ? '#F59E0B' : 'var(--ds-text-subtle)' }} />
+                      <span className="text-sm" style={{ color: isExpiring ? '#F59E0B' : 'var(--ds-text)', fontWeight: isExpiring ? 600 : 400 }}>{fmt(c.end_date)}</span>
+                      {isExpiring && <span className="text-[10px] px-1.5 rounded-full font-medium" style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}>{c.days_remaining}d</span>}
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-600">{fmtMoney(c.value)}</td>
-                  <td className="px-4 py-3.5"><span className={`badge ${sc.cls}`}>{sc.label}</span></td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text)' }}>{fmtMoney(c.value)}</td>
+                  <td className="px-4 py-3.5">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+                  </td>
                   <td className="px-4 py-3.5">
                     <div className="flex gap-1">
-                      {canWrite('contracts') && <button type="button" onClick={() => setEditing(c)} className="p-1.5 text-slate-400 hover:text-primary-700 rounded-lg"><Edit2 size={13} /></button>}
-                      {canDelete('contracts') && <button type="button" onClick={() => del(c.id)} className="p-1.5 text-slate-400 hover:text-red-700 rounded-lg"><Trash2 size={13} /></button>}
+                      {canWrite('contracts') && <button type="button" onClick={() => setEditing(c)} className="p-1.5 rounded-lg transition-colors hover:text-primary-700" style={{ color: 'var(--ds-text-subtle)' }}><Edit2 size={13} /></button>}
+                      {canDelete('contracts') && <button type="button" onClick={() => del(c.id)} className="p-1.5 rounded-lg transition-colors text-red-400 hover:text-red-600"><Trash2 size={13} /></button>}
                     </div>
                   </td>
                 </tr>

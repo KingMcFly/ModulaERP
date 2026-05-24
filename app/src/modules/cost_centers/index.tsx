@@ -10,6 +10,7 @@ function authFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem('token');
   return fetch(`${API}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts?.headers||{}) } });
 }
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
 
 interface CostCenter { id: number; name: string; code: string; description: string; manager: string; budget: number; spent: number; }
 
@@ -28,9 +29,9 @@ function CostCenterForm({ item, onClose, onSaved }: { item?: CostCenter|null; on
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-5">{item ? 'Editar Centro' : 'Nuevo Centro de Costo'}</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-md p-6" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>{item ? 'Editar Centro' : 'Nuevo Centro de Costo'}</h2>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><label htmlFor="cc-name" className="label">Nombre *</label><input id="cc-name" className="input" value={f.name} onChange={e => set('name', e.target.value)} required /></div>
@@ -69,7 +70,10 @@ export default function CostCentersModule() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-semibold text-slate-900">Centros de Costo</h1><p className="text-slate-500 text-sm mt-0.5">Control de presupuesto por área</p></div>
+        <div>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Centros de Costo</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Control de presupuesto por área</p>
+        </div>
         {canWrite('cost_centers') && <button type="button" onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Centro</button>}
       </div>
 
@@ -80,9 +84,9 @@ export default function CostCentersModule() {
             { label: 'Gastado total',     value: fmtMoney(totalSpent),  color: '#EF4444' },
             { label: 'Disponible',        value: fmtMoney(Math.max(totalBudget - totalSpent, 0)), color: '#10B981' },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft">
+            <div key={s.label} className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
               <p className="text-2xl font-semibold" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>{s.label}</p>
             </div>
           ))}
         </div>
@@ -90,41 +94,44 @@ export default function CostCentersModule() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
-          <p className="text-slate-400 text-sm col-span-3 text-center py-12">Cargando…</p>
+          <p className="text-sm col-span-3 text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</p>
         ) : items.length === 0 ? (
-          <div className="col-span-3 py-16 flex flex-col items-center gap-2 text-slate-400"><PieChart size={32} className="text-slate-200" /><p className="text-sm">Sin centros de costo</p></div>
+          <div className="col-span-3 py-16 flex flex-col items-center gap-2" style={{ color: 'var(--ds-text-muted)' }}>
+            <PieChart size={32} style={{ color: 'var(--ds-border)' }} />
+            <p className="text-sm">Sin centros de costo</p>
+          </div>
         ) : items.map(cc => {
           const pct = cc.budget ? Math.min(100, Math.round((cc.spent / cc.budget) * 100)) : 0;
           const overBudget = cc.budget && cc.spent > cc.budget;
           return (
-            <div key={cc.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <div key={cc.id} className="rounded-2xl shadow-sm p-5" style={cardStyle}>
               <div className="flex items-start justify-between mb-3">
                 <div className="size-10 bg-primary-50 rounded-xl flex items-center justify-center flex-shrink-0"><PieChart size={18} className="text-primary-600" /></div>
                 <div className="flex gap-1">
-                  {canWrite('cost_centers') && <button type="button" onClick={() => setEditing(cc)} className="p-1.5 text-slate-400 hover:text-primary-700 rounded-lg"><Edit2 size={14} /></button>}
-                  {canDelete('cost_centers') && <button type="button" onClick={() => del(cc.id)} className="p-1.5 text-slate-400 hover:text-red-700 rounded-lg"><Trash2 size={14} /></button>}
+                  {canWrite('cost_centers') && <button type="button" onClick={() => setEditing(cc)} className="p-1.5 rounded-lg transition-colors hover:text-primary-700" style={{ color: 'var(--ds-text-subtle)' }}><Edit2 size={14} /></button>}
+                  {canDelete('cost_centers') && <button type="button" onClick={() => del(cc.id)} className="p-1.5 rounded-lg transition-colors text-red-400 hover:text-red-600"><Trash2 size={14} /></button>}
                 </div>
               </div>
               <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="font-semibold text-slate-900 text-sm truncate">{cc.name}</h3>
-                {cc.code && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-mono">{cc.code}</span>}
+                <h3 className="font-semibold text-sm truncate" style={{ color: 'var(--ds-text)' }}>{cc.name}</h3>
+                {cc.code && <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-muted)' }}>{cc.code}</span>}
               </div>
-              {cc.manager && <p className="text-xs text-slate-500 mb-3">{cc.manager}</p>}
+              {cc.manager && <p className="text-xs mb-3" style={{ color: 'var(--ds-text-muted)' }}>{cc.manager}</p>}
               {cc.budget ? (
                 <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs text-slate-500">
+                  <div className="flex justify-between text-xs" style={{ color: 'var(--ds-text-muted)' }}>
                     <span>Gastado: {fmtMoney(cc.spent)}</span>
-                    <span className={overBudget ? 'text-red-600 font-semibold' : ''}>{pct}%</span>
+                    <span style={{ color: overBudget ? '#EF4444' : 'var(--ds-text-muted)', fontWeight: overBudget ? 600 : 400 }}>{pct}%</span>
                   </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--ds-border)' }}>
                     <div className={`h-full rounded-full transition-all ${overBudget ? 'bg-red-500' : pct > 80 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(100, pct)}%` }} />
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-slate-400">Presupuesto: {fmtMoney(cc.budget)}</span>
-                    {overBudget && <span className="text-red-600 font-semibold flex items-center gap-0.5"><TrendingUp size={10} />Excedido</span>}
+                    <span style={{ color: 'var(--ds-text-subtle)' }}>Presupuesto: {fmtMoney(cc.budget)}</span>
+                    {overBudget && <span className="text-red-500 font-semibold flex items-center gap-0.5"><TrendingUp size={10} />Excedido</span>}
                   </div>
                 </div>
-              ) : <p className="text-xs text-slate-400 mt-2">Sin presupuesto definido</p>}
+              ) : <p className="text-xs mt-2" style={{ color: 'var(--ds-text-subtle)' }}>Sin presupuesto definido</p>}
             </div>
           );
         })}

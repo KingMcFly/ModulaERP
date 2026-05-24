@@ -8,18 +8,21 @@ function authFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem('token');
   return fetch(`${API}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts?.headers||{}) } });
 }
+const isDark = () => document.documentElement.classList.contains('dark');
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
 
 interface Request { id: number; request_type: string; title: string; description: string; status: string; priority: string; requester_name: string; requested_at: string; rejection_reason?: string; }
 
-const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-  pending:   { label: 'Pendiente',   cls: 'bg-amber-100 text-amber-700' },
-  approved:  { label: 'Aprobada',    cls: 'bg-emerald-100 text-emerald-700' },
-  rejected:  { label: 'Rechazada',   cls: 'bg-red-100 text-red-700' },
-  completed: { label: 'Completada',  cls: 'bg-blue-100 text-blue-700' },
-  cancelled: { label: 'Cancelada',   cls: 'bg-slate-100 text-slate-500' },
+const STATUS_CFG: Record<string, { label: string; bg: string; color: string }> = {
+  pending:   { label: 'Pendiente',  bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B' },
+  approved:  { label: 'Aprobada',   bg: 'rgba(16,185,129,0.12)',  color: '#10B981' },
+  rejected:  { label: 'Rechazada',  bg: 'rgba(239,68,68,0.12)',   color: '#EF4444' },
+  completed: { label: 'Completada', bg: 'rgba(59,130,246,0.12)',  color: '#3B82F6' },
+  cancelled: { label: 'Cancelada',  bg: 'var(--ds-card-alt)',     color: 'var(--ds-text-subtle)' },
 };
 
 const PRIORITY_CFG: Record<string, string> = { low: 'Baja', medium: 'Media', high: 'Alta', urgent: 'Urgente' };
+const PRIORITY_COLORS: Record<string, string> = { low: 'var(--ds-text-subtle)', medium: 'var(--ds-text-muted)', high: '#F97316', urgent: '#EF4444' };
 const TYPE_LABELS: Record<string, string> = { loan: 'Préstamo', supply: 'Insumo', maintenance: 'Mantención', purchase: 'Compra', other: 'Otro' };
 
 function NewRequestModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
@@ -37,9 +40,9 @@ function NewRequestModal({ onClose, onCreated }: { onClose: () => void; onCreate
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nueva Solicitud</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-md p-6" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>Nueva Solicitud</h2>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div><label htmlFor="req-type" className="label">Tipo</label>
@@ -62,7 +65,7 @@ function NewRequestModal({ onClose, onCreated }: { onClose: () => void; onCreate
 }
 
 export default function RequestsModule() {
-  const { user, canWrite, canDelete } = useAuth();
+  const { user, canWrite } = useAuth();
   const [items, setItems] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatus] = useState('');
@@ -92,55 +95,68 @@ export default function RequestsModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Solicitudes</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Solicitudes internas y flujos de aprobación</p>
+          <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Solicitudes</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Solicitudes internas y flujos de aprobación</p>
         </div>
         {canWrite('requests') && <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary"><Plus size={16} /> Nueva Solicitud</button>}
       </div>
 
       {canApprove && pending > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center gap-3">
-          <Clock size={18} className="text-amber-600 flex-shrink-0" />
-          <p className="text-sm text-amber-800 font-medium">{pending} solicitud{pending > 1 ? 'es' : ''} pendiente{pending > 1 ? 's' : ''} de aprobación</p>
+        <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)' }}>
+          <Clock size={18} className="text-amber-500 flex-shrink-0" />
+          <p className="text-sm font-medium" style={{ color: '#F59E0B' }}>{pending} solicitud{pending > 1 ? 'es' : ''} pendiente{pending > 1 ? 's' : ''} de aprobación</p>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-4 shadow-soft flex gap-3 items-center">
-        <Filter size={15} className="text-slate-400" />
+      <div className="rounded-2xl p-4 shadow-soft flex gap-3 items-center" style={cardStyle}>
+        <Filter size={15} style={{ color: 'var(--ds-text-subtle)' }} />
         <select className="input flex-1 max-w-xs" value={statusFilter} onChange={e => setStatus(e.target.value)}>
           <option value="">Todas</option>
           {Object.entries(STATUS_CFG).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
+      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
         <table className="w-full">
-          <thead><tr className="bg-[#FAFAFA] border-b border-black/[0.04]">
-            {['Solicitud','Tipo','Prioridad','Solicitante','Fecha','Estado',''].map(h => (
-              <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">{h}</th>
-            ))}
-          </tr></thead>
-          <tbody className="divide-y divide-slate-50">
+          <thead>
+            <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
+              {['Solicitud','Tipo','Prioridad','Solicitante','Fecha','Estado',''].map(h => (
+                <th key={h} className="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3" style={{ color: 'var(--ds-text-muted)' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando…</td></tr>
+              <tr><td colSpan={7} className="text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</td></tr>
             ) : items.length === 0 ? (
-              <tr><td colSpan={7} className="py-12 text-center"><ClipboardList size={32} className="mx-auto text-slate-200 mb-2" /><p className="text-slate-400 text-sm">Sin solicitudes</p></td></tr>
-            ) : items.map(item => {
+              <tr><td colSpan={7} className="py-12 text-center">
+                <ClipboardList size={32} className="mx-auto mb-2" style={{ color: 'var(--ds-border)' }} />
+                <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Sin solicitudes</p>
+              </td></tr>
+            ) : items.map((item, i) => {
               const sc = STATUS_CFG[item.status] || STATUS_CFG.pending;
-              const priorityColors: Record<string, string> = { low: 'text-slate-500', medium: 'text-amber-600', high: 'text-orange-600', urgent: 'text-red-600' };
               return (
-                <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-4 py-3.5"><p className="text-sm font-medium text-slate-900">{item.title}</p>{item.description && <p className="text-xs text-slate-400 truncate max-w-[200px]">{item.description}</p>}</td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">{TYPE_LABELS[item.request_type] || item.request_type}</td>
-                  <td className="px-4 py-3.5 text-xs font-semibold"><span className={priorityColors[item.priority]}>{PRIORITY_CFG[item.priority]}</span></td>
-                  <td className="px-4 py-3.5 text-sm text-slate-600">{item.requester_name || '—'}</td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">{new Date(item.requested_at).toLocaleDateString('es-CL')}</td>
-                  <td className="px-4 py-3.5"><span className={`badge ${sc.cls}`}>{sc.label}</span></td>
+                <tr key={item.id}
+                  style={{ borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none', transition: 'background 120ms' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}
+                >
+                  <td className="px-4 py-3.5">
+                    <p className="text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{item.title}</p>
+                    {item.description && <p className="text-xs truncate max-w-[200px]" style={{ color: 'var(--ds-text-subtle)' }}>{item.description}</p>}
+                  </td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{TYPE_LABELS[item.request_type] || item.request_type}</td>
+                  <td className="px-4 py-3.5 text-xs font-semibold" style={{ color: PRIORITY_COLORS[item.priority] }}>{PRIORITY_CFG[item.priority]}</td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text)' }}>{item.requester_name || '—'}</td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{new Date(item.requested_at).toLocaleDateString('es-CL')}</td>
+                  <td className="px-4 py-3.5">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+                  </td>
                   <td className="px-4 py-3.5">
                     {canApprove && item.status === 'pending' && (
                       <div className="flex gap-1">
-                        <button type="button" onClick={() => approve(item.id)} className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors" aria-label="Aprobar"><CheckCircle size={16} /></button>
-                        <button type="button" onClick={() => reject(item.id)} className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors" aria-label="Rechazar"><XCircle size={16} /></button>
+                        <button type="button" onClick={() => approve(item.id)} className="p-1.5 rounded-lg transition-colors hover:text-emerald-600" style={{ color: 'var(--ds-text-subtle)' }} aria-label="Aprobar"><CheckCircle size={16} /></button>
+                        <button type="button" onClick={() => reject(item.id)} className="p-1.5 rounded-lg transition-colors hover:text-red-600" style={{ color: 'var(--ds-text-subtle)' }} aria-label="Rechazar"><XCircle size={16} /></button>
                       </div>
                     )}
                   </td>

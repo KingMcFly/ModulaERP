@@ -14,6 +14,8 @@ function apiFetch(path: string) {
   return fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
 }
 
+const cardStyle = { background: 'var(--ds-card)', border: '1px solid var(--ds-border)' };
+
 const STATUS_COLORS: Record<string, string> = {
   available: '#10b981',
   loaned:    '#f59e0b',
@@ -28,17 +30,16 @@ const STATUS_LABELS: Record<string, string> = {
   retired:     'Retirado',
 };
 
-
 interface KPI { label: string; value: string | number; sub?: string; icon: React.ReactNode; color: string; }
 
 function KPICard({ label, value, sub, icon, color }: KPI) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-5 flex items-start gap-4 shadow-sm">
+    <div className="rounded-2xl p-5 flex items-start gap-4 shadow-sm" style={cardStyle}>
       <div className={`p-3 rounded-xl flex-shrink-0 ${color}`}>{icon}</div>
       <div className="min-w-0">
-        <p className="text-2xl font-semibold text-slate-900">{value}</p>
-        <p className="text-sm font-medium text-slate-600">{label}</p>
-        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+        <p className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>{value}</p>
+        <p className="text-sm font-medium" style={{ color: 'var(--ds-text-muted)' }}>{label}</p>
+        {sub && <p className="text-xs mt-0.5" style={{ color: 'var(--ds-text-subtle)' }}>{sub}</p>}
       </div>
     </div>
   );
@@ -53,11 +54,11 @@ export default function ReportsModule() {
   }, []);
 
   if (loading) return (
-    <div className="flex items-center justify-center h-64 text-slate-400">
-      <div className="size-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+    <div className="flex items-center justify-center h-64" style={{ color: 'var(--ds-text-subtle)' }}>
+      <div className="size-8 border-4 rounded-full animate-spin" style={{ borderColor: 'var(--ds-border)', borderTopColor: '#F2B045' }} />
     </div>
   );
-  if (!data) return <div className="text-center py-16 text-slate-400">Sin datos</div>;
+  if (!data) return <div className="text-center py-16" style={{ color: 'var(--ds-text-subtle)' }}>Sin datos</div>;
 
   const fmtCurrency = (n: number) => MXN_FMT.format(n);
 
@@ -137,45 +138,44 @@ export default function ReportsModule() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Reportes</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Resumen ejecutivo del sistema</p>
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--ds-text)' }}>Reportes</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Resumen ejecutivo del sistema</p>
         </div>
-        <button type="button" onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 shadow-sm transition-colors">
+        <button
+          type="button" onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-colors"
+          style={{ background: 'var(--ds-card)', border: '1px solid var(--ds-border)', color: 'var(--ds-text)' }}
+        >
           <Download size={15} /> Exportar Excel
         </button>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {kpis.map(k => <KPICard key={k.label} {...k} />)}
       </div>
 
-      {/* Alerts row */}
       {(data.loans.overdue > 0 || data.supplies.low_stock > 0) && (
         <div className="flex flex-wrap gap-3">
           {data.loans.overdue > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-100 rounded-xl text-sm text-red-700">
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#EF4444' }}>
               <AlertTriangle size={15} /> <strong>{data.loans.overdue}</strong> préstamo{data.loans.overdue > 1 ? 's' : ''} vencido{data.loans.overdue > 1 ? 's' : ''}
             </div>
           )}
           {data.supplies.low_stock > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-xl text-sm text-amber-700">
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#F59E0B' }}>
               <AlertTriangle size={15} /> <strong>{data.supplies.low_stock}</strong> insumo{data.supplies.low_stock > 1 ? 's' : ''} con stock bajo
             </div>
           )}
         </div>
       )}
 
-      {/* Charts row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Assets by status pie */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-          <h2 className="font-semibold text-slate-900 mb-4">Activos por estado</h2>
+        <div className="rounded-2xl p-5 shadow-sm" style={cardStyle}>
+          <h2 className="font-semibold mb-4" style={{ color: 'var(--ds-text)' }}>Activos por estado</h2>
           {assetsByStatus.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-slate-400 text-sm">Sin activos registrados</div>
+            <div className="h-48 flex items-center justify-center text-sm" style={{ color: 'var(--ds-text-subtle)' }}>Sin activos registrados</div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -190,15 +190,14 @@ export default function ReportsModule() {
           )}
         </div>
 
-        {/* Maintenance trend bar */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-          <h2 className="font-semibold text-slate-900 mb-4">Órdenes de mantenimiento (últimos 6 meses)</h2>
+        <div className="rounded-2xl p-5 shadow-sm" style={cardStyle}>
+          <h2 className="font-semibold mb-4" style={{ color: 'var(--ds-text)' }}>Órdenes de mantenimiento (últimos 6 meses)</h2>
           {maintenanceTrend.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-slate-400 text-sm">Sin datos de tendencia</div>
+            <div className="h-48 flex items-center justify-center text-sm" style={{ color: 'var(--ds-text-subtle)' }}>Sin datos de tendencia</div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={maintenanceTrend} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-border)" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
@@ -209,13 +208,12 @@ export default function ReportsModule() {
         </div>
       </div>
 
-      {/* Charts row 2 */}
       {departments.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-          <h2 className="font-semibold text-slate-900 mb-4">Personal por departamento</h2>
+        <div className="rounded-2xl p-5 shadow-sm" style={cardStyle}>
+          <h2 className="font-semibold mb-4" style={{ color: 'var(--ds-text)' }}>Personal por departamento</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={departments} layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-border)" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
               <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={120} />
               <Tooltip />
