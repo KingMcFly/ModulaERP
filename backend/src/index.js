@@ -45,6 +45,7 @@ import usersRouter         from './routes/users.js';
 import cronRouter          from './routes/cron.js';
 import lookupRouter        from './routes/lookup.js';
 import registerRouter      from './routes/register.js';
+import statusRouter        from './routes/status.js';
 import db from './db.js';
 
 // ── A09: Bootstrap audit log table (runs once on startup) ─────────────────────
@@ -188,9 +189,17 @@ app.use('/api/users',          usersRouter);
 app.use('/api/cron',           cronRouter);
 app.use('/api/lookup',         lookupRouter);
 app.use('/api/register',       registerRouter);
+app.use('/api/status',         statusRouter);
 
-// ── A05: Health check — no sensitive server information exposed ───────────────
-app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+// ── A05: Health check — also pings DB so OpenStatus can detect DB outages ─────
+app.get('/api/health', async (_req, res) => {
+  try {
+    await db.query('SELECT 1');
+    res.json({ status: 'ok', db: 'ok' });
+  } catch {
+    res.status(503).json({ status: 'degraded', db: 'down' });
+  }
+});
 
 // ── A05: Security contact disclosure (RFC 9116) ───────────────────────────────
 app.get('/.well-known/security.txt', (_req, res) => {

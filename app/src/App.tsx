@@ -7,6 +7,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword  from './components/ResetPassword';
+import StatusPage     from './pages/StatusPage';
 
 const Dashboard      = lazy(() => import('./modules/Dashboard'));
 const Inventory      = lazy(() => import('./modules/inventory'));
@@ -83,6 +84,8 @@ export default function App() {
     <>
       <Toaster position="top-right" richColors />
       <Routes>
+        {/* Public routes — no auth required */}
+        <Route path="/status"                  element={<StatusPage />} />
         <Route path="/login"                   element={user ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/register"               element={user ? <Navigate to="/" replace /> : <Register />} />
         <Route path="/forgot-password"         element={user ? <Navigate to="/" replace /> : <ForgotPassword />} />
