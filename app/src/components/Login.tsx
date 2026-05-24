@@ -168,7 +168,7 @@ function SidePanel({ dark }: ThemeProps) {
 
   return (
     <aside
-      className="hidden h-full min-h-[590px] rounded-3xl border p-8 lg:flex lg:flex-col lg:justify-between"
+      className="hidden rounded-3xl border p-8 lg:flex lg:min-h-[590px] lg:flex-col"
       style={{
         background: c.cardAlt,
         borderColor: c.border,
@@ -204,7 +204,7 @@ function SidePanel({ dark }: ThemeProps) {
         </div>
       </div>
 
-      <div>
+      <div className="mt-10">
         <div
           className="rounded-2xl border p-5"
           style={{ background: dark ? colors.dark.card : colors.light.card, borderColor: c.border }}
@@ -223,7 +223,7 @@ function SidePanel({ dark }: ThemeProps) {
           </div>
         </div>
 
-        <p className="mt-5 text-[12px] leading-5" style={{ color: c.subtle }}>
+        <p className="mt-5 max-w-[560px] text-[12px] leading-5" style={{ color: c.subtle }}>
           Software desarrollado por FBSystems para empresas que necesitan ordenar su gestión diaria sin complejidad innecesaria.
         </p>
       </div>
