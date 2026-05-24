@@ -6,84 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { cleanRut, formatRut, looksLikeRut, validateRut } from '../utils/rut';
 
-// ── Logo — fiel al PNG ────────────────────────────────────────────────────────
-function Logo({ dark }: { dark: boolean }) {
-  return (
-    <div className="flex flex-col items-center gap-2.5 select-none">
-      {/* Wordmark */}
-      <div className="flex items-baseline" style={{ lineHeight: 1 }}>
-        <span
-          style={{
-            fontFamily: '"Plus Jakarta Sans", system-ui',
-            fontSize: 56,
-            fontWeight: 900,
-            letterSpacing: '-0.04em',
-            background: 'linear-gradient(135deg, #FFD166 0%, #F2A115 55%, #C8720A 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            filter: dark
-              ? 'drop-shadow(0 0 18px rgba(242,176,69,0.45))'
-              : 'drop-shadow(0 2px 6px rgba(180,100,0,0.18))',
-          }}
-        >
-          FB
-        </span>
-        <span
-          style={{
-            fontFamily: '"Plus Jakarta Sans", system-ui',
-            fontSize: 56,
-            fontWeight: 300,
-            letterSpacing: '-0.03em',
-            marginLeft: 8,
-            color: dark ? 'rgba(255,255,255,0.92)' : '#1A1A1E',
-          }}
-        >
-          Core
-        </span>
-      </div>
-
-      {/* Byline — matches the "— by FB Systems —" del PNG */}
-      <div className="flex items-center gap-2">
-        <div
-          style={{
-            width: 30, height: 1.5, borderRadius: 1,
-            background: `linear-gradient(90deg, transparent, ${dark ? '#F2A115' : '#C8720A'})`,
-            opacity: dark ? 0.7 : 0.5,
-          }}
-        />
-        <span
-          style={{
-            fontSize: 10,
-            letterSpacing: '0.20em',
-            textTransform: 'uppercase',
-            color: dark ? 'rgba(255,255,255,0.38)' : '#9898A3',
-          }}
-        >
-          by{' '}
-          <strong
-            style={{
-              fontWeight: 800,
-              color: dark ? '#F2A115' : '#C8720A',
-            }}
-          >
-            FB
-          </strong>{' '}
-          Systems
-        </span>
-        <div
-          style={{
-            width: 30, height: 1.5, borderRadius: 1,
-            background: `linear-gradient(90deg, ${dark ? '#F2A115' : '#C8720A'}, transparent)`,
-            opacity: dark ? 0.7 : 0.5,
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-// ── Input ─────────────────────────────────────────────────────────────────────
+// ── Input field ───────────────────────────────────────────────────────────────
 function Field({
   id, label, type = 'text', value, onChange, placeholder, autoComplete, dark, right,
 }: {
@@ -93,48 +16,45 @@ function Field({
 }) {
   const [focused, setFocused] = useState(false);
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <label
-          htmlFor={id}
-          style={{
-            fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: dark ? 'rgba(255,255,255,0.35)' : '#8E8E93',
-          }}
-        >
+        <label htmlFor={id} style={{
+          fontSize: 11, fontWeight: 600, letterSpacing: '0.07em',
+          textTransform: 'uppercase',
+          color: dark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.38)',
+        }}>
           {label}
         </label>
         {right}
       </div>
-      <div
-        className="flex items-center rounded-xl overflow-hidden transition-all duration-200"
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        required
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        className="w-full rounded-2xl text-sm outline-none transition-all duration-200"
         style={{
-          background: dark ? 'rgba(255,255,255,0.05)' : '#EDEDF2',
+          padding: '13px 16px',
+          background: dark
+            ? focused ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.05)'
+            : focused ? '#fff' : 'rgba(255,255,255,0.75)',
           border: `1.5px solid ${
             focused
-              ? 'rgba(242,176,69,0.60)'
-              : dark ? 'rgba(255,255,255,0.07)' : 'transparent'
+              ? 'rgba(242,176,69,0.55)'
+              : dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'
           }`,
-          boxShadow: focused ? '0 0 0 3px rgba(242,176,69,0.12)' : 'none',
+          boxShadow: focused
+            ? '0 0 0 3px rgba(242,176,69,0.10)'
+            : dark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
+          color: dark ? 'rgba(255,255,255,0.90)' : '#0D0D12',
+          backdropFilter: 'blur(12px)',
         }}
-      >
-        <input
-          id={id}
-          type={type}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          required
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          className="w-full bg-transparent py-3 px-4 text-sm outline-none"
-          style={{
-            color: dark ? 'rgba(255,255,255,0.88)' : '#0A0A0F',
-          }}
-        />
-      </div>
+      />
     </div>
   );
 }
@@ -149,32 +69,18 @@ function PasswordField({
   const [focused, setFocused] = useState(false);
   const [show, setShow] = useState(false);
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <label
-          htmlFor={id}
-          style={{
-            fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: dark ? 'rgba(255,255,255,0.35)' : '#8E8E93',
-          }}
-        >
+        <label htmlFor={id} style={{
+          fontSize: 11, fontWeight: 600, letterSpacing: '0.07em',
+          textTransform: 'uppercase',
+          color: dark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.38)',
+        }}>
           {label}
         </label>
         {right}
       </div>
-      <div
-        className="relative flex items-center rounded-xl overflow-hidden transition-all duration-200"
-        style={{
-          background: dark ? 'rgba(255,255,255,0.05)' : '#EDEDF2',
-          border: `1.5px solid ${
-            focused
-              ? 'rgba(242,176,69,0.60)'
-              : dark ? 'rgba(255,255,255,0.07)' : 'transparent'
-          }`,
-          boxShadow: focused ? '0 0 0 3px rgba(242,176,69,0.12)' : 'none',
-        }}
-      >
+      <div className="relative" style={{ transition: 'all 200ms' }}>
         <input
           id={id}
           type={show ? 'text' : 'password'}
@@ -185,17 +91,32 @@ function PasswordField({
           required
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className="w-full bg-transparent py-3 pl-4 pr-12 text-sm outline-none"
-          style={{ color: dark ? 'rgba(255,255,255,0.88)' : '#0A0A0F' }}
+          className="w-full rounded-2xl text-sm outline-none transition-all duration-200"
+          style={{
+            padding: '13px 48px 13px 16px',
+            background: dark
+              ? focused ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.05)'
+              : focused ? '#fff' : 'rgba(255,255,255,0.75)',
+            border: `1.5px solid ${
+              focused
+                ? 'rgba(242,176,69,0.55)'
+                : dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)'
+            }`,
+            boxShadow: focused
+              ? '0 0 0 3px rgba(242,176,69,0.10)'
+              : dark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
+            color: dark ? 'rgba(255,255,255,0.90)' : '#0D0D12',
+            backdropFilter: 'blur(12px)',
+          }}
         />
         <button
           type="button"
           onClick={() => setShow(s => !s)}
           aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-          className="absolute right-3 p-1.5 rounded-lg transition-colors"
-          style={{ color: dark ? 'rgba(255,255,255,0.28)' : '#AEAEB2' }}
-          onMouseEnter={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.65)' : '#65656E')}
-          onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.28)' : '#AEAEB2')}
+          className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-lg transition-colors"
+          style={{ color: dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)' }}
+          onMouseEnter={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)')}
+          onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.28)')}
         >
           {show ? <EyeOff size={14} /> : <Eye size={14} />}
         </button>
@@ -210,43 +131,25 @@ function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: (e: React.Mo
     <button
       type="button"
       onClick={onToggle}
-      aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-      className="flex items-center justify-center rounded-xl size-9 transition-all duration-200"
+      aria-label={dark ? 'Modo claro' : 'Modo oscuro'}
+      className="fixed top-4 right-4 z-50 size-9 flex items-center justify-center rounded-xl transition-all duration-200"
       style={{
-        background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-        border: `1px solid ${dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
-        color: dark ? 'rgba(255,255,255,0.55)' : '#65656E',
+        background: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+        border: `1px solid ${dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)'}`,
+        color: dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+        backdropFilter: 'blur(12px)',
       }}
-      onMouseEnter={e => Object.assign((e.currentTarget as HTMLButtonElement).style, {
-        background: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.09)',
-        color: dark ? 'rgba(255,255,255,0.85)' : '#0A0A0F',
+      onMouseEnter={e => Object.assign(e.currentTarget.style, {
+        background: dark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.09)',
+        color: dark ? 'rgba(255,255,255,0.80)' : 'rgba(0,0,0,0.70)',
       })}
-      onMouseLeave={e => Object.assign((e.currentTarget as HTMLButtonElement).style, {
-        background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
-        color: dark ? 'rgba(255,255,255,0.55)' : '#65656E',
+      onMouseLeave={e => Object.assign(e.currentTarget.style, {
+        background: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+        color: dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
       })}
     >
-      {dark
-        ? <Sun  size={15} strokeWidth={2} />
-        : <Moon size={15} strokeWidth={2} />
-      }
+      {dark ? <Sun size={15} strokeWidth={1.8} /> : <Moon size={15} strokeWidth={1.8} />}
     </button>
-  );
-}
-
-// ── Background decorations ────────────────────────────────────────────────────
-function BgDecor({ dark }: { dark: boolean }) {
-  if (!dark) return (
-    <>
-      <div className="pointer-events-none fixed" style={{ top: -180, right: -180, width: 600, height: 600, background: 'radial-gradient(circle, rgba(242,176,69,0.08) 0%, transparent 60%)' }} />
-      <div className="pointer-events-none fixed" style={{ bottom: -150, left: -150, width: 500, height: 500, background: 'radial-gradient(circle, rgba(242,176,69,0.05) 0%, transparent 60%)' }} />
-    </>
-  );
-  return (
-    <>
-      <div className="pointer-events-none fixed" style={{ top: -200, right: -200, width: 700, height: 700, background: 'radial-gradient(circle, rgba(242,176,69,0.07) 0%, transparent 60%)' }} />
-      <div className="pointer-events-none fixed" style={{ bottom: -200, left: -200, width: 600, height: 600, background: 'radial-gradient(circle, rgba(242,176,69,0.04) 0%, transparent 60%)' }} />
-    </>
   );
 }
 
@@ -286,33 +189,43 @@ export default function Login() {
 
   return (
     <div
-      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 transition-colors duration-300"
-      style={{ background: dark ? '#0D0D12' : '#F0F0F5' }}
+      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-5"
+      style={{
+        background: dark
+          ? 'radial-gradient(ellipse 90% 70% at 50% -10%, rgba(242,176,69,0.10) 0%, transparent 60%), #09090F'
+          : 'radial-gradient(ellipse 90% 60% at 50% -10%, rgba(242,176,69,0.10) 0%, transparent 60%), #F0F0F6',
+      }}
     >
-      <BgDecor dark={dark} />
+      {/* Subtle bottom glow */}
+      <div className="pointer-events-none fixed" style={{
+        bottom: -300, left: '50%', transform: 'translateX(-50%)',
+        width: 700, height: 500,
+        background: dark
+          ? 'radial-gradient(ellipse, rgba(242,176,69,0.04) 0%, transparent 70%)'
+          : 'radial-gradient(ellipse, rgba(242,176,69,0.06) 0%, transparent 70%)',
+      }} />
 
-      {/* Theme toggle — top right */}
-      <div className="fixed top-4 right-4 z-50">
-        <ThemeToggle dark={dark} onToggle={toggle} />
-      </div>
+      <ThemeToggle dark={dark} onToggle={toggle} />
 
-      <div className="relative z-10 w-full max-w-[400px] flex flex-col items-center">
+      <div className="relative z-10 w-full max-w-[390px] flex flex-col items-center">
 
-        {/* Logo */}
-        <Logo dark={dark} />
-
-        {/* Subtitle */}
-        <p
-          className="mt-3 text-sm"
-          style={{ color: dark ? 'rgba(255,255,255,0.35)' : '#9898A3' }}
-        >
-          Ingresa a tu espacio de trabajo
-        </p>
+        {/* Heading */}
+        <div className="w-full mb-8 text-center">
+          <h1
+            className="text-3xl font-bold tracking-tight"
+            style={{ color: dark ? 'rgba(255,255,255,0.94)' : '#0D0D12', letterSpacing: '-0.03em' }}
+          >
+            Bienvenido de vuelta
+          </h1>
+          <p className="mt-2 text-[14px]" style={{ color: dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.42)' }}>
+            Ingresa a tu espacio de trabajo
+          </p>
+        </div>
 
         {/* Session replaced banner */}
         {sessionMessage && (
           <div
-            className="w-full mt-6 flex items-start gap-3 rounded-2xl p-4 text-[13px]"
+            className="w-full mb-5 flex items-start gap-3 rounded-2xl p-4 text-[13px]"
             style={{
               background: 'rgba(239,68,68,0.10)',
               border: '1px solid rgba(239,68,68,0.20)',
@@ -324,126 +237,144 @@ export default function Login() {
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} noValidate className="w-full mt-8 space-y-4">
+        {/* Card */}
+        <div
+          className="w-full rounded-3xl p-7"
+          style={{
+            background: dark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.80)',
+            border: `1px solid ${dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)'}`,
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            boxShadow: dark
+              ? '0 8px 40px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.07)'
+              : '0 4px 24px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04)',
+          }}
+        >
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <Field
+              id="login-id"
+              label="Correo electrónico o RUT"
+              value={identifier}
+              onChange={handleIdentifierChange}
+              placeholder="correo@empresa.com o 12.345.678-9"
+              autoComplete="username"
+              dark={dark}
+            />
 
-          <Field
-            id="login-id"
-            label="Correo electrónico o RUT"
-            value={identifier}
-            onChange={handleIdentifierChange}
-            placeholder="correo@empresa.com o 12.345.678-9"
-            autoComplete="username"
-            dark={dark}
-          />
+            <PasswordField
+              id="login-password"
+              label="Contraseña"
+              value={password}
+              onChange={setPassword}
+              autoComplete="current-password"
+              dark={dark}
+              right={
+                <Link
+                  to="/forgot-password"
+                  className="text-[11px] font-semibold transition-colors"
+                  style={{ color: dark ? 'rgba(242,176,69,0.60)' : '#B8740A' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = '#F2A115')}
+                  onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(242,176,69,0.60)' : '#B8740A')}
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              }
+            />
 
-          <PasswordField
-            id="login-password"
-            label="Contraseña"
-            value={password}
-            onChange={setPassword}
-            autoComplete="current-password"
-            dark={dark}
-            right={
-              <Link
-                to="/forgot-password"
-                className="text-[11px] font-semibold transition-colors"
-                style={{ color: dark ? 'rgba(242,176,69,0.65)' : '#C8820A' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#F2A115')}
-                onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(242,176,69,0.65)' : '#C8820A')}
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            }
-          />
-
-          {/* Submit */}
-          <div className="pt-1">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-[13.5px] transition-all duration-150 disabled:opacity-40"
-              style={{
-                background: 'linear-gradient(135deg, #FFD166 0%, #F2A115 50%, #C8720A 100%)',
-                color: '#1A0F00',
-                boxShadow: dark
-                  ? '0 1px 0 rgba(255,255,255,0.10) inset, 0 4px 20px rgba(242,176,69,0.28)'
-                  : '0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 16px rgba(200,114,10,0.22)',
-              }}
-              onMouseEnter={e => {
-                if (loading) return;
-                Object.assign((e.currentTarget as HTMLButtonElement).style, {
-                  boxShadow: dark
-                    ? '0 1px 0 rgba(255,255,255,0.10) inset, 0 6px 28px rgba(242,176,69,0.42)'
-                    : '0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 24px rgba(200,114,10,0.34)',
-                  transform: 'translateY(-1px)',
-                });
-              }}
-              onMouseLeave={e => {
-                Object.assign((e.currentTarget as HTMLButtonElement).style, {
-                  boxShadow: dark
-                    ? '0 1px 0 rgba(255,255,255,0.10) inset, 0 4px 20px rgba(242,176,69,0.28)'
-                    : '0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 16px rgba(200,114,10,0.22)',
+            {/* Submit */}
+            <div className="pt-1">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 rounded-2xl font-bold text-[14px] transition-all duration-150 disabled:opacity-40"
+                style={{
+                  padding: '14px',
+                  background: 'linear-gradient(135deg, #FFD166 0%, #F0A010 50%, #C8720A 100%)',
+                  color: '#1C0E00',
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 22px rgba(200,114,10,0.30)',
+                }}
+                onMouseEnter={e => {
+                  if (loading) return;
+                  Object.assign(e.currentTarget.style, {
+                    boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 30px rgba(200,114,10,0.45)',
+                    transform: 'translateY(-1px)',
+                  });
+                }}
+                onMouseLeave={e => Object.assign(e.currentTarget.style, {
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 22px rgba(200,114,10,0.30)',
                   transform: '',
-                });
-              }}
-              onMouseDown={e  => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.98)'; }}
-              onMouseUp={e    => { (e.currentTarget as HTMLButtonElement).style.transform = ''; }}
-            >
-              {loading ? (
-                <>
-                  <span className="size-4 border-2 border-[#1A0F00]/25 border-t-[#1A0F00] rounded-full animate-spin" />
-                  Ingresando…
-                </>
-              ) : (
-                <>Ingresar <ArrowRight size={15} /></>
-              )}
-            </button>
-          </div>
-        </form>
-
-        {/* Divider */}
-        <div className="w-full my-7 flex items-center gap-4">
-          <div className="flex-1 h-px" style={{ background: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)' }} />
-          <span className="text-[11px]" style={{ color: dark ? 'rgba(255,255,255,0.20)' : '#AEAEB2' }}>
-            ¿Empresa nueva?
-          </span>
-          <div className="flex-1 h-px" style={{ background: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)' }} />
+                })}
+                onMouseDown={e  => { e.currentTarget.style.transform = 'scale(0.98)'; }}
+                onMouseUp={e    => { e.currentTarget.style.transform = ''; }}
+              >
+                {loading ? (
+                  <>
+                    <span className="size-4 border-2 border-[#1C0E00]/20 border-t-[#1C0E00] rounded-full animate-spin" />
+                    Ingresando…
+                  </>
+                ) : (
+                  <>Ingresar <ArrowRight size={15} strokeWidth={2.2} /></>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
 
-        {/* Register CTA */}
+        {/* Divider */}
+        <div className="w-full my-5 flex items-center gap-3">
+          <div className="flex-1 h-px" style={{ background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)' }} />
+          <span className="text-[11px]" style={{ color: dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.30)' }}>
+            ¿Empresa nueva?
+          </span>
+          <div className="flex-1 h-px" style={{ background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)' }} />
+        </div>
+
+        {/* Register */}
         <Link
           to="/register"
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-150"
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-150"
           style={{
-            background: dark ? 'rgba(255,255,255,0.05)' : 'white',
-            border: `1.5px solid ${dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'}`,
-            color: dark ? 'rgba(255,255,255,0.60)' : '#65656E',
-            boxShadow: dark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
+            background: dark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.70)',
+            border: `1.5px solid ${dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            color: dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+            backdropFilter: 'blur(12px)',
           }}
-          onMouseEnter={e => Object.assign((e.currentTarget as HTMLAnchorElement).style, {
-            background: dark ? 'rgba(255,255,255,0.09)' : '#FAFAFA',
-            color: dark ? 'rgba(255,255,255,0.88)' : '#0A0A0F',
+          onMouseEnter={e => Object.assign(e.currentTarget.style, {
+            background: dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.95)',
+            color: dark ? 'rgba(255,255,255,0.80)' : '#0D0D12',
           })}
-          onMouseLeave={e => Object.assign((e.currentTarget as HTMLAnchorElement).style, {
-            background: dark ? 'rgba(255,255,255,0.05)' : 'white',
-            color: dark ? 'rgba(255,255,255,0.60)' : '#65656E',
+          onMouseLeave={e => Object.assign(e.currentTarget.style, {
+            background: dark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.70)',
+            color: dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
           })}
         >
           Crea tu empresa gratis
         </Link>
 
-        {/* Footer */}
-        <Link
-          to="/status"
-          className="mt-8 flex items-center gap-1.5 text-[11.5px] transition-colors"
-          style={{ color: dark ? 'rgba(255,255,255,0.18)' : '#C3C3C8' }}
-          onMouseEnter={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.45)' : '#8E8E93')}
-          onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.18)' : '#C3C3C8')}
-        >
-          <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Estado del sistema
-        </Link>
+        {/* Logo PNG at the bottom */}
+        <div className="mt-12 flex flex-col items-center gap-4">
+          <img
+            src="/logo.png"
+            alt="FB Core"
+            style={{
+              width: 170,
+              borderRadius: 16,
+              opacity: dark ? 0.80 : 0.55,
+              filter: dark ? 'none' : 'brightness(0.95)',
+            }}
+          />
+          <Link
+            to="/status"
+            className="flex items-center gap-1.5 text-[11px] transition-colors"
+            style={{ color: dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.28)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.55)')}
+            onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.28)')}
+          >
+            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Estado del sistema
+          </Link>
+        </div>
+
       </div>
     </div>
   );
