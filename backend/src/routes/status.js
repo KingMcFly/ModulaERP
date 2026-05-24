@@ -61,9 +61,10 @@ async function fetchStatus(apiKey) {
           description: m.description || null,
           status:      statusFromSummary(days),
           uptime:      uptimeFromSummary(days),
+          days:        days.slice(0, 45).reverse(), // oldest → newest, max 45 days
         };
       } catch {
-        return { id: m.id, name: m.name, url: m.url, description: null, status: 'unknown', uptime: null };
+        return { id: m.id, name: m.name, url: m.url, description: null, status: 'unknown', uptime: null, days: [] };
       }
     })
   );

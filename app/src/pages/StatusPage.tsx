@@ -8,6 +8,12 @@ const REFRESH_INTERVAL = 60_000;
 type MonitorStatus = 'operational' | 'degraded' | 'down' | 'unknown';
 type OverallStatus = MonitorStatus;
 
+interface DayCheck {
+  day: string;
+  count: number;
+  ok: number;
+}
+
 interface Monitor {
   id: number;
   name: string;
@@ -15,6 +21,7 @@ interface Monitor {
   status: MonitorStatus;
   uptime: number | null;
   description: string | null;
+  days: DayCheck[];
 }
 
 interface IncidentUpdate {
@@ -95,27 +102,65 @@ function StatusDot({ status }: { status: MonitorStatus }) {
   );
 }
 
+function barColor(d: DayCheck) {
+  if (d.count === 0)              return 'bg-slate-200';
+  if (d.ok === d.count)           return 'bg-emerald-400';
+  if (d.ok === 0)                 return 'bg-red-400';
+  return 'bg-amber-400';
+}
+
+function barLabel(d: DayCheck) {
+  const date = new Intl.DateTimeFormat('es-CL', { day: '2-digit', month: 'short' }).format(new Date(d.day));
+  if (d.count === 0) return `${date} — sin datos`;
+  const pct = Math.round((d.ok / d.count) * 100);
+  return `${date} — ${pct}% operacional`;
+}
+
+function UptimeBar({ days }: { days: DayCheck[] }) {
+  if (!days.length) return null;
+  return (
+    <div className="flex items-end gap-px h-6">
+      {days.map((d) => (
+        <div
+          key={d.day}
+          title={barLabel(d)}
+          className={`w-1.5 rounded-sm h-full transition-opacity hover:opacity-70 cursor-default ${barColor(d)}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 function MonitorCard({ monitor }: { monitor: Monitor }) {
   const meta = STATUS_META[monitor.status] ?? STATUS_META.unknown;
   return (
-    <div className="flex items-center justify-between py-4 px-5 bg-white rounded-2xl border border-slate-100 shadow-sm gap-4">
-      <div className="flex items-center gap-3 min-w-0">
-        <StatusDot status={monitor.status} />
-        <div className="min-w-0">
-          <p className="font-semibold text-slate-800 text-sm truncate">{monitor.name}</p>
-          {monitor.description && (
-            <p className="text-xs text-slate-400 truncate">{monitor.description}</p>
-          )}
+    <div className="py-4 px-5 bg-white rounded-2xl border border-slate-100 shadow-sm space-y-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <StatusDot status={monitor.status} />
+          <div className="min-w-0">
+            <p className="font-semibold text-slate-800 text-sm truncate">{monitor.name}</p>
+            {monitor.description && (
+              <p className="text-xs text-slate-400 truncate">{monitor.description}</p>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="flex items-center gap-3 shrink-0">
-        {monitor.uptime !== null && (
-          <span className="text-xs text-slate-400 tabular-nums">{monitor.uptime.toFixed(2)}% uptime</span>
-        )}
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ring-1 ${meta.color} ${meta.ring} bg-white`}>
+        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ring-1 shrink-0 ${meta.color} ${meta.ring} bg-white`}>
           {meta.label}
         </span>
       </div>
+
+      {monitor.days.length > 0 && (
+        <div className="space-y-1.5">
+          <UptimeBar days={monitor.days} />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-slate-400">Últimos {monitor.days.length} días</span>
+            {monitor.uptime !== null && (
+              <span className="text-xs text-slate-400 tabular-nums">{monitor.uptime.toFixed(2)}% uptime</span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
