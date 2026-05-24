@@ -74,25 +74,16 @@ function Brand({ dark, center = false }: ThemeProps & { center?: boolean }) {
           boxShadow: dark ? 'none' : '0 1px 2px rgba(17,24,39,0.04)',
         }}
       >
-        <span
-          className="text-[15px] font-black tracking-[-0.08em]"
-          style={{ color: c.accent }}
-        >
+        <span className="text-[15px] font-black tracking-[-0.08em]" style={{ color: c.accent }}>
           FB
         </span>
       </div>
 
       <div className="leading-none">
-        <div
-          className="text-[20px] font-black tracking-[-0.045em]"
-          style={{ color: c.text }}
-        >
+        <div className="text-[20px] font-black tracking-[-0.045em]" style={{ color: c.text }}>
           FB Core
         </div>
-        <div
-          className="mt-1 text-[10.5px] font-bold uppercase tracking-[0.18em]"
-          style={{ color: c.subtle }}
-        >
+        <div className="mt-1 text-[10.5px] font-bold uppercase tracking-[0.18em]" style={{ color: c.subtle }}>
           by FBSystems
         </div>
       </div>
@@ -163,67 +154,67 @@ function TrustItem({ dark, children }: ThemeProps & { children: React.ReactNode 
   );
 }
 
-function SidePanel({ dark }: ThemeProps) {
+function InfoCard({ dark }: ThemeProps) {
   const c = dark ? colors.dark : colors.light;
 
   return (
-    <aside
-      className="hidden rounded-3xl border p-8 lg:flex lg:min-h-[560px] lg:flex-col lg:justify-center"
-      style={{
-        background: c.cardAlt,
-        borderColor: c.border,
-        boxShadow: dark ? 'none' : '0 10px 35px rgba(17,24,39,0.055)',
-      }}
-    >
-      <div>
+    <aside className="hidden lg:flex">
+      <div
+        className="flex min-h-[620px] w-full flex-col rounded-3xl border p-8"
+        style={{
+          background: c.cardAlt,
+          borderColor: c.border,
+          boxShadow: dark ? '0 20px 60px rgba(0,0,0,0.20)' : '0 20px 60px rgba(17,24,39,0.06)',
+        }}
+      >
         <Brand dark={dark} />
 
-        <div className="mt-14 max-w-[440px]">
-          <div
-            className="mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em]"
-            style={{
-              background: dark ? '#171B24' : '#FFFFFF',
-              borderColor: c.border,
-              color: c.accent,
-            }}
-          >
-            <ShieldCheck size={14} strokeWidth={2.2} />
-            Acceso empresarial seguro
+        <div className="flex flex-1 flex-col justify-center">
+          <div className="max-w-[440px]">
+            <div
+              className="mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em]"
+              style={{
+                background: dark ? '#171B24' : '#FFFFFF',
+                borderColor: c.border,
+                color: c.accent,
+              }}
+            >
+              <ShieldCheck size={14} strokeWidth={2.2} />
+              Acceso empresarial seguro
+            </div>
+
+            <h2 className="max-w-[420px] text-[38px] font-black leading-[1.02] tracking-[-0.055em]" style={{ color: c.text }}>
+              Plataforma centralizada para tu operación.
+            </h2>
+
+            <p className="mt-5 max-w-[420px] text-[15px] leading-7" style={{ color: c.muted }}>
+              FB Core reúne la gestión operativa de tu empresa en un entorno claro, controlado y preparado para equipos reales.
+            </p>
+
+            <div
+              className="mt-10 rounded-2xl border p-5"
+              style={{
+                background: dark ? colors.dark.card : colors.light.card,
+                borderColor: c.border,
+              }}
+            >
+              <div className="mb-4 flex items-center gap-2">
+                <Server size={17} style={{ color: c.accent }} />
+                <span className="text-[13px] font-black uppercase tracking-[0.12em]" style={{ color: c.text }}>
+                  Operación confiable
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <TrustItem dark={dark}>Control de acceso por empresa, usuarios y permisos.</TrustItem>
+                <TrustItem dark={dark}>Diseño sobrio orientado a claridad y productividad.</TrustItem>
+                <TrustItem dark={dark}>Estado del sistema visible para mayor transparencia.</TrustItem>
+              </div>
+            </div>
           </div>
-
-          <h2
-            className="max-w-[410px] text-[38px] font-black leading-[1.02] tracking-[-0.055em]"
-            style={{ color: c.text }}
-          >
-            Plataforma centralizada para tu operación.
-          </h2>
-
-          <p className="mt-5 max-w-[420px] text-[15px] leading-7" style={{ color: c.muted }}>
-            FB Core reúne la gestión operativa de tu empresa en un entorno claro, controlado y preparado para equipos reales.
-          </p>
         </div>
-      </div>
 
-      <div className="mt-10">
-        <div
-          className="rounded-2xl border p-5"
-          style={{ background: dark ? colors.dark.card : colors.light.card, borderColor: c.border }}
-        >
-          <div className="mb-4 flex items-center gap-2">
-            <Server size={17} style={{ color: c.accent }} />
-            <span className="text-[13px] font-black uppercase tracking-[0.12em]" style={{ color: c.text }}>
-              Operación confiable
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            <TrustItem dark={dark}>Control de acceso por empresa, usuarios y permisos.</TrustItem>
-            <TrustItem dark={dark}>Diseño sobrio orientado a claridad y productividad.</TrustItem>
-            <TrustItem dark={dark}>Estado del sistema visible para mayor transparencia.</TrustItem>
-          </div>
-        </div>
-
-        <p className="mt-5 max-w-[560px] text-[12px] leading-5" style={{ color: c.subtle }}>
+        <p className="max-w-[520px] text-[12px] leading-5" style={{ color: c.subtle }}>
           Software desarrollado por FBSystems para empresas que necesitan ordenar su gestión diaria sin complejidad innecesaria.
         </p>
       </div>
@@ -277,11 +268,7 @@ function Field({
 
   return (
     <div className="space-y-2">
-      <label
-        htmlFor={id}
-        className="block text-[11px] font-black uppercase tracking-[0.16em]"
-        style={{ color: c.subtle }}
-      >
+      <label htmlFor={id} className="block text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: c.subtle }}>
         {label}
       </label>
 
@@ -339,11 +326,7 @@ function PasswordField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <label
-          htmlFor={id}
-          className="block text-[11px] font-black uppercase tracking-[0.16em]"
-          style={{ color: c.subtle }}
-        >
+        <label htmlFor={id} className="block text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: c.subtle }}>
           {label}
         </label>
         {right}
@@ -384,6 +367,148 @@ function PasswordField({
         >
           {show ? <EyeOff size={17} strokeWidth={2} /> : <Eye size={17} strokeWidth={2} />}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function LoginCard({
+  dark,
+  identifier,
+  password,
+  loading,
+  sessionMessage,
+  onIdentifierChange,
+  onPasswordChange,
+  onSubmit,
+}: ThemeProps & {
+  identifier: string;
+  password: string;
+  loading: boolean;
+  sessionMessage?: string | null;
+  onIdentifierChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent) => void;
+}) {
+  const c = dark ? colors.dark : colors.light;
+
+  return (
+    <div className="flex">
+      <div
+        className="flex min-h-[auto] w-full flex-col rounded-3xl border p-6 sm:p-8 lg:min-h-[620px]"
+        style={{
+          background: c.card,
+          borderColor: c.border,
+          boxShadow: dark ? '0 20px 60px rgba(0,0,0,0.22)' : '0 20px 60px rgba(17,24,39,0.08)',
+        }}
+      >
+        <Brand dark={dark} />
+
+        <div className="flex flex-1 flex-col justify-center pt-8 lg:pt-0">
+          <div>
+            <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: c.accent }}>
+              Acceso de clientes
+            </p>
+
+            <h1 className="text-[31px] font-black leading-tight tracking-[-0.045em]" style={{ color: c.text }}>
+              Accede a tu cuenta
+            </h1>
+
+            <p className="mt-3 text-[14px] leading-6" style={{ color: c.muted }}>
+              Ingresa con tu correo electrónico o RUT para continuar en FB Core.
+            </p>
+          </div>
+
+          {sessionMessage && (
+            <div
+              className="mt-6 flex items-start gap-3 rounded-xl border p-4 text-[13px] leading-5"
+              style={{
+                background: dark ? 'rgba(239,68,68,0.075)' : '#FEF2F2',
+                borderColor: dark ? 'rgba(239,68,68,0.22)' : '#FECACA',
+                color: dark ? '#FCA5A5' : '#991B1B',
+              }}
+            >
+              <AlertTriangle size={17} className="mt-0.5 shrink-0" />
+              <span>{sessionMessage}</span>
+            </div>
+          )}
+
+          <form onSubmit={onSubmit} noValidate className="mt-7 space-y-5">
+            <Field
+              id="login-id"
+              label="Correo electrónico o RUT"
+              value={identifier}
+              onChange={onIdentifierChange}
+              placeholder="correo@empresa.com"
+              autoComplete="username"
+              dark={dark}
+              icon={<Mail size={17} strokeWidth={2.1} />}
+            />
+
+            <PasswordField
+              id="login-password"
+              label="Contraseña"
+              value={password}
+              onChange={onPasswordChange}
+              autoComplete="current-password"
+              dark={dark}
+              right={
+                <Link to="/forgot-password" className="text-[12px] font-bold transition hover:underline" style={{ color: c.accent }}>
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              }
+            />
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+              style={{
+                background: c.accent,
+                color: c.accentText,
+                boxShadow: 'none',
+              }}
+              onMouseEnter={(event) => {
+                if (!loading) event.currentTarget.style.background = c.accentHover;
+              }}
+              onMouseLeave={(event) => {
+                event.currentTarget.style.background = c.accent;
+              }}
+            >
+              {loading ? (
+                <>
+                  <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent opacity-80" aria-hidden />
+                  Ingresando…
+                </>
+              ) : (
+                <>
+                  Ingresar
+                  <ArrowRight size={17} strokeWidth={2.4} />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="my-7 flex items-center gap-4">
+            <div className="h-px flex-1" style={{ background: c.border }} />
+            <span className="text-[12px] font-semibold" style={{ color: c.subtle }}>
+              ¿Empresa nueva?
+            </span>
+            <div className="h-px flex-1" style={{ background: c.border }} />
+          </div>
+
+          <Link
+            to="/register"
+            className="flex h-12 w-full items-center justify-center rounded-xl border text-[14px] font-black transition hover:-translate-y-0.5"
+            style={{
+              background: dark ? colors.dark.cardAlt : colors.light.cardAlt,
+              borderColor: c.border,
+              color: c.text,
+            }}
+          >
+            Crear empresa gratis
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -443,147 +568,27 @@ export default function Login() {
       <PageBackground dark={dark} />
       <ThemeToggle dark={dark} onClick={toggle} />
 
-      <section className="relative z-10 mx-auto grid min-h-[calc(100dvh-2.5rem)] w-full max-w-6xl items-center gap-6 lg:grid-cols-2 lg:gap-10">
-        <SidePanel dark={dark} />
+      <section className="relative z-10 mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-6xl flex-col justify-center">
+        <div className="grid items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
+          <InfoCard dark={dark} />
 
-        <div className="mx-auto flex w-full max-w-[520px] flex-col lg:max-w-none">
-          <div className="mb-7 flex items-center justify-between gap-4 lg:hidden">
-            <Brand dark={dark} />
-          </div>
+          <LoginCard
+            dark={dark}
+            identifier={identifier}
+            password={password}
+            loading={loading}
+            sessionMessage={sessionMessage}
+            onIdentifierChange={handleIdentifierChange}
+            onPasswordChange={setPassword}
+            onSubmit={handleSubmit}
+          />
+        </div>
 
-          <div
-            className="rounded-3xl border p-6 sm:p-8 lg:flex lg:min-h-[560px] lg:flex-col lg:justify-center"
-            style={{
-              background: c.card,
-              borderColor: c.border,
-              boxShadow: dark ? '0 20px 60px rgba(0,0,0,0.22)' : '0 20px 60px rgba(17,24,39,0.08)',
-            }}
-          >
-            <div className="hidden lg:block">
-              <Brand dark={dark} />
-            </div>
-
-            <div className="mt-8 lg:mt-12">
-              <p
-                className="mb-3 text-[11px] font-black uppercase tracking-[0.18em]"
-                style={{ color: c.accent }}
-              >
-                Acceso de clientes
-              </p>
-
-              <h1 className="text-[31px] font-black leading-tight tracking-[-0.045em]" style={{ color: c.text }}>
-                Accede a tu cuenta
-              </h1>
-
-              <p className="mt-3 text-[14px] leading-6" style={{ color: c.muted }}>
-                Ingresa con tu correo electrónico o RUT para continuar en FB Core.
-              </p>
-            </div>
-
-            {sessionMessage && (
-              <div
-                className="mt-6 flex items-start gap-3 rounded-xl border p-4 text-[13px] leading-5"
-                style={{
-                  background: dark ? 'rgba(239,68,68,0.075)' : '#FEF2F2',
-                  borderColor: dark ? 'rgba(239,68,68,0.22)' : '#FECACA',
-                  color: dark ? '#FCA5A5' : '#991B1B',
-                }}
-              >
-                <AlertTriangle size={17} className="mt-0.5 shrink-0" />
-                <span>{sessionMessage}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} noValidate className="mt-7 space-y-5">
-              <Field
-                id="login-id"
-                label="Correo electrónico o RUT"
-                value={identifier}
-                onChange={handleIdentifierChange}
-                placeholder="correo@empresa.com"
-                autoComplete="username"
-                dark={dark}
-                icon={<Mail size={17} strokeWidth={2.1} />}
-              />
-
-              <PasswordField
-                id="login-password"
-                label="Contraseña"
-                value={password}
-                onChange={setPassword}
-                autoComplete="current-password"
-                dark={dark}
-                right={
-                  <Link
-                    to="/forgot-password"
-                    className="text-[12px] font-bold transition hover:underline"
-                    style={{ color: c.accent }}
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-                }
-              />
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-                style={{
-                  background: c.accent,
-                  color: c.accentText,
-                  boxShadow: 'none',
-                }}
-                onMouseEnter={(event) => {
-                  if (!loading) event.currentTarget.style.background = c.accentHover;
-                }}
-                onMouseLeave={(event) => {
-                  event.currentTarget.style.background = c.accent;
-                }}
-              >
-                {loading ? (
-                  <>
-                    <span
-                      className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent opacity-80"
-                      aria-hidden
-                    />
-                    Ingresando…
-                  </>
-                ) : (
-                  <>
-                    Ingresar
-                    <ArrowRight size={17} strokeWidth={2.4} />
-                  </>
-                )}
-              </button>
-            </form>
-
-            <div className="my-7 flex items-center gap-4">
-              <div className="h-px flex-1" style={{ background: c.border }} />
-              <span className="text-[12px] font-semibold" style={{ color: c.subtle }}>
-                ¿Empresa nueva?
-              </span>
-              <div className="h-px flex-1" style={{ background: c.border }} />
-            </div>
-
-            <Link
-              to="/register"
-              className="flex h-12 w-full items-center justify-center rounded-xl border text-[14px] font-black transition hover:-translate-y-0.5"
-              style={{
-                background: dark ? colors.dark.cardAlt : colors.light.cardAlt,
-                borderColor: c.border,
-                color: c.text,
-              }}
-            >
-              Crear empresa gratis
-            </Link>
-          </div>
-
-          <div className="mt-5 flex items-center justify-between gap-4 px-1">
-            <StatusBadge dark={dark} />
-            <p className="hidden text-right text-[12px] font-medium sm:block" style={{ color: c.subtle }}>
-              © {new Date().getFullYear()} FBSystems
-            </p>
-          </div>
+        <div className="mt-5 flex items-center justify-between gap-4 px-1">
+          <StatusBadge dark={dark} />
+          <p className="hidden text-right text-[12px] font-medium sm:block" style={{ color: c.subtle }}>
+            © {new Date().getFullYear()} FBSystems
+          </p>
         </div>
       </section>
     </main>
