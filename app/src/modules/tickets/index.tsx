@@ -39,7 +39,7 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-5">Nuevo Ticket</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nuevo Ticket</h2>
         <form onSubmit={submit} className="space-y-4">
           <div><label htmlFor="tkt-title" className="label">Título *</label><input id="tkt-title" className="input" value={f.title} onChange={e => set('title', e.target.value)} required /></div>
           <div className="grid grid-cols-2 gap-3">
@@ -47,11 +47,11 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
               <select id="tkt-priority" className="input" value={f.priority} onChange={e => set('priority', e.target.value)}>
                 {Object.entries(PRIORITY_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
               </select></div>
-            <div><label htmlFor="tkt-category" className="label">Categoría</label><input id="tkt-category" className="input" value={f.category} onChange={e => set('category', e.target.value)} placeholder="HW, SW, Red..." /></div>
+            <div><label htmlFor="tkt-category" className="label">Categoría</label><input id="tkt-category" className="input" value={f.category} onChange={e => set('category', e.target.value)} placeholder="HW, SW, Red…" /></div>
             <div className="col-span-2"><label htmlFor="tkt-sla" className="label">SLA (horas)</label><input id="tkt-sla" className="input" type="number" min="1" value={f.sla_hours} onChange={e => set('sla_hours', e.target.value)} /></div>
           </div>
           <div><label htmlFor="tkt-desc" className="label">Descripción</label><textarea id="tkt-desc" className="input resize-none" rows={3} value={f.description} onChange={e => set('description', e.target.value)} /></div>
-          <div className="flex gap-3 pt-1"><button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button><button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Creando...' : 'Crear Ticket'}</button></div>
+          <div className="flex gap-3 pt-1"><button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button><button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Creando…' : 'Crear Ticket'}</button></div>
         </form>
       </div>
     </div>
@@ -83,8 +83,8 @@ export default function TicketsModule() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-slate-900">Mesa de Ayuda</h1><p className="text-slate-500 text-sm mt-0.5">Tickets y soporte técnico interno</p></div>
-        {canWrite('tickets') && <button onClick={() => setShowModal(true)} className="btn btn-primary"><Plus size={16} /> Nuevo Ticket</button>}
+        <div><h1 className="text-2xl font-semibold text-slate-900">Mesa de Ayuda</h1><p className="text-slate-500 text-sm mt-0.5">Tickets y soporte técnico interno</p></div>
+        {canWrite('tickets') && <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary"><Plus size={16} /> Nuevo Ticket</button>}
       </div>
 
       {overSla.length > 0 && (
@@ -103,7 +103,7 @@ export default function TicketsModule() {
           { label: 'Resueltos',    value: items.filter(i=>i.status==='resolved').length,    color: '#10B981' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft text-center">
-            <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+            <p className="text-2xl font-semibold" style={{ color: s.color }}>{s.value}</p>
             <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
           </div>
         ))}
@@ -125,7 +125,7 @@ export default function TicketsModule() {
           </tr></thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando...</td></tr>
+              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando…</td></tr>
             ) : items.length === 0 ? (
               <tr><td colSpan={7} className="py-12 text-center"><LifeBuoy size={32} className="mx-auto text-slate-200 mb-2" /><p className="text-slate-400 text-sm">Sin tickets</p></td></tr>
             ) : items.map(t => {

@@ -23,6 +23,20 @@ const ALLOWED_MIME = new Set([
   'text/plain', 'text/csv',
 ]);
 
+// A08: Extension blacklist — reject executables/scripts regardless of MIME spoofing
+const BLOCKED_EXTENSIONS = new Set([
+  '.exe', '.dll', '.bat', '.cmd', '.sh', '.ps1', '.psm1', '.psd1',
+  '.vbs', '.vbe', '.js', '.jse', '.wsf', '.wsh', '.msi', '.msp',
+  '.com', '.scr', '.pif', '.hta', '.cpl', '.jar', '.py', '.rb',
+  '.php', '.asp', '.aspx', '.jsp', '.cfm', '.cgi', '.pl', '.sql',
+  '.svg', // SVG can contain embedded scripts
+]);
+
+// Sanitize filename: strip path traversal, keep only safe characters
+function sanitizeFilename(name) {
+  return path.basename(name).replace(/[^a-zA-Z0-9._\-\s]/g, '_').slice(0, 200);
+}
+
 const VALID_ENTITIES = new Set(['asset', 'loan', 'maintenance', 'personnel', 'supply']);
 
 const storage = multer.diskStorage({
@@ -38,8 +52,16 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_MIME.has(file.mimetype)) return cb(null, true);
-    cb(new Error('Tipo de archivo no permitido'));
+    // A08: Check extension blacklist first (prevents MIME spoofing attacks)
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (BLOCKED_EXTENSIONS.has(ext)) {
+      return cb(new Error('Extensión de archivo no permitida'));
+    }
+    // Then validate MIME type whitelist
+    if (!ALLOWED_MIME.has(file.mimetype)) {
+      return cb(new Error('Tipo de archivo no permitido'));
+    }
+    cb(null, true);
   },
 });
 
@@ -71,12 +93,15 @@ router.post('/:entity/:entityId', (req, res, next) => {
   const { entity, entityId } = req.params;
   const relPath = path.join('attachments', req.file.filename);
 
+  // A03/A08: Sanitize original filename before storing to prevent XSS via filename display
+  const safeFilename = sanitizeFilename(req.file.originalname);
+
   const [rows] = await db.query(
     `INSERT INTO attachments (tenant_id, entity_type, entity_id, file_path, file_name, file_size, mime_type, uploaded_by)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
     [
       req.user.tenant_id, entity, entityId,
-      relPath, req.file.originalname,
+      relPath, safeFilename,
       req.file.size, req.file.mimetype,
       req.user.id,
     ]

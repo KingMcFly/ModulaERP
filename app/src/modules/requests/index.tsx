@@ -39,7 +39,7 @@ function NewRequestModal({ onClose, onCreated }: { onClose: () => void; onCreate
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-5">Nueva Solicitud</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nueva Solicitud</h2>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div><label htmlFor="req-type" className="label">Tipo</label>
@@ -54,7 +54,7 @@ function NewRequestModal({ onClose, onCreated }: { onClose: () => void; onCreate
           <div><label htmlFor="req-title" className="label">Título *</label><input id="req-title" className="input" value={f.title} onChange={e => set('title', e.target.value)} required /></div>
           <div><label htmlFor="req-desc" className="label">Descripción</label><textarea id="req-desc" className="input resize-none" rows={3} value={f.description} onChange={e => set('description', e.target.value)} /></div>
           <div><label htmlFor="req-notes" className="label">Notas adicionales</label><input id="req-notes" className="input" value={f.notes} onChange={e => set('notes', e.target.value)} /></div>
-          <div className="flex gap-3 pt-1"><button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button><button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Enviando...' : 'Enviar Solicitud'}</button></div>
+          <div className="flex gap-3 pt-1"><button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button><button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Enviando…' : 'Enviar Solicitud'}</button></div>
         </form>
       </div>
     </div>
@@ -92,10 +92,10 @@ export default function RequestsModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Solicitudes</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Solicitudes</h1>
           <p className="text-slate-500 text-sm mt-0.5">Solicitudes internas y flujos de aprobación</p>
         </div>
-        {canWrite('requests') && <button onClick={() => setShowModal(true)} className="btn btn-primary"><Plus size={16} /> Nueva Solicitud</button>}
+        {canWrite('requests') && <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary"><Plus size={16} /> Nueva Solicitud</button>}
       </div>
 
       {canApprove && pending > 0 && (
@@ -122,7 +122,7 @@ export default function RequestsModule() {
           </tr></thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando...</td></tr>
+              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando…</td></tr>
             ) : items.length === 0 ? (
               <tr><td colSpan={7} className="py-12 text-center"><ClipboardList size={32} className="mx-auto text-slate-200 mb-2" /><p className="text-slate-400 text-sm">Sin solicitudes</p></td></tr>
             ) : items.map(item => {
@@ -139,8 +139,8 @@ export default function RequestsModule() {
                   <td className="px-4 py-3.5">
                     {canApprove && item.status === 'pending' && (
                       <div className="flex gap-1">
-                        <button onClick={() => approve(item.id)} className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors" aria-label="Aprobar"><CheckCircle size={16} /></button>
-                        <button onClick={() => reject(item.id)} className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors" aria-label="Rechazar"><XCircle size={16} /></button>
+                        <button type="button" onClick={() => approve(item.id)} className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg transition-colors" aria-label="Aprobar"><CheckCircle size={16} /></button>
+                        <button type="button" onClick={() => reject(item.id)} className="p-1.5 text-slate-400 hover:text-red-600 rounded-lg transition-colors" aria-label="Rechazar"><XCircle size={16} /></button>
                       </div>
                     )}
                   </td>

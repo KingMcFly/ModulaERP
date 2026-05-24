@@ -27,18 +27,17 @@ const STATUS_CFG: Record<string, { label: string; cls: string }> = {
   cancelled:{ label: 'Cancelada',  cls: 'bg-red-100 text-red-600' },
 };
 
-function fmtMoney(n?: number) {
-  return n != null ? new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n) : '—';
-}
+const CLP_FMT = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+function fmtMoney(n?: number) { return n != null ? CLP_FMT.format(n) : '—'; }
 function fmt(d?: string | null) { return d ? new Date(d).toLocaleDateString('es-CL') : '—'; }
 
-interface ItemRow { description: string; quantity: string; unit_price: string; }
+interface ItemRow { _key: string; description: string; quantity: string; unit_price: string; }
 
 function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [providers, setProviders]     = useState<{ id: number; name: string }[]>([]);
   const [costCenters, setCostCenters] = useState<{ id: number; name: string }[]>([]);
   const [f, setF] = useState({ title: '', po_number: '', provider_id: '', cost_center_id: '', notes: '' });
-  const [items, setItems] = useState<ItemRow[]>([{ description: '', quantity: '1', unit_price: '' }]);
+  const [items, setItems] = useState<ItemRow[]>([{ _key: crypto.randomUUID(), description: '', quantity: '1', unit_price: '' }]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -49,7 +48,7 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
   const set = (k: string, v: string) => setF(p => ({ ...p, [k]: v }));
   const setItem = (i: number, k: keyof ItemRow, v: string) =>
     setItems(rows => rows.map((r, idx) => idx === i ? { ...r, [k]: v } : r));
-  const addItem = () => setItems(r => [...r, { description: '', quantity: '1', unit_price: '' }]);
+  const addItem = () => setItems(r => [...r, { _key: crypto.randomUUID(), description: '', quantity: '1', unit_price: '' }]);
   const removeItem = (i: number) => setItems(r => r.filter((_, idx) => idx !== i));
 
   const total = items.reduce((sum, it) => sum + (parseFloat(it.quantity) || 0) * (parseFloat(it.unit_price) || 0), 0);
@@ -78,7 +77,7 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-bold text-slate-900 mb-5">Nueva Orden de Compra</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nueva Orden de Compra</h2>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
@@ -128,7 +127,7 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
                 </tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {items.map((it, i) => (
-                    <tr key={i}>
+                    <tr key={it._key}>
                       <td className="px-2 py-1.5">
                         <input className="input text-sm py-1" value={it.description} onChange={e => setItem(i, 'description', e.target.value)} placeholder="Descripción del ítem" />
                       </td>
@@ -164,7 +163,7 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
 
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Creando...' : 'Crear OC'}</button>
+            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Creando…' : 'Crear OC'}</button>
           </div>
         </form>
       </div>
@@ -223,7 +222,7 @@ function PurchaseRow({ po, onStatusChange }: { po: Purchase; onStatusChange: () 
         <tr>
           <td colSpan={6} className="px-6 pb-4 bg-slate-50/50">
             {loadingDetail ? (
-              <p className="text-xs text-slate-400 py-2">Cargando ítems...</p>
+              <p className="text-xs text-slate-400 py-2">Cargando ítems…</p>
             ) : detail?.items && detail.items.length > 0 ? (
               <table className="w-full text-xs mt-2 border border-slate-100 rounded-lg overflow-hidden">
                 <thead><tr className="bg-white border-b border-slate-100">
@@ -273,11 +272,11 @@ export default function PurchasesModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Órdenes de Compra</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Órdenes de Compra</h1>
           <p className="text-slate-500 text-sm mt-0.5">Gestión de compras y proveedores</p>
         </div>
         {canWrite('purchases') && (
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
+          <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary">
             <Plus size={16} /> Nueva OC
           </button>
         )}
@@ -292,7 +291,7 @@ export default function PurchasesModule() {
           { label: 'Valor total',   value: fmtMoney(totalValue), color: '#10B981', isText: true },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft">
-            <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+            <p className="text-2xl font-semibold" style={{ color: s.color }}>{s.value}</p>
             <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
           </div>
         ))}
@@ -314,7 +313,7 @@ export default function PurchasesModule() {
           </tr></thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
-              <tr><td colSpan={6} className="text-center py-12 text-slate-400">Cargando...</td></tr>
+              <tr><td colSpan={6} className="text-center py-12 text-slate-400">Cargando…</td></tr>
             ) : items.length === 0 ? (
               <tr><td colSpan={6} className="py-12 text-center">
                 <ShoppingCart size={32} className="mx-auto text-slate-200 mb-2" />

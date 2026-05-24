@@ -116,7 +116,7 @@ function PlanBanner({
           >
             <Zap size={12} /> Extender ahora
           </a>
-          <button onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none">&times;</button>
+          <button type="button" onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none">&times;</button>
         </div>
       </div>
     );
@@ -148,7 +148,7 @@ function PlanBanner({
           >
             Ver planes
           </a>
-          <button onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none">&times;</button>
+          <button type="button" onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none">&times;</button>
         </div>
       </div>
     );
@@ -167,7 +167,7 @@ function PlanBanner({
             Vuélvete Plus →
           </a>
         </span>
-        <button onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none shrink-0">&times;</button>
+        <button type="button" onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none shrink-0">&times;</button>
       </div>
     );
   }
@@ -198,6 +198,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   );
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const token = localStorage.getItem('token');
 
   // Close sidebar on mobile after nav
   useEffect(() => {
@@ -209,7 +210,6 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   function handleLogout() { logout(); navigate('/login'); }
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
     if (!token) return;
     function fetchNotifs() {
       fetch(`${API}/notifications/summary`, { headers: { Authorization: `Bearer ${token}` } })
@@ -220,16 +220,15 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     fetchNotifs();
     const id = setInterval(fetchNotifs, 60_000);
     return () => clearInterval(id);
-  }, []);
+  }, [token]);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
     if (!token) return;
     fetch(`${API}/dashboard/plan`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setPlan(d); })
       .catch(() => {});
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -283,8 +282,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           height: isMobile ? '100dvh' : undefined,
           zIndex: isMobile ? 50 : undefined,
           background: 'rgba(255,255,255,0.96)',
-          backdropFilter: 'blur(28px) saturate(220%)',
-          WebkitBackdropFilter: 'blur(28px) saturate(220%)',
+          backdropFilter: 'blur(8px) saturate(220%)',
+          WebkitBackdropFilter: 'blur(8px) saturate(220%)',
           borderRight: '1px solid rgba(0,0,0,0.06)',
           boxShadow: isMobile && sidebarOpen ? '4px 0 24px rgba(0,0,0,0.12)' : '1px 0 0 rgba(255,255,255,0.6) inset',
           transition: 'width 280ms cubic-bezier(0.32, 0.72, 0, 1)',
@@ -305,7 +304,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             }}
           />
           <div
-            className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 text-white font-bold text-sm relative z-10"
+            className="size-8 rounded-[10px] flex items-center justify-center flex-shrink-0 text-white font-bold text-sm relative z-10"
             style={{
               background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}CC)`,
               boxShadow: `0 4px 10px ${primaryColor}40, inset 0 1px 0 rgba(255,255,255,0.25)`,
@@ -399,7 +398,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 style={{ transition: 'background-color 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
               >
                 <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
+                  className="size-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
                   style={{
                     background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}BB)`,
                     boxShadow: `0 2px 6px ${primaryColor}35`,
@@ -429,7 +428,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                   }}
                 >
                   <button
-                    role="menuitem"
+                    type="button" role="menuitem"
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-red-500 hover:bg-red-50 font-semibold"
                     style={{ transition: 'background-color 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
@@ -461,8 +460,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           className="h-[58px] flex items-center justify-between px-5 flex-shrink-0"
           style={{
             background: 'rgba(255,255,255,0.92)',
-            backdropFilter: 'blur(28px) saturate(200%)',
-            WebkitBackdropFilter: 'blur(28px) saturate(200%)',
+            backdropFilter: 'blur(8px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(8px) saturate(200%)',
             borderBottom: '1px solid rgba(0,0,0,0.06)',
             boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset',
           }}
@@ -473,7 +472,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             aria-expanded={sidebarOpen}
             aria-controls="sidebar"
             aria-label={sidebarOpen ? 'Cerrar menú lateral' : 'Abrir menú lateral'}
-            className="w-8 h-8 flex items-center justify-center text-[#AEAEB2] hover:text-[#0A0A0F] hover:bg-black/[0.05] rounded-xl"
+            className="size-8 flex items-center justify-center text-[#AEAEB2] hover:text-[#0A0A0F] hover:bg-black/[0.05] rounded-xl"
             style={{ transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
           >
             {sidebarOpen
@@ -490,7 +489,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 aria-label={notifs.total > 0 ? `${notifs.total} notificaciones pendientes` : 'Sin notificaciones'}
                 aria-expanded={notifOpen}
                 aria-haspopup="dialog"
-                className="relative w-8 h-8 flex items-center justify-center text-[#AEAEB2] hover:text-[#0A0A0F] hover:bg-black/[0.05] rounded-xl"
+                className="relative size-8 flex items-center justify-center text-[#AEAEB2] hover:text-[#0A0A0F] hover:bg-black/[0.05] rounded-xl"
                 style={{ transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
               >
                 <Bell size={16} aria-hidden="true" />
@@ -535,7 +534,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                       </div>
                     ) : (notifs.items ?? []).map((item, i) => (
                       <div
-                        key={i}
+                        key={`${item.type}:${item.message}`}
                         className="flex items-start gap-3 px-4 py-3 hover:bg-black/[0.02]"
                         style={{
                           borderBottom: i < notifs.items.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
@@ -556,7 +555,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 type="button"
                 onClick={handleLogout}
                 aria-label="Cerrar sesión"
-                className="w-8 h-8 flex items-center justify-center text-[#AEAEB2] hover:text-red-500 hover:bg-red-50 rounded-xl"
+                className="size-8 flex items-center justify-center text-[#AEAEB2] hover:text-red-500 hover:bg-red-50 rounded-xl"
                 style={{ transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
               >
                 <LogOut size={16} aria-hidden="true" />

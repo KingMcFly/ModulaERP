@@ -23,7 +23,7 @@ function CardSkeleton() {
   return (
     <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
       <div className="flex items-start justify-between mb-5">
-        <Skeleton className="w-11 h-11 rounded-2xl" />
+        <Skeleton className="size-11 rounded-2xl" />
         <Skeleton className="w-14 h-5 rounded-full" />
       </div>
       <Skeleton className="w-24 h-8 mb-2 rounded-xl" />
@@ -71,9 +71,8 @@ function timeAgo(iso: string) {
 }
 
 function fmt(n: number) { return n?.toLocaleString('es-CL') ?? '0'; }
-function fmtCurrency(n: number) {
-  return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n || 0);
-}
+const CLP_FMT = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+function fmtCurrency(n: number) { return CLP_FMT.format(n || 0); }
 
 function AlertBanner({ stats }: { stats: DashStats }) {
   const { alerts, overdue_loans_list, low_stock_list } = stats;
@@ -90,7 +89,7 @@ function AlertBanner({ stats }: { stats: DashStats }) {
     >
       <div className="flex items-center gap-2">
         <div
-          className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+          className="size-6 rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: 'rgba(245,158,11,0.15)' }}
         >
           <AlertTriangle size={13} className="text-amber-500" aria-hidden="true" />
@@ -146,7 +145,7 @@ function ActivityFeed({ items }: { items: ActivityEntry[] }) {
     return (
       <div className="flex flex-col items-center py-12 gap-2.5 text-[#AEAEB2]">
         <div
-          className="w-11 h-11 rounded-full flex items-center justify-center"
+          className="size-11 rounded-full flex items-center justify-center"
           style={{ background: 'rgba(16,185,129,0.1)' }}
         >
           <CheckCircle size={20} className="text-emerald-400" aria-hidden="true" />
@@ -165,7 +164,7 @@ function ActivityFeed({ items }: { items: ActivityEntry[] }) {
           style={{ borderBottom: i < items.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}
         >
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold"
+            className="size-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold"
             style={{
               background: 'linear-gradient(135deg, #F3F3F7, #E8E8F0)',
               color: '#65656E',
@@ -264,7 +263,7 @@ export default function Dashboard() {
           ? [0, 1, 2, 3].map(i => <CardSkeleton key={i} />)
           : cards.map(({ icon: Icon, label, value, sub, color, extra }, i) => (
             <div
-              key={i}
+              key={label}
               className="bg-white rounded-2xl p-5 animate-fade-up group"
               style={{
                 border: '1px solid rgba(0,0,0,0.05)',
@@ -281,7 +280,7 @@ export default function Dashboard() {
             >
               <div className="flex items-start justify-between mb-5">
                 <div
-                  className="w-11 h-11 rounded-2xl flex items-center justify-center"
+                  className="size-11 rounded-2xl flex items-center justify-center"
                   style={{ background: `linear-gradient(135deg, ${color}22, ${color}0E)` }}
                 >
                   <Icon size={20} style={{ color }} aria-hidden="true" />
@@ -345,7 +344,7 @@ export default function Dashboard() {
               <div className="space-y-4 pt-4">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="flex items-center gap-3">
-                    <Skeleton className="w-7 h-7 rounded-full flex-shrink-0" />
+                    <Skeleton className="size-7 rounded-full flex-shrink-0" />
                     <div className="flex-1 space-y-1.5">
                       <Skeleton className="h-3.5 w-3/4 rounded-lg" />
                       <Skeleton className="h-2.5 w-1/4 rounded-lg" />
@@ -379,7 +378,7 @@ export default function Dashboard() {
                     onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = ''}
                   >
                     <div
-                      className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                      className="size-8 rounded-xl flex items-center justify-center flex-shrink-0"
                       style={{ background: `${color}14` }}
                     >
                       <Icon size={14} style={{ color }} aria-hidden="true" />
@@ -414,7 +413,7 @@ export default function Dashboard() {
                     onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = ''}
                   >
                     <div
-                      className="w-8 h-8 rounded-xl flex items-center justify-center"
+                      className="size-8 rounded-xl flex items-center justify-center"
                       style={{ background: `${m.color || '#F2B045'}14` }}
                     >
                       <AlertCircle size={14} style={{ color: m.color || '#F2B045' }} aria-hidden="true" />

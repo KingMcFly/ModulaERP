@@ -131,7 +131,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[85vh] flex flex-col">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-2xl bg-primary-50 flex items-center justify-center">
+          <div className="size-10 rounded-2xl bg-primary-50 flex items-center justify-center">
             <ShieldCheck size={18} className="text-primary-500" />
           </div>
           <div>
@@ -140,7 +140,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
           </div>
         </div>
         {!data ? (
-          <div className="flex-1 flex items-center justify-center text-[#AEAEB2] text-sm">Cargando...</div>
+          <div className="flex-1 flex items-center justify-center text-[#AEAEB2] text-sm">Cargando…</div>
         ) : isFullAccess ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-2 py-8 text-center">
             <ShieldCheck size={32} className="text-emerald-400" />
@@ -157,13 +157,13 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
             {data.modules.map(m => (
               <div key={m.code} className="grid grid-cols-[1fr_60px_60px_60px] gap-2 items-center bg-[#F5F5F7] rounded-xl px-3 py-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: m.color }} />
+                  <div className="size-2 rounded-full flex-shrink-0" style={{ background: m.color }} />
                   <span className="text-sm font-medium text-[#1D1D1F] truncate">{m.name}</span>
                 </div>
                 {(['can_view', 'can_write', 'can_delete'] as const).map(field => (
                   <div key={field} className="flex justify-center">
                     <button type="button" onClick={() => toggle(m.code, field)}
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                      className={`size-8 rounded-xl flex items-center justify-center transition-all ${
                         m[field] ? 'bg-primary-500 text-white' : 'bg-white text-[#AEAEB2] border border-black/[0.07]'
                       }`}>
                       {field === 'can_view' && <Eye size={13} />}
@@ -180,7 +180,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
           <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
           {!isFullAccess && (
             <button type="button" onClick={save} disabled={saving} className="flex-1 btn btn-primary">
-              {saving ? 'Guardando...' : 'Guardar permisos'}
+              {saving ? 'Guardando…' : 'Guardar permisos'}
             </button>
           )}
         </div>
@@ -223,7 +223,7 @@ function ResetPasswordModal({ userId, userName, onClose }: { userId: number; use
             placeholder="Mínimo 8 caracteres, mayúscula y número" />
           <div className="flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando...' : 'Guardar'}</button>
+            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando…' : 'Guardar'}</button>
           </div>
         </form>
       </div>
@@ -285,7 +285,7 @@ function PersonForm({ person, onClose, onSaved }: { person?: Person | null; onCl
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-bold text-slate-900 mb-5">
+        <h2 className="text-lg font-semibold text-slate-900 mb-5">
           {person ? 'Editar Persona' : 'Nueva Persona'}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
@@ -386,7 +386,7 @@ function PersonForm({ person, onClose, onSaved }: { person?: Person | null; onCl
                 <div className="mt-3 pt-3 border-t border-amber-200">
                   <label className="label">Especialidad</label>
                   <input className="input bg-white" value={form.specialty} onChange={e => set('specialty', e.target.value)}
-                    placeholder="Ej: Electricidad, Mecánica..." />
+                    placeholder="Ej: Electricidad, Mecánica…" />
                 </div>
               )}
             </div>
@@ -395,7 +395,7 @@ function PersonForm({ person, onClose, onSaved }: { person?: Person | null; onCl
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
             <button type="submit" disabled={saving} className="flex-1 btn btn-primary">
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
         </form>
@@ -443,7 +443,7 @@ export default function PersonnelModule() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Personas</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Personas</h1>
         <p className="text-slate-500 text-sm mt-0.5">Gestión de personas y accesos al sistema</p>
       </div>
 
@@ -456,7 +456,7 @@ export default function PersonnelModule() {
             { label: 'Departamentos',  value: stats.departments?.length ?? 0, color: 'text-primary-600' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft text-center">
-              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+              <p className={`text-2xl font-semibold ${s.color}`}>{s.value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
             </div>
           ))}
@@ -467,7 +467,7 @@ export default function PersonnelModule() {
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input className="input pl-9" placeholder="Buscar por nombre, RUT o área..."
+          <input className="input pl-9" placeholder="Buscar por nombre, RUT o área…"
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         {departments.length > 0 && (
@@ -477,7 +477,7 @@ export default function PersonnelModule() {
           </select>
         )}
         <button
-          onClick={() => exportToExcel(people.map(p => ({
+          type="button" onClick={() => exportToExcel(people.map(p => ({
             Nombre: p.name, 'RUT/ID': p.national_id, Departamento: p.department,
             Cargo: p.position, Teléfono: p.phone, Email: p.email,
             Rol: p.role, 'Último acceso': p.last_login,
@@ -488,7 +488,7 @@ export default function PersonnelModule() {
           <Download size={15} /> Exportar
         </button>
         {canWrite('personnel') && (
-          <button onClick={() => setEditing(null)} className="btn btn-primary">
+          <button type="button" onClick={() => setEditing(null)} className="btn btn-primary">
             <Plus size={16} /> Nueva Persona
           </button>
         )}
@@ -506,7 +506,7 @@ export default function PersonnelModule() {
           </thead>
           <tbody className="divide-y divide-black/[0.04]">
             {loading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando...</td></tr>
+              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando…</td></tr>
             ) : people.length === 0 ? (
               <tr><td colSpan={7} className="py-12 text-center text-slate-400">Sin personas registradas</td></tr>
             ) : people.map(p => {
@@ -515,7 +515,7 @@ export default function PersonnelModule() {
                 <tr key={p.id} className="hover:bg-[#FAFAFA] transition-colors">
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm flex-shrink-0">
+                      <div className="size-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold text-sm flex-shrink-0">
                         {p.name[0]?.toUpperCase()}
                       </div>
                       <div>
@@ -554,26 +554,26 @@ export default function PersonnelModule() {
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1 justify-end">
                       {canWrite('personnel') && p.id && (
-                        <button onClick={() => setEditing(p as any)} title="Editar persona"
+                        <button type="button" onClick={() => setEditing(p as any)} title="Editar persona"
                           className="p-1.5 text-[#AEAEB2] hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors">
                           <Edit2 size={13} />
                         </button>
                       )}
                       {isAdmin && p.user_id && (
-                        <button onClick={() => setPermPerson(p)} title="Editar permisos"
+                        <button type="button" onClick={() => setPermPerson(p)} title="Editar permisos"
                           className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#6E6E73] hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors border border-transparent hover:border-primary-100">
                           <ShieldCheck size={12} />
                           <span>Permisos</span>
                         </button>
                       )}
                       {isAdmin && p.user_id && (
-                        <button onClick={() => setResetPerson(p)} title="Cambiar contraseña"
+                        <button type="button" onClick={() => setResetPerson(p)} title="Cambiar contraseña"
                           className="p-1.5 text-[#AEAEB2] hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors">
                           <KeyRound size={13} />
                         </button>
                       )}
                       {canDelete('personnel') && p.id && (
-                        <button onClick={() => deactivate(p as any)} title="Desactivar"
+                        <button type="button" onClick={() => deactivate(p as any)} title="Desactivar"
                           className="p-1.5 text-[#AEAEB2] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                           <Trash2 size={13} />
                         </button>

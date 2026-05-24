@@ -60,8 +60,8 @@ router.post('/:id/movement', guard, w(async (req, res) => {
 
   // Validar que quantity sea un entero positivo (A08)
   const qty = Number(quantity);
-  if (!Number.isFinite(qty) || !Number.isInteger(qty) || qty <= 0) {
-    return res.status(400).json({ error: 'Cantidad debe ser un entero positivo' });
+  if (!Number.isFinite(qty) || !Number.isInteger(qty) || qty <= 0 || qty > 1_000_000) {
+    return res.status(400).json({ error: 'Cantidad debe ser un entero positivo menor a 1.000.000' });
   }
 
   const [[supply]] = await db.query(

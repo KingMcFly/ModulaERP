@@ -1,7 +1,26 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import db from '../db.js';
 import { requireAdmin } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { audit } from '../utils/audit.js';
+
+const VALID_ROLES = ['user', 'manager', 'admin'];
+
+const createUserSchema = z.object({
+  name:               z.string().trim().min(1).max(100),
+  email:              z.string().email().max(254).trim().toLowerCase(),
+  password:           z.string().min(8).max(128),
+  role:               z.enum(['user', 'manager', 'admin']).default('user'),
+  module_permissions: z.array(z.object({
+    code:       z.string().min(1).max(50),
+    can_view:   z.boolean().default(true),
+    can_write:  z.boolean().default(false),
+    can_delete: z.boolean().default(false),
+  })).default([]),
+  rut: z.string().max(20).optional(),
+});
 
 const router = Router();
 router.use(requireAdmin);
@@ -19,7 +38,7 @@ router.get('/', w(async (req, res) => {
 }));
 
 // Create user in tenant
-router.post('/', w(async (req, res) => {
+router.post('/', validate(createUserSchema), w(async (req, res) => {
   const tid = req.user.tenant_id;
   const { name, email, password, role = 'user', module_permissions = [], rut } = req.body;
 

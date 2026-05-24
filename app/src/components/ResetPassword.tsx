@@ -67,22 +67,22 @@ export default function ResetPassword() {
         >
           {done ? (
             <div className="text-center space-y-4 py-2">
-              <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto shadow-soft">
+              <div className="size-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto shadow-soft">
                 <CheckCircle size={26} className="text-emerald-500" aria-hidden="true" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[#1D1D1F]">¡Contraseña actualizada!</h1>
-                <p className="text-sm text-[#6E6E73] mt-1">Serás redirigido al inicio de sesión...</p>
+                <h1 className="text-xl font-semibold text-[#1D1D1F]">¡Contraseña actualizada!</h1>
+                <p className="text-sm text-[#6E6E73] mt-1">Serás redirigido al inicio de sesión…</p>
               </div>
               <Link to="/login" className="btn btn-primary w-full justify-center">Ir al login</Link>
             </div>
           ) : (
             <>
               <div className="mb-6">
-                <div className="w-11 h-11 bg-primary-50 rounded-2xl flex items-center justify-center mb-4 shadow-soft">
+                <div className="size-11 bg-primary-50 rounded-2xl flex items-center justify-center mb-4 shadow-soft">
                   <Lock size={18} className="text-primary-500" aria-hidden="true" />
                 </div>
-                <h1 className="text-xl font-bold text-[#1D1D1F]">Nueva contraseña</h1>
+                <h1 className="text-xl font-semibold text-[#1D1D1F]">Nueva contraseña</h1>
                 <p className="text-xs text-[#6E6E73] mt-1">Elige una contraseña segura para tu cuenta</p>
               </div>
 
@@ -119,7 +119,7 @@ export default function ResetPassword() {
                 )}
 
                 <button type="submit" disabled={loading} className="btn btn-primary w-full justify-center">
-                  {loading ? 'Guardando...' : 'Guardar contraseña'}
+                  {loading ? 'Guardando…' : 'Guardar contraseña'}
                 </button>
               </form>
             </>

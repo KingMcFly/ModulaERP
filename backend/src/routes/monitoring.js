@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import { randomBytes } from 'crypto';
+import { rateLimit } from 'express-rate-limit';
 import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { requireModule } from '../middleware/tenant.js';
@@ -77,6 +79,13 @@ router.get('/agents', guard, w(async (req, res) => {
 }));
 
 router.get('/agents/:id/history', guard, w(async (req, res) => {
+  // A01: Verify the agent belongs to this tenant before returning its history
+  const [[agent]] = await db.query(
+    'SELECT id FROM monitoring_agents WHERE id = ? AND tenant_id = ?',
+    [req.params.id, req.user.tenant_id]
+  );
+  if (!agent) return res.status(404).json({ error: 'Agente no encontrado' });
+
   const [rows] = await db.query(
     'SELECT * FROM monitoring_heartbeats WHERE agent_id = ? ORDER BY recorded_at DESC LIMIT 288',
     [req.params.id]
@@ -105,9 +114,20 @@ router.get('/tokens', guard, w(async (req, res) => {
   res.json(rows);
 }));
 
-router.post('/tokens', guard, w(async (req, res) => {
+// A07: Rate-limit token creation — prevents automated mass token generation
+const tokenCreateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados tokens creados. Intenta más tarde.' },
+  keyGenerator: (req) => `${req.user?.tenant_id}:${req.ip}`,
+});
+
+router.post('/tokens', guard, tokenCreateLimiter, w(async (req, res) => {
   const { label } = req.body;
-  const token = `MERP-${req.user.tenant_id}-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  // A02: Use cryptographically secure random bytes — not Math.random()
+  const token = `MERP-${randomBytes(24).toString('hex')}`;
   const [rows] = await db.query(
     'INSERT INTO monitoring_tokens (tenant_id, token, label) VALUES (?, ?, ?) RETURNING id',
     [req.user.tenant_id, token, label || null]

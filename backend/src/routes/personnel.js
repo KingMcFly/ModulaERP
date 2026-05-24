@@ -143,6 +143,11 @@ router.post('/', guard, w(async (req, res) => {
 
   const tid = req.user.tenant_id;
   const safeRole = ['user', 'manager', 'admin'].includes(role) ? role : 'user';
+
+  // A01: Only admins/super_admins can assign roles above 'user'
+  if (safeRole !== 'user' && !['super_admin', 'admin'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'No tienes permisos para asignar este rol' });
+  }
   const fmtRut   = formatRut(national_id);
 
   // Check email not already used
@@ -252,7 +257,8 @@ router.delete('/:id', guard, w(async (req, res) => {
   await db.query('UPDATE personnel SET is_active=false WHERE id=? AND tenant_id=?', [req.params.id, tid]);
   await db.query('UPDATE technicians SET is_active=false WHERE personnel_id=? AND tenant_id=?', [req.params.id, tid]);
   if (p?.user_id) {
-    await db.query('UPDATE users SET is_active=false WHERE id=? AND tenant_id=?', [p.user_id, tid]);
+    // A07: Revoke active session immediately on deactivation — forces logout on next request
+    await db.query('UPDATE users SET is_active=false, active_session_id=NULL WHERE id=? AND tenant_id=?', [p.user_id, tid]);
   }
   res.json({ message: 'Persona desactivada' });
 }));

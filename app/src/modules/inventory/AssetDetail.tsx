@@ -95,10 +95,8 @@ function fmt(date?: string) {
   return new Date(date).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-function fmtCurrency(n?: number) {
-  if (!n) return '—';
-  return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
-}
+const CLP_FMT = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+function fmtCurrency(n?: number) { return n ? CLP_FMT.format(n) : '—'; }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 
@@ -122,7 +120,7 @@ export default function AssetDetail() {
         setAsset(d);
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, navigate]);
 
   if (loading) return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -146,7 +144,7 @@ export default function AssetDetail() {
       {/* Back + header */}
       <div className="flex items-start gap-4">
         <button
-          onClick={() => navigate('/inventory')}
+          type="button" onClick={() => navigate('/inventory')}
           className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl mt-0.5 transition-colors"
           aria-label="Volver al inventario"
         >
@@ -154,7 +152,7 @@ export default function AssetDetail() {
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-xl font-bold text-slate-900 truncate">
+            <h1 className="text-xl font-semibold text-slate-900 truncate">
               {asset.brand} {asset.model || asset.asset_type}
             </h1>
             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusCfg.color}`}>
@@ -168,7 +166,7 @@ export default function AssetDetail() {
           </p>
         </div>
         <button
-          onClick={() => setShowQR(true)}
+          type="button" onClick={() => setShowQR(true)}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors flex-shrink-0"
         >
           <QrCode size={15} aria-hidden="true" />
@@ -202,7 +200,7 @@ export default function AssetDetail() {
           { key: 'attachments',  label: 'Adjuntos',   count: 0,                        icon: Paperclip },
           ] as { key: Tab; label: string; count: number; icon: React.ElementType }[]).map(t => (
             <button
-              key={t.key}
+              type="button" key={t.key}
               onClick={() => setTab(t.key)}
               className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium border-b-2 transition-colors ${
                 tab === t.key
@@ -249,7 +247,7 @@ function InfoCard({ icon: Icon, label, value, color }: { icon: React.ElementType
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}18` }}>
+        <div className="size-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${color}18` }}>
           <Icon size={14} style={{ color }} aria-hidden="true" />
         </div>
         <span className="text-xs font-semibold text-slate-500">{label}</span>
@@ -265,7 +263,7 @@ function LoanHistory({ loans }: { loans: LoanRecord[] }) {
     <div className="space-y-3">
       {loans.map(l => (
         <div key={l.id} className="flex items-start gap-4 p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
-          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+          <div className={`size-2 rounded-full mt-2 flex-shrink-0 ${
             l.status === 'active' ? 'bg-blue-500' :
             l.status === 'returned' ? 'bg-emerald-500' : 'bg-amber-500'
           }`} />
@@ -299,7 +297,7 @@ function MaintenanceHistory({ records }: { records: MaintRecord[] }) {
     <div className="space-y-3">
       {records.map(r => (
         <div key={r.id} className="flex items-start gap-4 p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
-          <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+          <div className={`size-2 rounded-full mt-2 flex-shrink-0 ${
             r.status === 'completed' ? 'bg-emerald-500' :
             r.status === 'in_progress' ? 'bg-blue-500' :
             r.status === 'pending' ? 'bg-amber-500' : 'bg-slate-400'
@@ -336,7 +334,7 @@ function ActivityHistory({ records }: { records: ActivityRecord[] }) {
     <div className="space-y-2">
       {records.map(r => (
         <div key={r.id} className="flex items-center gap-3 py-2 border-b border-slate-50 last:border-0">
-          <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+          <div className="size-6 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
             <span className="text-[10px] font-bold text-slate-500">
               {(r.user_name || '?')[0].toUpperCase()}
             </span>

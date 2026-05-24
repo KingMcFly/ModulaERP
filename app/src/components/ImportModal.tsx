@@ -112,7 +112,7 @@ export default function ImportModal({ type, onClose, onImported }: ImportModalPr
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-primary-50 rounded-xl flex items-center justify-center">
+            <div className="size-9 bg-primary-50 rounded-xl flex items-center justify-center">
               <FileSpreadsheet size={18} className="text-primary-600" aria-hidden="true" />
             </div>
             <div>
@@ -120,7 +120,7 @@ export default function ImportModal({ type, onClose, onImported }: ImportModalPr
               <p className="text-xs text-slate-500">Formato .xlsx o .csv · máx. 500 filas</p>
             </div>
           </div>
-          <button onClick={onClose} aria-label="Cerrar" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
             <X size={16} aria-hidden="true" />
           </button>
         </div>
@@ -131,7 +131,7 @@ export default function ImportModal({ type, onClose, onImported }: ImportModalPr
             <p className="text-sm font-medium text-slate-700">1. Descarga la plantilla</p>
             <p className="text-xs text-slate-500 mt-0.5">Columnas: {tpl.columns.join(', ')}</p>
           </div>
-          <button onClick={downloadTemplate}
+          <button type="button" onClick={downloadTemplate}
             className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg text-slate-600 hover:bg-white transition-colors">
             <Download size={13} aria-hidden="true" /> Plantilla
           </button>
@@ -170,8 +170,8 @@ export default function ImportModal({ type, onClose, onImported }: ImportModalPr
                 <tr>{tpl.columns.map(c => <th key={c} className="text-left pr-4 pb-1 font-semibold text-slate-500 whitespace-nowrap">{c}</th>)}</tr>
               </thead>
               <tbody>
-                {rows.slice(0, 3).map((r, i) => (
-                  <tr key={i}>{tpl.columns.map(c => <td key={c} className="pr-4 pb-0.5 whitespace-nowrap max-w-[120px] truncate">{String(r[c] ?? '')}</td>)}</tr>
+                {rows.slice(0, 3).map((r) => (
+                  <tr key={tpl.columns.map(c => String(r[c] ?? '')).join('|')}>{tpl.columns.map(c => <td key={c} className="pr-4 pb-0.5 whitespace-nowrap max-w-[120px] truncate">{String(r[c] ?? '')}</td>)}</tr>
                 ))}
               </tbody>
             </table>
@@ -191,8 +191,8 @@ export default function ImportModal({ type, onClose, onImported }: ImportModalPr
                   <AlertTriangle size={14} className="text-amber-600" aria-hidden="true" />
                   <span className="text-xs font-semibold text-amber-700">{result.failed} fila{result.failed > 1 ? 's' : ''} con error</span>
                 </div>
-                {result.errors.map((e, i) => (
-                  <p key={i} className="text-xs text-amber-600 ml-5">Fila {e.row}: {e.message}</p>
+                {result.errors.map((e) => (
+                  <p key={e.row} className="text-xs text-amber-600 ml-5">Fila {e.row}: {e.message}</p>
                 ))}
               </div>
             )}
@@ -206,11 +206,11 @@ export default function ImportModal({ type, onClose, onImported }: ImportModalPr
           </button>
           {!result && (
             <button
-              onClick={handleImport}
+              type="button" onClick={handleImport}
               disabled={rows.length === 0 || importing}
               className="flex-1 btn btn-primary"
             >
-              {importing ? 'Importando...' : `Importar ${rows.length} fila${rows.length !== 1 ? 's' : ''}`}
+              {importing ? 'Importando…' : `Importar ${rows.length} fila${rows.length !== 1 ? 's' : ''}`}
             </button>
           )}
         </div>

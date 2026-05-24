@@ -69,6 +69,14 @@ router.patch('/:id/status', guard, w(async (req, res) => {
 router.post('/:id/comments', guard, w(async (req, res) => {
   const { comment, is_internal } = req.body;
   if (!comment?.trim()) return res.status(400).json({ error: 'Comentario requerido' });
+
+  // A01: Verify ticket belongs to this tenant before inserting a comment
+  const [[ticket]] = await db.query(
+    'SELECT id FROM tickets WHERE id = ? AND tenant_id = ?',
+    [req.params.id, req.user.tenant_id]
+  );
+  if (!ticket) return res.status(404).json({ error: 'Ticket no encontrado' });
+
   const [rows] = await db.query(
     'INSERT INTO ticket_comments (ticket_id, user_id, comment, is_internal) VALUES (?,?,?,?) RETURNING id',
     [req.params.id, req.user.id, comment.trim(), is_internal ? true : false]

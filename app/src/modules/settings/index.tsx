@@ -24,11 +24,11 @@ function SimpleCatalog({ title, icon: Icon, apiPath }: { title: string; icon: Re
   const [editName, setEditName] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     authFetch(`/catalog${apiPath}`).then(r => r.json()).then(setItems).finally(() => setLoading(false));
-  };
-  useEffect(load, []);
+  }, [apiPath]);
+  useEffect(load, [load]);
 
   async function add() {
     if (!newName.trim()) return;
@@ -55,13 +55,13 @@ function SimpleCatalog({ title, icon: Icon, apiPath }: { title: string; icon: Re
     <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center">
+          <div className="size-8 bg-primary-50 rounded-lg flex items-center justify-center">
             <Icon size={16} className="text-primary-500" />
           </div>
           <h3 className="font-semibold text-slate-900">{title}</h3>
           <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{items.length}</span>
         </div>
-        <button onClick={() => { setAdding(true); setNewName(''); }} className="btn btn-primary text-xs py-1.5 px-3">
+        <button type="button" onClick={() => { setAdding(true); setNewName(''); }} className="btn btn-primary text-xs py-1.5 px-3">
           <Plus size={13} /> Agregar
         </button>
       </div>
@@ -70,17 +70,17 @@ function SimpleCatalog({ title, icon: Icon, apiPath }: { title: string; icon: Re
         <div className="px-5 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2">
           <input
             className="input flex-1 text-sm"
-            placeholder={`Nuevo ${title.toLowerCase().replace('categorías de ', '')}...`}
+            placeholder={`Nuevo ${title.toLowerCase().replace('categorías de ', '')}…`}
             value={newName} onChange={e => setNewName(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') add(); if (e.key === 'Escape') setAdding(false); }}
           />
-          <button onClick={add} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg"><Check size={16} /></button>
-          <button onClick={() => setAdding(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg"><X size={16} /></button>
+          <button type="button" onClick={add} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg"><Check size={16} /></button>
+          <button type="button" onClick={() => setAdding(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg"><X size={16} /></button>
         </div>
       )}
 
       {loading ? (
-        <div className="py-10 text-center text-slate-400 text-sm">Cargando...</div>
+        <div className="py-10 text-center text-slate-400 text-sm">Cargando…</div>
       ) : items.length === 0 ? (
         <div className="py-10 text-center">
           <Icon size={28} className="mx-auto text-slate-200 mb-2" />
@@ -95,18 +95,18 @@ function SimpleCatalog({ title, icon: Icon, apiPath }: { title: string; icon: Re
                   <input autoFocus className="input flex-1 text-sm" value={editName}
                     onChange={e => setEditName(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') save(item.id); if (e.key === 'Escape') setEditId(null); }} />
-                  <button onClick={() => save(item.id)} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"><Check size={14} /></button>
-                  <button onClick={() => setEditId(null)} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg"><X size={14} /></button>
+                  <button type="button" onClick={() => save(item.id)} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"><Check size={14} /></button>
+                  <button type="button" onClick={() => setEditId(null)} className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg"><X size={14} /></button>
                 </>
               ) : (
                 <>
                   <span className="flex-1 text-sm text-slate-800">{item.name}</span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => { setEditId(item.id); setEditName(item.name); }}
+                    <button type="button" onClick={() => { setEditId(item.id); setEditName(item.name); }}
                       className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg">
                       <Edit2 size={13} />
                     </button>
-                    <button onClick={() => remove(item.id)}
+                    <button type="button" onClick={() => remove(item.id)}
                       className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
                       <Trash2 size={13} />
                     </button>
@@ -163,7 +163,7 @@ function LocationForm({ loc, onClose, onSaved }: { loc: Location | null; onClose
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold mb-5">{loc ? 'Editar Ubicación' : 'Nueva Ubicación'}</h2>
+        <h2 className="text-lg font-semibold mb-5">{loc ? 'Editar Ubicación' : 'Nueva Ubicación'}</h2>
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label htmlFor="loc-name" className="label">Nombre *</label>
@@ -171,7 +171,7 @@ function LocationForm({ loc, onClose, onSaved }: { loc: Location | null; onClose
           </div>
           <div>
             <label htmlFor="loc-description" className="label">Descripción</label>
-            <input id="loc-description" className="input" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Ej: Bodega norte, Sala de servidores..." />
+            <input id="loc-description" className="input" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Ej: Bodega norte, Sala de servidores…" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -193,7 +193,7 @@ function LocationForm({ loc, onClose, onSaved }: { loc: Location | null; onClose
           </div>
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando...' : 'Guardar'}</button>
+            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando…' : 'Guardar'}</button>
           </div>
         </form>
       </div>
@@ -206,11 +206,11 @@ function LocationsCatalog() {
   const [editing, setEditing] = useState<Location | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     authFetch('/catalog/locations').then(r => r.json()).then(setItems).finally(() => setLoading(false));
-  };
-  useEffect(load, []);
+  }, []);
+  useEffect(load, [load]);
 
   async function remove(loc: Location) {
     if (!confirm(`¿Eliminar "${loc.name}"? Los activos e insumos asignados quedarán sin ubicación.`)) return;
@@ -223,19 +223,19 @@ function LocationsCatalog() {
     <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center">
+          <div className="size-8 bg-primary-50 rounded-lg flex items-center justify-center">
             <MapPin size={16} className="text-primary-500" />
           </div>
           <h3 className="font-semibold text-slate-900">Ubicaciones</h3>
           <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{items.length}</span>
         </div>
-        <button onClick={() => setEditing(null)} className="btn btn-primary text-xs py-1.5 px-3">
+        <button type="button" onClick={() => setEditing(null)} className="btn btn-primary text-xs py-1.5 px-3">
           <Plus size={13} /> Agregar
         </button>
       </div>
 
       {loading ? (
-        <div className="py-10 text-center text-slate-400 text-sm">Cargando...</div>
+        <div className="py-10 text-center text-slate-400 text-sm">Cargando…</div>
       ) : items.length === 0 ? (
         <div className="py-10 text-center">
           <MapPin size={28} className="mx-auto text-slate-200 mb-2" />
@@ -257,7 +257,7 @@ function LocationsCatalog() {
                 <tr key={loc.id} className="hover:bg-slate-50 group">
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: loc.color }} />
+                      <div className="size-3 rounded-full flex-shrink-0" style={{ backgroundColor: loc.color }} />
                       <span className="text-sm font-medium text-slate-900">{loc.name}</span>
                     </div>
                   </td>
@@ -266,8 +266,8 @@ function LocationsCatalog() {
                   <td className="px-5 py-3.5"><span className={`badge ${cc.cls}`}>{cc.label}</span></td>
                   <td className="px-5 py-3.5">
                     <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => setEditing(loc)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"><Edit2 size={13} /></button>
-                      <button onClick={() => remove(loc)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={13} /></button>
+                      <button type="button" onClick={() => setEditing(loc)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"><Edit2 size={13} /></button>
+                      <button type="button" onClick={() => remove(loc)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 size={13} /></button>
                     </div>
                   </td>
                 </tr>
@@ -312,7 +312,7 @@ function UsageBar({ used, max, label, icon: Icon }: { used: number; max: number;
     <div className="bg-white border border-slate-100 rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${near ? 'bg-red-50' : 'bg-primary-50'}`}>
+          <div className={`size-8 rounded-lg flex items-center justify-center ${near ? 'bg-red-50' : 'bg-primary-50'}`}>
             <Icon size={15} className={near ? 'text-red-500' : 'text-primary-500'} />
           </div>
           <span className="text-sm font-medium text-slate-700">{label}</span>
@@ -359,7 +359,7 @@ function PlanTab() {
     authFetch('/dashboard/plan').then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="py-12 text-center text-slate-400">Cargando...</div>;
+  if (loading) return <div className="py-12 text-center text-slate-400">Cargando…</div>;
   if (!data) return <div className="py-12 text-center text-slate-400">No disponible</div>;
 
   const planCfg = PLAN_LABELS[data.plan] || PLAN_LABELS.starter;
@@ -573,7 +573,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[85vh] flex flex-col">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-2xl bg-primary-50 flex items-center justify-center">
+          <div className="size-10 rounded-2xl bg-primary-50 flex items-center justify-center">
             <ShieldCheck size={18} className="text-primary-500" />
           </div>
           <div>
@@ -583,7 +583,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
         </div>
 
         {!data ? (
-          <div className="flex-1 flex items-center justify-center text-[#AEAEB2] text-sm">Cargando...</div>
+          <div className="flex-1 flex items-center justify-center text-[#AEAEB2] text-sm">Cargando…</div>
         ) : isFullAccess ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 py-8 text-center">
             <ShieldCheck size={32} className="text-emerald-400" />
@@ -604,7 +604,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
             {data.modules.map(m => (
               <div key={m.code} className="grid grid-cols-[1fr_60px_60px_60px] gap-2 items-center bg-[#F5F5F7] rounded-xl px-3 py-2.5">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: m.color }} />
+                  <div className="size-2 rounded-full flex-shrink-0" style={{ background: m.color }} />
                   <span className="text-sm font-medium text-[#1D1D1F] truncate">{m.name}</span>
                 </div>
                 {(['can_view', 'can_write', 'can_delete'] as const).map(field => (
@@ -612,7 +612,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
                     <button
                       type="button"
                       onClick={() => toggle(m.code, field)}
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                      className={`size-8 rounded-xl flex items-center justify-center transition-all ${
                         m[field]
                           ? 'bg-primary-500 text-white shadow-[0_1px_4px_rgba(242,176,69,0.3)]'
                           : 'bg-white text-[#AEAEB2] border border-black/[0.07]'
@@ -633,7 +633,7 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
           <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
           {!isFullAccess && (
             <button type="button" onClick={save} disabled={saving} className="flex-1 btn btn-primary">
-              {saving ? 'Guardando...' : 'Guardar permisos'}
+              {saving ? 'Guardando…' : 'Guardar permisos'}
             </button>
           )}
         </div>
@@ -656,7 +656,9 @@ function UserForm({ item, onClose, onSaved }: { item?: TenantUser | null; onClos
     e.preventDefault();
     if (!item && f.password.length < 8) { toast.error('Contraseña mínimo 8 caracteres'); return; }
     if (!item && !/[A-Z]/.test(f.password)) { toast.error('La contraseña debe tener al menos una mayúscula'); return; }
+    if (!item && !/[a-z]/.test(f.password)) { toast.error('La contraseña debe tener al menos una minúscula'); return; }
     if (!item && !/[0-9]/.test(f.password)) { toast.error('La contraseña debe tener al menos un número'); return; }
+    if (!item && !/[^A-Za-z0-9]/.test(f.password)) { toast.error('La contraseña debe tener al menos un carácter especial'); return; }
     setSaving(true);
     try {
       const body: any = { name: f.name, email: f.email, role: f.role };
@@ -687,7 +689,7 @@ function UserForm({ item, onClose, onSaved }: { item?: TenantUser | null; onClos
           {!item && (
             <div>
               <label htmlFor="u-pass" className="label">Contraseña *</label>
-              <input id="u-pass" className="input" type="password" value={f.password} onChange={e => set('password', e.target.value)} required placeholder="Mínimo 8 caracteres, mayúscula y número" />
+              <input id="u-pass" className="input" type="password" value={f.password} onChange={e => set('password', e.target.value)} required placeholder="Mín. 8 chars, mayúscula, minúscula, número y símbolo" />
             </div>
           )}
           <div>
@@ -706,7 +708,7 @@ function UserForm({ item, onClose, onSaved }: { item?: TenantUser | null; onClos
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
             <button type="submit" disabled={saving} className="flex-1 btn btn-primary">
-              {saving ? 'Guardando...' : item ? 'Guardar' : 'Crear usuario'}
+              {saving ? 'Guardando…' : item ? 'Guardar' : 'Crear usuario'}
             </button>
           </div>
         </form>
@@ -749,7 +751,7 @@ function ResetPasswordModal({ userId, userName, onClose }: { userId: number; use
           </div>
           <div className="flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando...' : 'Guardar'}</button>
+            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando…' : 'Guardar'}</button>
           </div>
         </form>
       </div>
@@ -780,19 +782,19 @@ function UsersTab() {
     <div className="bg-white rounded-2xl shadow-soft overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-primary-50 rounded-xl flex items-center justify-center">
+          <div className="size-8 bg-primary-50 rounded-xl flex items-center justify-center">
             <Users size={16} className="text-primary-500" />
           </div>
           <h3 className="font-semibold text-[#1D1D1F]">Usuarios</h3>
           <span className="text-[11px] text-[#AEAEB2] bg-[#F5F5F7] px-2 py-0.5 rounded-full font-medium">{users.length}</span>
         </div>
-        <button onClick={() => setEditing(null)} className="btn btn-primary text-xs py-1.5 px-3">
+        <button type="button" onClick={() => setEditing(null)} className="btn btn-primary text-xs py-1.5 px-3">
           <UserPlus size={13} /> Nuevo usuario
         </button>
       </div>
 
       {loading ? (
-        <div className="py-12 text-center text-[#AEAEB2] text-sm">Cargando...</div>
+        <div className="py-12 text-center text-[#AEAEB2] text-sm">Cargando…</div>
       ) : users.length === 0 ? (
         <div className="py-12 text-center">
           <Users size={28} className="mx-auto text-[#E5E5EA] mb-2" />
@@ -815,7 +817,7 @@ function UsersTab() {
                 <tr key={u.id} className="hover:bg-[#FAFAFA] transition-colors group">
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
+                      <div className="size-8 rounded-full bg-primary-50 flex items-center justify-center flex-shrink-0">
                         <span className="text-xs font-bold text-primary-600">{u.name[0].toUpperCase()}</span>
                       </div>
                       <div>
@@ -832,7 +834,7 @@ function UsersTab() {
                   </td>
                   <td className="px-5 py-3.5">
                     <button
-                      onClick={() => !isSelf && toggleActive(u)}
+                      type="button" onClick={() => !isSelf && toggleActive(u)}
                       disabled={isSelf}
                       className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
                         isSelf ? 'opacity-40 cursor-default' :
@@ -847,21 +849,21 @@ function UsersTab() {
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end">
                       <button
-                        onClick={() => setPermUser(u)}
+                        type="button" onClick={() => setPermUser(u)}
                         title="Permisos de módulo"
                         className="p-1.5 text-[#AEAEB2] hover:text-primary-500 hover:bg-primary-50 rounded-lg"
                       >
                         <ShieldCheck size={14} />
                       </button>
                       <button
-                        onClick={() => setEditing(u)}
+                        type="button" onClick={() => setEditing(u)}
                         title="Editar"
                         className="p-1.5 text-[#AEAEB2] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] rounded-lg"
                       >
                         <Edit2 size={13} />
                       </button>
                       <button
-                        onClick={() => setResetUser(u)}
+                        type="button" onClick={() => setResetUser(u)}
                         title="Cambiar contraseña"
                         className="p-1.5 text-[#AEAEB2] hover:text-amber-500 hover:bg-amber-50 rounded-lg"
                       >
@@ -906,7 +908,7 @@ export default function SettingsModule() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Configuración</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Configuración</h1>
         <p className="text-slate-500 text-sm mt-0.5">Datos maestros y catálogos del sistema</p>
       </div>
 
@@ -916,7 +918,7 @@ export default function SettingsModule() {
           {TABS.map(t => {
             const Icon = t.icon;
             return (
-              <button key={t.id} onClick={() => setTab(t.id)}
+              <button type="button" key={t.id} onClick={() => setTab(t.id)}
                 className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                   tab === t.id
                     ? 'bg-primary-50 text-primary-700'

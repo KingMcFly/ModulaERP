@@ -172,7 +172,7 @@ export default function Login() {
                 (e.currentTarget as HTMLButtonElement).style.transform = '';
               }}
             >
-              {loading ? 'Ingresando...' : 'Ingresar'}
+              {loading ? 'Ingresando…' : 'Ingresar'}
             </button>
           </form>
         </div>

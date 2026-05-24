@@ -37,15 +37,27 @@ router.get('/:id', guard, w(async (req, res) => {
 
 router.post('/', guard, w(async (req, res) => {
   const { provider_id, cost_center_id, po_number, ordered_at, expected_at, notes, items = [] } = req.body;
+
+  // A08: Validate items array length to prevent resource exhaustion
+  if (!Array.isArray(items)) return res.status(400).json({ error: 'items debe ser un arreglo' });
+  if (items.length > 200) return res.status(400).json({ error: 'Máximo 200 ítems por orden' });
+
+  // A08: Validate numeric bounds per item before opening transaction
+  const safeItems = [];
+  let total = 0;
+  for (const i of items) {
+    const qty   = parseFloat(i.quantity ?? 1);
+    const price = parseFloat(i.unit_price ?? 0);
+    if (!Number.isFinite(qty)   || qty   <= 0  || qty   > 1_000_000)   return res.status(400).json({ error: 'Cantidad inválida en un ítem' });
+    if (!Number.isFinite(price) || price < 0   || price > 999_999_999) return res.status(400).json({ error: 'Precio unitario inválido en un ítem' });
+    const t = qty * price;
+    total += t;
+    safeItems.push({ ...i, total_price: t });
+  }
+
   const conn = await db.getConnection();
   await conn.beginTransaction();
   try {
-    let total = 0;
-    const safeItems = items.map(i => {
-      const t = parseFloat(i.quantity||1) * parseFloat(i.unit_price||0);
-      total += t;
-      return { ...i, total_price: t };
-    });
     const [poRows] = await conn.query(
       `INSERT INTO purchase_orders (tenant_id, provider_id, cost_center_id, po_number, ordered_at, expected_at, notes, total, created_by)
        VALUES (?,?,?,?,?,?,?,?,?) RETURNING id`,

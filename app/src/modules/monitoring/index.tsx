@@ -124,14 +124,14 @@ export default function MonitoringModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Monitoreo</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Monitoreo</h1>
           <p className="text-slate-500 text-sm mt-0.5">Estado en tiempo real de los equipos</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setView(view === 'agents' ? 'tokens' : 'agents')} className="btn btn-ghost">
+          <button type="button" onClick={() => setView(view === 'agents' ? 'tokens' : 'agents')} className="btn btn-ghost">
             {view === 'agents' ? <><Key size={15} /> Tokens</> : <><Activity size={15} /> Agentes</>}
           </button>
-          <button onClick={load} className="btn btn-ghost"><RefreshCw size={15} /></button>
+          <button type="button" onClick={load} className="btn btn-ghost"><RefreshCw size={15} /></button>
         </div>
       </div>
 
@@ -144,7 +144,7 @@ export default function MonitoringModule() {
             { label: 'Offline', value: stats.offline, cls: 'text-slate-400' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft text-center">
-              <p className={`text-2xl font-bold ${s.cls}`}>{s.value}</p>
+              <p className={`text-2xl font-semibold ${s.cls}`}>{s.value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
             </div>
           ))}
@@ -153,7 +153,7 @@ export default function MonitoringModule() {
 
       {view === 'agents' ? (
         loading ? (
-          <div className="text-center py-12 text-slate-400">Cargando...</div>
+          <div className="text-center py-12 text-slate-400">Cargando…</div>
         ) : agents.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-100 text-center py-16">
             <Activity size={32} className="text-slate-300 mx-auto mb-3" />
@@ -169,8 +169,8 @@ export default function MonitoringModule() {
         <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
           <h2 className="font-semibold text-slate-900">Tokens de Agente</h2>
           <div className="flex gap-2">
-            <input className="input flex-1" placeholder="Etiqueta del token..." value={newTokenLabel} onChange={e => setNewTokenLabel(e.target.value)} />
-            {canWrite('monitoring') && <button onClick={createToken} className="btn btn-primary"><Plus size={15} /> Crear Token</button>}
+            <input className="input flex-1" placeholder="Etiqueta del token…" value={newTokenLabel} onChange={e => setNewTokenLabel(e.target.value)} />
+            {canWrite('monitoring') && <button type="button" onClick={createToken} className="btn btn-primary"><Plus size={15} /> Crear Token</button>}
           </div>
           <div className="divide-y divide-slate-100">
             {tokens.map(t => (
@@ -182,7 +182,7 @@ export default function MonitoringModule() {
                   </span>
                 </div>
                 {t.is_active && canDelete('monitoring') && (
-                  <button onClick={() => revokeToken(t.id)} className="btn btn-ghost text-xs text-red-500 hover:bg-red-50">Revocar</button>
+                  <button type="button" onClick={() => revokeToken(t.id)} className="btn btn-ghost text-xs text-red-500 hover:bg-red-50">Revocar</button>
                 )}
               </div>
             ))}

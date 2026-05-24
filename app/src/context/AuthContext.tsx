@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 export interface AppModule {
   code: string; name: string; icon: string; color: string; sort_order: number;
@@ -32,7 +32,7 @@ export const useAuth = () => useContext(Ctx);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !!localStorage.getItem('token'));
   const [sessionMessage, setSessionMessage] = useState<string | null>(null);
   const interceptorRef = useRef(false);
 
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) { setLoading(false); return; }
+    if (!token) return;
     fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(setUser)
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  async function login(email: string, password: string) {
+  const login = useCallback(async (email: string, password: string) => {
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -85,34 +85,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('token', data.token);
     setSessionMessage(null);
     setUser(data.user);
-  }
+  }, []);
 
-  function loginWithToken(token: string, userData: AuthUser) {
+  const loginWithToken = useCallback((token: string, userData: AuthUser) => {
     localStorage.setItem('token', token);
     setSessionMessage(null);
     setUser(userData);
-  }
+  }, []);
 
-  function logout() { doLogout(); }
+  const logout = useCallback(() => {
+    // Notify backend to revoke session before clearing local state (A07)
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`${API}/auth/logout`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {/* fire-and-forget — local cleanup always runs */});
+    }
+    doLogout();
+  }, [doLogout]);
 
-  function hasModule(code: string) {
-    return user?.modules?.some(m => m.code === code) ?? false;
-  }
+  const hasModule = useCallback((code: string) =>
+    user?.modules?.some(m => m.code === code) ?? false
+  , [user]);
 
-  function canWrite(code: string) {
+  const canWrite = useCallback((code: string) => {
     if (!user) return false;
     if (FULL_ACCESS_ROLES.includes(user.role)) return true;
     return user.modules?.some(m => m.code === code && m.can_write) ?? false;
-  }
+  }, [user]);
 
-  function canDelete(code: string) {
+  const canDelete = useCallback((code: string) => {
     if (!user) return false;
     if (FULL_ACCESS_ROLES.includes(user.role)) return true;
     return user.modules?.some(m => m.code === code && m.can_delete) ?? false;
-  }
+  }, [user]);
+
+  const ctxValue = useMemo(() => ({
+    user, loading, sessionMessage, login, loginWithToken, logout, hasModule, canWrite, canDelete,
+  }), [user, loading, sessionMessage, login, loginWithToken, logout, hasModule, canWrite, canDelete]);
 
   return (
-    <Ctx.Provider value={{ user, loading, sessionMessage, login, loginWithToken, logout, hasModule, canWrite, canDelete }}>
+    <Ctx.Provider value={ctxValue}>
       {children}
     </Ctx.Provider>
   );

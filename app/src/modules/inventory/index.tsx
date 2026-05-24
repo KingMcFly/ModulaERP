@@ -89,7 +89,7 @@ function AssetForm({ asset, onClose, onSaved }: { asset?: Asset | null; onClose:
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-bold text-slate-900 mb-5">{asset ? 'Editar Activo' : 'Nuevo Activo'}</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-5">{asset ? 'Editar Activo' : 'Nuevo Activo'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="col-span-2">
             <AssetLookup
@@ -108,7 +108,7 @@ function AssetForm({ asset, onClose, onSaved }: { asset?: Asset | null; onClose:
               <label htmlFor="asset-type" className="label">Tipo *</label>
               {assetTypes.length > 0 ? (
                 <select id="asset-type" className="input" value={form.asset_type} onChange={e => set('asset_type', e.target.value)} required>
-                  <option value="">Seleccionar tipo...</option>
+                  <option value="">Seleccionar tipo…</option>
                   {assetTypes.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}
                 </select>
               ) : (
@@ -143,7 +143,7 @@ function AssetForm({ asset, onClose, onSaved }: { asset?: Asset | null; onClose:
           <div><label htmlFor="asset-notes" className="label">Notas</label><textarea id="asset-notes" className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando...' : 'Guardar'}</button>
+            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando…' : 'Guardar'}</button>
           </div>
         </form>
       </div>
@@ -191,9 +191,9 @@ function AssetsTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
-        <button onClick={handleExport} className="btn btn-ghost border border-slate-200"><Download size={15} /> Exportar</button>
-        <button onClick={() => setShowImport(true)} className="btn btn-ghost border border-slate-200"><Upload size={15} /> Importar</button>
-        {canWrite('inventory') && <button onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Activo</button>}
+        <button type="button" onClick={handleExport} className="btn btn-ghost border border-slate-200"><Download size={15} /> Exportar</button>
+        <button type="button" onClick={() => setShowImport(true)} className="btn btn-ghost border border-slate-200"><Upload size={15} /> Importar</button>
+        {canWrite('inventory') && <button type="button" onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Activo</button>}
       </div>
 
       {stats && (
@@ -205,7 +205,7 @@ function AssetsTab() {
             { label: 'En Mantención',  value: stats.maintenance, cls: 'text-amber-600' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft text-center">
-              <p className={`text-2xl font-bold ${s.cls}`}>{s.value ?? 0}</p>
+              <p className={`text-2xl font-semibold ${s.cls}`}>{s.value ?? 0}</p>
               <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
             </div>
           ))}
@@ -215,7 +215,7 @@ function AssetsTab() {
       <div className="bg-white rounded-2xl p-4 shadow-soft flex gap-3">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input className="input pl-9" placeholder="Buscar por serie, marca, modelo..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="input pl-9" placeholder="Buscar por serie, marca, modelo…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input w-40" value={statusFilter} onChange={e => setStatus(e.target.value)}>
           <option value="">Todos</option>
@@ -234,7 +234,7 @@ function AssetsTab() {
           </thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando...</td></tr>
+              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando…</td></tr>
             ) : assets.length === 0 ? (
               <tr><td colSpan={7} className="py-12 text-center">
                 <Package size={32} className="mx-auto text-slate-200 mb-2" />
@@ -246,7 +246,7 @@ function AssetsTab() {
                 <tr key={a.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="size-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
                         <Package size={15} className="text-primary-500" />
                       </div>
                       <span className="text-sm font-medium text-slate-900">{a.asset_type}</span>
@@ -266,9 +266,9 @@ function AssetsTab() {
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1 justify-end">
                       <Link to={`/inventory/asset/${a.id}`} aria-label={`Ver ficha de ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-primary-600 rounded-lg transition-colors"><ExternalLink size={14} aria-hidden="true" /></Link>
-                      <button onClick={() => setQrAsset(a)} aria-label={`Ver QR de ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-violet-600 rounded-lg transition-colors"><QrCode size={14} aria-hidden="true" /></button>
-                      {canWrite('inventory') && <button onClick={() => setEditing(a)} aria-label={`Editar ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-primary-700 rounded-lg transition-colors"><Edit2 size={14} aria-hidden="true" /></button>}
-                      {canDelete('inventory') && <button onClick={() => del(a.id)} aria-label={`Eliminar ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-red-700 rounded-lg transition-colors"><Trash2 size={14} aria-hidden="true" /></button>}
+                      <button type="button" onClick={() => setQrAsset(a)} aria-label={`Ver QR de ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-violet-600 rounded-lg transition-colors"><QrCode size={14} aria-hidden="true" /></button>
+                      {canWrite('inventory') && <button type="button" onClick={() => setEditing(a)} aria-label={`Editar ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-primary-700 rounded-lg transition-colors"><Edit2 size={14} aria-hidden="true" /></button>}
+                      {canDelete('inventory') && <button type="button" onClick={() => del(a.id)} aria-label={`Eliminar ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-red-700 rounded-lg transition-colors"><Trash2 size={14} aria-hidden="true" /></button>}
                     </div>
                   </td>
                 </tr>
@@ -332,7 +332,7 @@ function SupplyForm({ supply, onClose, onSaved }: { supply?: Supply | null; onCl
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-bold mb-5">{supply ? 'Editar Insumo' : 'Nuevo Insumo'}</h2>
+        <h2 className="text-lg font-semibold mb-5">{supply ? 'Editar Insumo' : 'Nuevo Insumo'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="supply-name" className="label">Nombre *</label>
@@ -352,7 +352,7 @@ function SupplyForm({ supply, onClose, onSaved }: { supply?: Supply | null; onCl
             </div>
             <div>
               <label htmlFor="supply-unit" className="label">Unidad</label>
-              <input id="supply-unit" className="input" value={form.unit} onChange={e => set('unit', e.target.value)} placeholder="unidad, kg, litros..." />
+              <input id="supply-unit" className="input" value={form.unit} onChange={e => set('unit', e.target.value)} placeholder="unidad, kg, litros…" />
             </div>
             {!supply && (
               <div>
@@ -379,7 +379,7 @@ function SupplyForm({ supply, onClose, onSaved }: { supply?: Supply | null; onCl
           <div><label htmlFor="supply-notes" className="label">Notas</label><textarea id="supply-notes" className="input resize-none" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} /></div>
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando...' : 'Guardar'}</button>
+            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando…' : 'Guardar'}</button>
           </div>
         </form>
       </div>
@@ -419,7 +419,7 @@ function MovementModal({ supply, onClose, onSaved }: { supply: Supply; onClose: 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-sm p-6">
-        <h2 className="text-lg font-bold mb-1">Movimiento de Stock</h2>
+        <h2 className="text-lg font-semibold mb-1">Movimiento de Stock</h2>
         <p className="text-sm text-slate-500 mb-5">
           {supply.name} · Stock actual: <strong>{supply.current_stock} {supply.unit || 'un.'}</strong>
         </p>
@@ -444,11 +444,11 @@ function MovementModal({ supply, onClose, onSaved }: { supply: Supply; onClose: 
           </div>
           <div>
             <label htmlFor="move-notes" className="label">Observaciones</label>
-            <input id="move-notes" className="input" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Motivo del movimiento..." />
+            <input id="move-notes" className="input" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Motivo del movimiento…" />
           </div>
           <div className="flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando...' : 'Registrar'}</button>
+            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando…' : 'Registrar'}</button>
           </div>
         </form>
       </div>
@@ -500,8 +500,8 @@ function SuppliesTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
-        <button onClick={handleExportSupplies} className="btn btn-ghost border border-slate-200"><Download size={15} /> Exportar</button>
-        {canWrite('inventory') && <button onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Insumo</button>}
+        <button type="button" onClick={handleExportSupplies} className="btn btn-ghost border border-slate-200"><Download size={15} /> Exportar</button>
+        {canWrite('inventory') && <button type="button" onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Insumo</button>}
       </div>
 
       {lowStock.length > 0 && (
@@ -517,7 +517,7 @@ function SuppliesTab() {
       <div className="bg-white rounded-2xl p-4 shadow-soft">
         <div className="relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input className="input pl-9" placeholder="Buscar por nombre o categoría..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="input pl-9" placeholder="Buscar por nombre o categoría…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
 
@@ -532,7 +532,7 @@ function SuppliesTab() {
           </thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando...</td></tr>
+              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando…</td></tr>
             ) : supplies.length === 0 ? (
               <tr><td colSpan={7} className="py-12 text-center">
                 <ShoppingBag size={32} className="mx-auto text-slate-200 mb-2" />
@@ -544,7 +544,7 @@ function SuppliesTab() {
                 <tr key={s.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="size-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
                         <ShoppingBag size={14} className="text-emerald-600" />
                       </div>
                       <span className="text-sm font-medium text-slate-900">{s.name}</span>
@@ -569,13 +569,13 @@ function SuppliesTab() {
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1 justify-end">
                       {canWrite('inventory') && (
-                        <button onClick={() => setMoving(s)} title="Movimiento de stock"
+                        <button type="button" onClick={() => setMoving(s)} title="Movimiento de stock"
                           className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
                           <RotateCcw size={13} />
                         </button>
                       )}
-                      {canWrite('inventory') && <button onClick={() => setEditing(s)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"><Edit2 size={13} /></button>}
-                      {canDelete('inventory') && <button onClick={() => del(s.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={13} /></button>}
+                      {canWrite('inventory') && <button type="button" onClick={() => setEditing(s)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"><Edit2 size={13} /></button>}
+                      {canDelete('inventory') && <button type="button" onClick={() => del(s.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={13} /></button>}
                     </div>
                   </td>
                 </tr>
@@ -599,7 +599,7 @@ export default function InventoryModule() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Inventario</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Inventario</h1>
         <p className="text-slate-500 text-sm mt-0.5">Gestión de activos y control de insumos</p>
       </div>
 
@@ -610,7 +610,7 @@ export default function InventoryModule() {
         ] as const).map(t => {
           const Icon = t.icon;
           return (
-            <button key={t.id} onClick={() => setTab(t.id)}
+            <button type="button" key={t.id} onClick={() => setTab(t.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 tab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}>

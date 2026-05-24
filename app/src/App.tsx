@@ -38,7 +38,7 @@ function ModuleGuard({ code, children }: { code: string; children: React.ReactNo
 function Spinner() {
   return (
     <div className="flex items-center justify-center h-48">
-      <div className="w-7 h-7 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+      <div className="size-7 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
     </div>
   );
 }
@@ -75,7 +75,7 @@ export default function App() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
-      <div className="w-9 h-9 border-4 border-primary-800 border-t-primary-400 rounded-full animate-spin" />
+      <div className="size-9 border-4 border-primary-800 border-t-primary-400 rounded-full animate-spin" />
     </div>
   );
 

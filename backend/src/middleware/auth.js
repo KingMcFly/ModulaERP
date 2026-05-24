@@ -1,19 +1,31 @@
 import jwt from 'jsonwebtoken';
 import db from '../db.js';
 
+// Import audit lazily to avoid circular deps at module init time
+let _audit;
+async function getAudit() {
+  if (!_audit) _audit = (await import('../utils/audit.js')).audit;
+  return _audit;
+}
+
 export async function requireAuth(req, res, next) {
   const header = req.headers.authorization;
   if (!header?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Token requerido' });
   }
+
   let decoded;
   try {
     decoded = jwt.verify(header.slice(7), process.env.JWT_SECRET);
   } catch {
+    // A07: Log invalid token attempts for monitoring (A09)
+    const audit = await getAudit();
+    await audit.log(req, audit.EVENTS.INVALID_TOKEN, {}).catch(() => {});
     return res.status(401).json({ error: 'Token inválido o expirado' });
   }
 
-  // Concurrent session check — skip for super_admin to avoid extra DB hit
+  // A07: Concurrent session check — revokes old tokens when user logs in elsewhere
+  // Skip for super_admin to avoid extra DB hit on every request
   if (decoded.session_id && decoded.role !== 'super_admin') {
     try {
       const [rows] = await db.query(
@@ -23,15 +35,19 @@ export async function requireAuth(req, res, next) {
       if (!rows.length) {
         return res.status(401).json({ error: 'Usuario no encontrado o inactivo' });
       }
-      if (rows[0].active_session_id && rows[0].active_session_id !== decoded.session_id) {
+      // NULL session means logged out — reject all tokens
+      if (!rows[0].active_session_id) {
+        return res.status(401).json({ error: 'Sesión cerrada. Inicia sesión nuevamente.' });
+      }
+      if (rows[0].active_session_id !== decoded.session_id) {
         return res.status(401).json({
           error: 'Tu sesión fue cerrada porque se inició sesión en otro dispositivo.',
           reason: 'session_replaced',
         });
       }
     } catch (err) {
-      console.error('SESSION_CHECK_ERROR:', err.message);
-      // Don't block request on DB error — fail open for availability
+      console.error(`[SESSION_CHECK_ERROR][${req.id}] ${err.message}`);
+      // Fail open only on DB error — availability over security for this check
     }
   }
 
@@ -40,9 +56,11 @@ export async function requireAuth(req, res, next) {
 }
 
 export function requireSuperAdmin(req, res, next) {
-  requireAuth(req, res, (err) => {
+  requireAuth(req, res, async (err) => {
     if (err) return;
     if (req.user.role !== 'super_admin') {
+      const audit = await getAudit();
+      await audit.log(req, audit.EVENTS.ACCESS_DENIED, { required: 'super_admin', actual: req.user.role }).catch(() => {});
       return res.status(403).json({ error: 'Acceso denegado' });
     }
     next();
@@ -50,9 +68,11 @@ export function requireSuperAdmin(req, res, next) {
 }
 
 export function requireAdmin(req, res, next) {
-  requireAuth(req, res, (err) => {
+  requireAuth(req, res, async (err) => {
     if (err) return;
     if (!['super_admin', 'admin', 'manager'].includes(req.user.role)) {
+      const audit = await getAudit();
+      await audit.log(req, audit.EVENTS.ACCESS_DENIED, { required: 'admin', actual: req.user.role }).catch(() => {});
       return res.status(403).json({ error: 'Acceso denegado' });
     }
     next();

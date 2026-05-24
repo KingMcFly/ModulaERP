@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Paperclip, Upload, Trash2, Download, FileText, Image, File, X } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -42,16 +42,16 @@ export default function AttachmentPanel({ entity, entityId }: Props) {
 
   const token = localStorage.getItem('token');
 
-  function load() {
+  const load = useCallback(() => {
     setLoading(true);
     fetch(`${API}/attachments/${entity}/${entityId}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => setItems(Array.isArray(d) ? d : []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }
+  }, [entity, entityId, token]);
 
-  useEffect(load, [entity, entityId]);
+  useEffect(load, [load]);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -121,7 +121,7 @@ export default function AttachmentPanel({ entity, entityId }: Props) {
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
         >
           <Upload size={12} aria-hidden="true" />
-          {uploading ? 'Subiendo...' : 'Adjuntar'}
+          {uploading ? 'Subiendo…' : 'Adjuntar'}
         </button>
         <input
           ref={fileRef}
@@ -134,7 +134,7 @@ export default function AttachmentPanel({ entity, entityId }: Props) {
       </div>
 
       {loading ? (
-        <div className="text-xs text-slate-400 py-3 text-center">Cargando adjuntos...</div>
+        <div className="text-xs text-slate-400 py-3 text-center">Cargando adjuntos…</div>
       ) : items.length === 0 ? (
         <div className="border-2 border-dashed border-slate-100 rounded-xl py-6 flex flex-col items-center gap-2">
           <Paperclip size={20} className="text-slate-300" aria-hidden="true" />
@@ -154,14 +154,14 @@ export default function AttachmentPanel({ entity, entityId }: Props) {
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
-                  onClick={() => handleDownload(item.id, item.file_name)}
+                  type="button" onClick={() => handleDownload(item.id, item.file_name)}
                   aria-label={`Descargar ${item.file_name}`}
                   className="p-1 text-slate-400 hover:text-primary-600 rounded"
                 >
                   <Download size={13} aria-hidden="true" />
                 </button>
                 <button
-                  onClick={() => handleDelete(item.id, item.file_name)}
+                  type="button" onClick={() => handleDelete(item.id, item.file_name)}
                   aria-label={`Eliminar ${item.file_name}`}
                   className="p-1 text-slate-400 hover:text-red-600 rounded"
                 >

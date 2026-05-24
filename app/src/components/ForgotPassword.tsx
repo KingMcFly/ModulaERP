@@ -42,11 +42,11 @@ export default function ForgotPassword() {
         >
           {done ? (
             <div className="text-center space-y-4 py-2">
-              <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto shadow-soft">
+              <div className="size-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto shadow-soft">
                 <CheckCircle size={26} className="text-emerald-500" aria-hidden="true" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-[#1D1D1F]">Revisa tu correo</h1>
+                <h1 className="text-xl font-semibold text-[#1D1D1F]">Revisa tu correo</h1>
                 <p className="text-sm text-[#6E6E73] mt-2 leading-relaxed">
                   Si el correo <strong className="text-[#1D1D1F]">{email}</strong> existe en el sistema, recibirás instrucciones para restablecer tu contraseña.
                 </p>
@@ -66,7 +66,7 @@ export default function ForgotPassword() {
                   <ArrowLeft size={16} aria-hidden="true" />
                 </Link>
                 <div>
-                  <h1 className="text-lg font-bold text-[#1D1D1F]">Recuperar contraseña</h1>
+                  <h1 className="text-lg font-semibold text-[#1D1D1F]">Recuperar contraseña</h1>
                   <p className="text-xs text-[#6E6E73] mt-0.5">Te enviaremos instrucciones por correo</p>
                 </div>
               </div>
@@ -94,7 +94,7 @@ export default function ForgotPassword() {
                 )}
 
                 <button type="submit" disabled={loading} className="btn btn-primary w-full justify-center">
-                  {loading ? 'Enviando...' : 'Enviar instrucciones'}
+                  {loading ? 'Enviando…' : 'Enviar instrucciones'}
                 </button>
               </form>
             </>

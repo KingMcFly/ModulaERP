@@ -64,12 +64,12 @@ function NewMaintenanceModal({ onClose, onCreated }: { onClose: () => void; onCr
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-5">Nuevo Mantenimiento</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nuevo Mantenimiento</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="maint-asset" className="label">Activo *</label>
             <select id="maint-asset" className="input" value={form.asset_id} onChange={e => set('asset_id', e.target.value)} required>
-              <option value="">Seleccionar activo...</option>
+              <option value="">Seleccionar activo…</option>
               {assets.map(a => <option key={a.id} value={a.id}>{a.asset_type} — {a.brand} {a.model}</option>)}
             </select>
           </div>
@@ -100,7 +100,7 @@ function NewMaintenanceModal({ onClose, onCreated }: { onClose: () => void; onCr
           </div>
           <div className="flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Creando...' : 'Crear'}</button>
+            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Creando…' : 'Crear'}</button>
           </div>
         </form>
       </div>
@@ -110,9 +110,8 @@ function NewMaintenanceModal({ onClose, onCreated }: { onClose: () => void; onCr
 
 function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onStatusChange: (id: number, status: string) => void }) {
   const { canWrite } = useAuth();
-  const today = new Date();
-  const [year, setYear]   = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth());
+  const [year, setYear]   = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState(() => new Date().getMonth());
   const [selected, setSelected] = useState<Maintenance[] | null>(null);
 
   function prev() { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); }
@@ -135,15 +134,16 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
   const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
   while (cells.length % 7 !== 0) cells.push(null);
 
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const _now = new Date();
+  const todayStr = `${_now.getFullYear()}-${String(_now.getMonth()+1).padStart(2,'0')}-${String(_now.getDate()).padStart(2,'0')}`;
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-        <button onClick={prev} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"><ChevronLeft size={18} /></button>
+        <button type="button" onClick={prev} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"><ChevronLeft size={18} /></button>
         <h2 className="text-base font-semibold text-slate-900">{MONTHS[month]} {year}</h2>
-        <button onClick={next} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"><ChevronRight size={18} /></button>
+        <button type="button" onClick={next} className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100"><ChevronRight size={18} /></button>
       </div>
 
       {/* Day headers */}
@@ -156,18 +156,18 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
       {/* Grid */}
       <div className="grid grid-cols-7 divide-x divide-slate-50">
         {cells.map((day, i) => {
-          if (!day) return <div key={i} className="min-h-[88px] bg-slate-50/50" />;
+          if (!day) return <div key={`pad-${i}`} className="min-h-[88px] bg-slate-50/50" />;
           const key = day.toString();
           const dayRecords = byDate[key] || [];
           const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
           const isToday = dateStr === todayStr;
           return (
             <div
-              key={i}
+              key={dateStr}
               className={`min-h-[88px] p-1.5 border-b border-slate-50 cursor-pointer hover:bg-slate-50 transition-colors ${isToday ? 'bg-primary-50/40' : ''}`}
               onClick={() => dayRecords.length > 0 ? setSelected(dayRecords) : null}
             >
-              <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full mb-1 ${isToday ? 'bg-primary-600 text-white' : 'text-slate-500'}`}>
+              <span className={`text-xs font-medium size-6 flex items-center justify-center rounded-full mb-1 ${isToday ? 'bg-primary-600 text-white' : 'text-slate-500'}`}>
                 {day}
               </span>
               <div className="space-y-0.5">
@@ -193,7 +193,7 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
       <div className="flex items-center gap-4 px-5 py-3 border-t border-slate-100">
         {Object.entries(TYPE_CFG).map(([, v]) => (
           <div key={v.label} className="flex items-center gap-1.5">
-            <span className={`w-2 h-2 rounded-full ${v.dot}`} />
+            <span className={`size-2 rounded-full ${v.dot}`} />
             <span className="text-xs text-slate-500">{v.label}</span>
           </div>
         ))}
@@ -205,7 +205,7 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
           <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-slate-900">Mantenimientos del día</h3>
-              <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
+              <button type="button" onClick={() => setSelected(null)} className="text-slate-400 hover:text-slate-600 text-lg leading-none">&times;</button>
             </div>
             <div className="space-y-3">
               {selected.map(r => {
@@ -224,10 +224,10 @@ function CalendarView({ records, onStatusChange }: { records: Maintenance[]; onS
                       <span className={`badge ${sc?.cls} flex items-center gap-1`}><StatusIcon size={10} />{sc?.label}</span>
                       <div className="flex gap-1">
                         {r.status === 'pending' && canWrite('maintenance') && (
-                          <button onClick={() => { onStatusChange(r.id, 'in_progress'); setSelected(null); }} className="btn btn-ghost text-xs py-1 px-2">Iniciar</button>
+                          <button type="button" onClick={() => { onStatusChange(r.id, 'in_progress'); setSelected(null); }} className="btn btn-ghost text-xs py-1 px-2">Iniciar</button>
                         )}
                         {r.status === 'in_progress' && canWrite('maintenance') && (
-                          <button onClick={() => { onStatusChange(r.id, 'completed'); setSelected(null); }} className="btn btn-primary text-xs py-1 px-2">Completar</button>
+                          <button type="button" onClick={() => { onStatusChange(r.id, 'completed'); setSelected(null); }} className="btn btn-primary text-xs py-1 px-2">Completar</button>
                         )}
                       </div>
                     </div>
@@ -276,11 +276,11 @@ export default function MaintenanceModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mantenimientos</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Mantenimientos</h1>
           <p className="text-slate-500 text-sm mt-0.5">Programación y seguimiento de mantenimientos</p>
         </div>
         {canWrite('maintenance') && (
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
+          <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary">
             <Plus size={16} /> Nuevo
           </button>
         )}
@@ -290,7 +290,7 @@ export default function MaintenanceModule() {
         {view === 'list' && (
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input className="input pl-9" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
+            <input className="input pl-9" placeholder="Buscar…" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         )}
         {view === 'list' && (
@@ -306,13 +306,13 @@ export default function MaintenanceModule() {
         {/* View toggle */}
         <div className="flex bg-slate-100 rounded-lg p-1 gap-1 flex-shrink-0">
           <button
-            onClick={() => setView('list')}
+            type="button" onClick={() => setView('list')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${view === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
             <List size={13} /> Lista
           </button>
           <button
-            onClick={() => setView('calendar')}
+            type="button" onClick={() => setView('calendar')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${view === 'calendar' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
             <Calendar size={13} /> Calendario
@@ -325,7 +325,7 @@ export default function MaintenanceModule() {
       ) : (
         <div className="space-y-3">
           {loading ? (
-            <div className="text-center py-12 text-slate-400">Cargando...</div>
+            <div className="text-center py-12 text-slate-400">Cargando…</div>
           ) : filtered.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-100 text-center py-12 text-slate-400">Sin registros</div>
           ) : filtered.map(r => {
@@ -334,7 +334,7 @@ export default function MaintenanceModule() {
             const StatusIcon = sc?.icon || Clock;
             return (
               <div key={r.id} className="bg-white rounded-2xl p-5 shadow-soft flex items-center gap-4">
-                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="size-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Wrench size={18} className="text-amber-500" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -353,10 +353,10 @@ export default function MaintenanceModule() {
                     <StatusIcon size={11} /> {sc?.label}
                   </span>
                   {r.status === 'pending' && canWrite('maintenance') && (
-                    <button onClick={() => updateStatus(r.id, 'in_progress')} className="btn btn-ghost text-xs py-1 px-2">Iniciar</button>
+                    <button type="button" onClick={() => updateStatus(r.id, 'in_progress')} className="btn btn-ghost text-xs py-1 px-2">Iniciar</button>
                   )}
                   {r.status === 'in_progress' && canWrite('maintenance') && (
-                    <button onClick={() => updateStatus(r.id, 'completed')} className="btn btn-primary text-xs py-1 px-2">Completar</button>
+                    <button type="button" onClick={() => updateStatus(r.id, 'completed')} className="btn btn-primary text-xs py-1 px-2">Completar</button>
                   )}
                 </div>
               </div>

@@ -57,12 +57,12 @@ function NewLoanModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-5">Nuevo Préstamo</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-5">Nuevo Préstamo</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="loan-asset" className="label">Activo *</label>
             <select id="loan-asset" className="input" value={form.asset_id} onChange={e => set('asset_id', e.target.value)} required>
-              <option value="">Seleccionar activo disponible...</option>
+              <option value="">Seleccionar activo disponible…</option>
               {assets.map(a => <option key={a.id} value={a.id}>{a.asset_type} — {a.brand} {a.model} ({a.serial_number || 'sin serie'})</option>)}
             </select>
           </div>
@@ -70,7 +70,7 @@ function NewLoanModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
             <div>
               <label htmlFor="loan-person" className="label">Persona (opcional)</label>
               <select id="loan-person" className="input" value={form.borrower_id} onChange={e => { set('borrower_id', e.target.value); if (e.target.value) set('borrower_name', e.target.options[e.target.selectedIndex].text); }}>
-                <option value="">Seleccionar...</option>
+                <option value="">Seleccionar…</option>
                 {personnel.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
@@ -89,7 +89,7 @@ function NewLoanModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
           </div>
           <div className="flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button>
-            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Registrando...' : 'Registrar Préstamo'}</button>
+            <button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Registrando…' : 'Registrar Préstamo'}</button>
           </div>
         </form>
       </div>
@@ -132,11 +132,11 @@ export default function LoansModule() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Préstamos</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Préstamos</h1>
           <p className="text-slate-500 text-sm mt-0.5">Control de préstamo y devolución</p>
         </div>
         {canWrite('loans') && (
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
+          <button type="button" onClick={() => setShowModal(true)} className="btn btn-primary">
             <Plus size={16} /> Nuevo Préstamo
           </button>
         )}
@@ -152,7 +152,7 @@ export default function LoansModule() {
       <div className="bg-white rounded-2xl p-4 shadow-soft flex gap-3">
         <div className="relative flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input className="input pl-9" placeholder="Buscar por activo o persona..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input className="input pl-9" placeholder="Buscar por activo o persona…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input w-36" value={statusFilter} onChange={e => setStatus(e.target.value)}>
           <option value="">Todos</option>
@@ -172,7 +172,7 @@ export default function LoansModule() {
           </thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
-              <tr><td colSpan={6} className="text-center py-12 text-slate-400">Cargando...</td></tr>
+              <tr><td colSpan={6} className="text-center py-12 text-slate-400">Cargando…</td></tr>
             ) : filtered.length === 0 ? (
               <tr><td colSpan={6} className="text-center py-12 text-slate-400">Sin préstamos</td></tr>
             ) : filtered.map(l => {
@@ -202,12 +202,12 @@ export default function LoansModule() {
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-1.5">
                       {l.status === 'active' && canWrite('loans') && (
-                        <button onClick={() => returnLoan(l.id)} className="btn btn-ghost text-xs py-1.5 px-2.5 text-emerald-600 hover:bg-emerald-50">
+                        <button type="button" onClick={() => returnLoan(l.id)} className="btn btn-ghost text-xs py-1.5 px-2.5 text-emerald-600 hover:bg-emerald-50">
                           <RotateCcw size={13} /> Devolver
                         </button>
                       )}
                       <button
-                        onClick={() => generateLoanPDF({
+                        type="button" onClick={() => generateLoanPDF({
                           loan: l,
                           tenantName: user?.tenant?.name || 'FB Core',
                           tenantColor: user?.tenant?.primary_color,

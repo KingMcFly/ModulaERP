@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@e965/xlsx": "^0.20.3",
-    "@tanstack/react-table": "^8.20.5",
     "framer-motion": "^11.3.19",
     "html5-qrcode": "^2.3.8",
     "jspdf": "^4.2.1",

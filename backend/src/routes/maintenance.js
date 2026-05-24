@@ -92,7 +92,14 @@ router.post('/', guard, w(async (req, res) => {
 
 router.put('/:id', guard, w(async (req, res) => {
   const { technician_id, maint_type, status, scheduled_at, started_at, completed_at,
-          description, findings, actions_taken, cost, next_maintenance } = req.body;
+          description, findings, actions_taken, next_maintenance } = req.body;
+
+  // A08: Validate cost bounds — reject negative or astronomically large values
+  const cost = req.body.cost != null ? parseFloat(req.body.cost) : null;
+  if (cost !== null && (!Number.isFinite(cost) || cost < 0 || cost > 999_999_999)) {
+    return res.status(400).json({ error: 'Costo inválido' });
+  }
+
   await db.query(
     `UPDATE maintenance_records SET technician_id=?, maint_type=?, status=?, scheduled_at=?,
      started_at=?, completed_at=?, description=?, findings=?, actions_taken=?, cost=?, next_maintenance=?,
@@ -108,7 +115,7 @@ router.put('/:id', guard, w(async (req, res) => {
       description     || null,
       findings        || null,
       actions_taken   || null,
-      cost            || null,
+      cost,
       next_maintenance|| null,
       req.params.id,
       req.user.tenant_id,
@@ -118,9 +125,16 @@ router.put('/:id', guard, w(async (req, res) => {
 }));
 
 router.patch('/:id/checklist/:itemId', guard, w(async (req, res) => {
+  // A01: Verify the maintenance record belongs to this tenant before updating checklist
+  const [[mr]] = await db.query(
+    'SELECT id FROM maintenance_records WHERE id = ? AND tenant_id = ?',
+    [req.params.id, req.user.tenant_id]
+  );
+  if (!mr) return res.status(404).json({ error: 'No encontrado' });
+
   await db.query(
-    'UPDATE maintenance_checklist SET is_completed = ? WHERE id = ?',
-    [req.body.is_completed, req.params.itemId]
+    'UPDATE maintenance_checklist SET is_completed = ? WHERE id = ? AND maintenance_id = ?',
+    [req.body.is_completed, req.params.itemId, req.params.id]
   );
   res.json({ message: 'Actualizado' });
 }));

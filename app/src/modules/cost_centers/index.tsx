@@ -4,6 +4,8 @@ import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const CLP_FMT = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+function fmtMoney(n?: number) { return n ? CLP_FMT.format(n) : '—'; }
 function authFetch(path: string, opts?: RequestInit) {
   const token = localStorage.getItem('token');
   return fetch(`${API}${path}`, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, ...(opts?.headers||{}) } });
@@ -28,7 +30,7 @@ function CostCenterForm({ item, onClose, onSaved }: { item?: CostCenter|null; on
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-5">{item ? 'Editar Centro' : 'Nuevo Centro de Costo'}</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-5">{item ? 'Editar Centro' : 'Nuevo Centro de Costo'}</h2>
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2"><label htmlFor="cc-name" className="label">Nombre *</label><input id="cc-name" className="input" value={f.name} onChange={e => set('name', e.target.value)} required /></div>
@@ -37,14 +39,12 @@ function CostCenterForm({ item, onClose, onSaved }: { item?: CostCenter|null; on
             <div className="col-span-2"><label htmlFor="cc-budget" className="label">Presupuesto ($)</label><input id="cc-budget" className="input" type="number" value={f.budget} onChange={e => set('budget', e.target.value)} /></div>
             <div className="col-span-2"><label htmlFor="cc-desc" className="label">Descripción</label><textarea id="cc-desc" className="input resize-none" rows={2} value={f.description} onChange={e => set('description', e.target.value)} /></div>
           </div>
-          <div className="flex gap-3 pt-1"><button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button><button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando...' : 'Guardar'}</button></div>
+          <div className="flex gap-3 pt-1"><button type="button" onClick={onClose} className="flex-1 btn btn-ghost">Cancelar</button><button type="submit" disabled={saving} className="flex-1 btn btn-primary">{saving ? 'Guardando…' : 'Guardar'}</button></div>
         </form>
       </div>
     </div>
   );
 }
-
-function fmtMoney(n?: number) { return n ? new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:0}).format(n) : '—'; }
 
 export default function CostCentersModule() {
   const { canWrite, canDelete } = useAuth();
@@ -69,8 +69,8 @@ export default function CostCentersModule() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-slate-900">Centros de Costo</h1><p className="text-slate-500 text-sm mt-0.5">Control de presupuesto por área</p></div>
-        {canWrite('cost_centers') && <button onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Centro</button>}
+        <div><h1 className="text-2xl font-semibold text-slate-900">Centros de Costo</h1><p className="text-slate-500 text-sm mt-0.5">Control de presupuesto por área</p></div>
+        {canWrite('cost_centers') && <button type="button" onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Centro</button>}
       </div>
 
       {totalBudget > 0 && (
@@ -81,7 +81,7 @@ export default function CostCentersModule() {
             { label: 'Disponible',        value: fmtMoney(Math.max(totalBudget - totalSpent, 0)), color: '#10B981' },
           ].map(s => (
             <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft">
-              <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-2xl font-semibold" style={{ color: s.color }}>{s.value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
             </div>
           ))}
@@ -90,7 +90,7 @@ export default function CostCentersModule() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
-          <p className="text-slate-400 text-sm col-span-3 text-center py-12">Cargando...</p>
+          <p className="text-slate-400 text-sm col-span-3 text-center py-12">Cargando…</p>
         ) : items.length === 0 ? (
           <div className="col-span-3 py-16 flex flex-col items-center gap-2 text-slate-400"><PieChart size={32} className="text-slate-200" /><p className="text-sm">Sin centros de costo</p></div>
         ) : items.map(cc => {
@@ -99,10 +99,10 @@ export default function CostCentersModule() {
           return (
             <div key={cc.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
               <div className="flex items-start justify-between mb-3">
-                <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center flex-shrink-0"><PieChart size={18} className="text-primary-600" /></div>
+                <div className="size-10 bg-primary-50 rounded-xl flex items-center justify-center flex-shrink-0"><PieChart size={18} className="text-primary-600" /></div>
                 <div className="flex gap-1">
-                  {canWrite('cost_centers') && <button onClick={() => setEditing(cc)} className="p-1.5 text-slate-400 hover:text-primary-700 rounded-lg"><Edit2 size={14} /></button>}
-                  {canDelete('cost_centers') && <button onClick={() => del(cc.id)} className="p-1.5 text-slate-400 hover:text-red-700 rounded-lg"><Trash2 size={14} /></button>}
+                  {canWrite('cost_centers') && <button type="button" onClick={() => setEditing(cc)} className="p-1.5 text-slate-400 hover:text-primary-700 rounded-lg"><Edit2 size={14} /></button>}
+                  {canDelete('cost_centers') && <button type="button" onClick={() => del(cc.id)} className="p-1.5 text-slate-400 hover:text-red-700 rounded-lg"><Trash2 size={14} /></button>}
                 </div>
               </div>
               <div className="flex items-center gap-2 mb-0.5">

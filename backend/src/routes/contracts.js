@@ -30,7 +30,7 @@ router.post('/', guard, w(async (req, res) => {
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id`,
     [req.user.tenant_id, title.trim(), contract_number||null, provider_id||null, cost_center_id||null,
      contract_type||null, start_date||null, end_date||null, value||null, description||null,
-     parseInt(alert_days)||30, req.user.id]
+     Math.min(Math.max(parseInt(alert_days) || 30, 1), 365), req.user.id]
   );
   res.status(201).json({ id: rows[0].id });
 }));
@@ -42,7 +42,8 @@ router.put('/:id', guard, w(async (req, res) => {
        start_date=?,end_date=?,value=?,description=?,alert_days=?,status=?
      WHERE id=? AND tenant_id=?`,
     [title, contract_number||null, provider_id||null, cost_center_id||null, contract_type||null,
-     start_date||null, end_date||null, value||null, description||null, parseInt(alert_days)||30,
+     start_date||null, end_date||null, value||null, description||null,
+     Math.min(Math.max(parseInt(alert_days) || 30, 1), 365),
      status||'active', req.params.id, req.user.tenant_id]
   );
   res.json({ message: 'Contrato actualizado' });

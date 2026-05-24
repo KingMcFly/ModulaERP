@@ -2,7 +2,21 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
+import { randomBytes } from 'crypto';
 import 'dotenv/config';
+
+// ── A05: Validate required env vars at startup — fail fast, don't limp along ──
+const REQUIRED_ENV = ['JWT_SECRET', 'DATABASE_URL'];
+const missing = REQUIRED_ENV.filter(k => !process.env[k]);
+if (missing.length) {
+  console.error(`[FATAL] Missing required environment variables: ${missing.join(', ')}`);
+  process.exit(1);
+}
+// A02: Enforce a minimum JWT_SECRET length (32 chars = 256 bits)
+if (process.env.JWT_SECRET.length < 32) {
+  console.error('[FATAL] JWT_SECRET must be at least 32 characters (use a random 64-hex string)');
+  process.exit(1);
+}
 
 import authRouter          from './routes/auth.js';
 import assetsRouter        from './routes/assets.js';
@@ -31,30 +45,65 @@ import usersRouter         from './routes/users.js';
 import cronRouter          from './routes/cron.js';
 import lookupRouter        from './routes/lookup.js';
 import registerRouter      from './routes/register.js';
+import db from './db.js';
+
+// ── A09: Bootstrap audit log table (runs once on startup) ─────────────────────
+db.query(`
+  CREATE TABLE IF NOT EXISTS security_audit_log (
+    id         BIGSERIAL PRIMARY KEY,
+    event      VARCHAR(64)  NOT NULL,
+    user_id    INTEGER,
+    tenant_id  INTEGER,
+    ip_address VARCHAR(45),
+    request_id VARCHAR(36),
+    meta       JSONB,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+  )
+`).catch(err => console.error('[DB] audit log table init failed:', err.message));
+
+db.query(`
+  CREATE INDEX IF NOT EXISTS idx_audit_event      ON security_audit_log (event);
+  CREATE INDEX IF NOT EXISTS idx_audit_user       ON security_audit_log (user_id);
+  CREATE INDEX IF NOT EXISTS idx_audit_tenant     ON security_audit_log (tenant_id);
+  CREATE INDEX IF NOT EXISTS idx_audit_created_at ON security_audit_log (created_at);
+`).catch(() => {/* indexes non-fatal */});
 
 const app = express();
 
 // Trust Vercel/proxy headers so req.ip resolves correctly (needed for rate limiting)
 app.set('trust proxy', 1);
 
-// ── Security headers (A05) ─────────────────────────────────────────────────
+// ── A09: X-Request-ID — correlate logs across services ────────────────────────
+app.use((req, _res, next) => {
+  req.id = req.headers['x-request-id'] || randomBytes(8).toString('hex');
+  next();
+});
+
+// ── A05: Security headers ─────────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc:  ["'self'"],
-      styleSrc:   ["'self'", "'unsafe-inline'"],
-      imgSrc:     ["'self'", 'data:', 'blob:'],
-      connectSrc: ["'self'"],
-      fontSrc:    ["'self'"],
-      objectSrc:  ["'none'"],
-      frameAncestors: ["'none'"],
+      defaultSrc:     ["'self'"],
+      scriptSrc:      ["'self'"],
+      styleSrc:       ["'self'", "'unsafe-inline'"], // kept for API docs/admin UIs
+      imgSrc:         ["'self'", 'data:', 'blob:'],
+      connectSrc:     ["'self'"],
+      fontSrc:        ["'self'"],
+      objectSrc:      ["'none'"],
+      baseUri:        ["'none'"],              // A01: prevent base tag injection
+      frameAncestors: ["'none'"],              // A01: clickjacking prevention
+      formAction:     ["'self'"],              // A01: restrict form submissions
     },
+    reportOnly: false,
   },
   crossOriginEmbedderPolicy: false,
+  // Strict-Transport-Security included by helmet by default (HSTS)
 }));
 
-// ── CORS (A05) ─────────────────────────────────────────────────────────────
+// A05: Remove X-Powered-By (already done by helmet, explicit for clarity)
+app.disable('x-powered-by');
+
+// ── A05: CORS ─────────────────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.ADMIN_URL,
@@ -62,42 +111,56 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, cb) => {
+    // Allow same-origin (no origin header) and server-to-server calls
     if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
     cb(new Error('CORS: origen no permitido'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+  exposedHeaders: ['X-Request-ID'],
 }));
 
-// ── Body parsing — tamaño reducido para prevenir DoS (A05) ─────────────────
+// ── A05: Body parsing limits — prevent DoS via large payloads ─────────────────
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// ── Archivos estáticos de uploads (A05) ───────────────────────────────────
+// ── A05: Static uploads (no directory listing, no dotfiles) ───────────────────
 app.use('/uploads', express.static(process.env.UPLOAD_DIR || './uploads', {
   dotfiles: 'deny',
   index: false,
 }));
 
-// ── Assets públicos (logo, etc.) ──────────────────────────────────────────
 app.use('/public', express.static(new URL('../public', import.meta.url).pathname, {
   dotfiles: 'deny',
   index: false,
   maxAge: '7d',
 }));
 
-// ── Rate limiting global (A07) ─────────────────────────────────────────────
+// ── A07: Global rate limiter — defense against scraping and DoS ───────────────
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
+  windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiadas peticiones. Intenta más tarde.' },
+  keyGenerator: (req) => req.ip,
 });
 app.use('/api', globalLimiter);
 
-// ── Rutas ──────────────────────────────────────────────────────────────────
+// ── A07: Tighter rate limit for mutation endpoints ────────────────────────────
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === 'GET',
+  keyGenerator: (req) => req.ip,
+  message: { error: 'Demasiadas escrituras. Intenta más tarde.' },
+});
+app.use('/api', writeLimiter);
+
+// ── Rutas ─────────────────────────────────────────────────────────────────────
 app.use('/api/auth',          authRouter);
 app.use('/api/assets',        assetsRouter);
 app.use('/api/loans',         loansRouter);
@@ -126,16 +189,26 @@ app.use('/api/cron',           cronRouter);
 app.use('/api/lookup',         lookupRouter);
 app.use('/api/register',       registerRouter);
 
-// Health — sin información sensible del servidor (A05)
+// ── A05: Health check — no sensitive server information exposed ───────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
-// ── Error handler global — no expone detalles internos (A05, A09) ──────────
+// ── A05: Security contact disclosure (RFC 9116) ───────────────────────────────
+app.get('/.well-known/security.txt', (_req, res) => {
+  res.type('text/plain').send([
+    'Contact: mailto:security@fbcore.cloud',
+    'Preferred-Languages: es, en',
+    `Expires: ${new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()}`,
+    'Policy: https://fbcore.cloud/security-policy',
+  ].join('\n'));
+});
+
+// ── A05: Error handler — no stack traces exposed to clients ───────────────────
 app.use((err, req, res, _next) => {
   const status = err.status || err.statusCode || 500;
-  // Log con contexto pero sin stack en respuesta
-  console.error(`[${new Date().toISOString()}] ${req.method} ${req.path} → ${status}:`, err.message);
+  const rid = req.id || '-';
+  console.error(`[${new Date().toISOString()}][${rid}] ${req.method} ${req.path} → ${status}: ${err.message}`);
   if (status === 500) {
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: 'Error interno del servidor', request_id: rid });
   } else {
     res.status(status).json({ error: err.message });
   }

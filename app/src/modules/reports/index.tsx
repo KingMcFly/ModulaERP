@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from 'recharts';
 import { Package, Users, ArrowRightLeft, Wrench, ShoppingCart, TrendingUp, AlertTriangle, Download } from 'lucide-react';
 import { exportToExcel } from '../../utils/exportExcel';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const MXN_FMT = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
 
 function apiFetch(path: string) {
   const token = localStorage.getItem('token');
@@ -27,7 +28,6 @@ const STATUS_LABELS: Record<string, string> = {
   retired:     'Retirado',
 };
 
-const PIE_COLORS = ['#F2B045', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 interface KPI { label: string; value: string | number; sub?: string; icon: React.ReactNode; color: string; }
 
@@ -36,7 +36,7 @@ function KPICard({ label, value, sub, icon, color }: KPI) {
     <div className="bg-white rounded-2xl border border-slate-100 p-5 flex items-start gap-4 shadow-sm">
       <div className={`p-3 rounded-xl flex-shrink-0 ${color}`}>{icon}</div>
       <div className="min-w-0">
-        <p className="text-2xl font-bold text-slate-900">{value}</p>
+        <p className="text-2xl font-semibold text-slate-900">{value}</p>
         <p className="text-sm font-medium text-slate-600">{label}</p>
         {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
       </div>
@@ -54,13 +54,12 @@ export default function ReportsModule() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64 text-slate-400">
-      <div className="w-8 h-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
+      <div className="size-8 border-4 border-slate-200 border-t-primary-500 rounded-full animate-spin" />
     </div>
   );
   if (!data) return <div className="text-center py-16 text-slate-400">Sin datos</div>;
 
-  const fmtCurrency = (n: number) =>
-    new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n);
+  const fmtCurrency = (n: number) => MXN_FMT.format(n);
 
   const kpis: KPI[] = [
     {
@@ -141,10 +140,10 @@ export default function ReportsModule() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Reportes</h1>
+          <h1 className="text-xl font-semibold text-slate-900">Reportes</h1>
           <p className="text-sm text-slate-500 mt-0.5">Resumen ejecutivo del sistema</p>
         </div>
-        <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 shadow-sm transition-colors">
+        <button type="button" onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 shadow-sm transition-colors">
           <Download size={15} /> Exportar Excel
         </button>
       </div>
@@ -181,8 +180,8 @@ export default function ReportsModule() {
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie data={assetsByStatus} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                  {assetsByStatus.map((entry: any, i: number) => (
-                    <Cell key={i} fill={entry.fill} />
+                  {assetsByStatus.map((entry: any) => (
+                    <Cell key={entry.name} fill={entry.fill} />
                   ))}
                 </Pie>
                 <Tooltip />

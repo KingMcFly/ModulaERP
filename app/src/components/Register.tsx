@@ -28,9 +28,11 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 const MANDATORY = ['inventory', 'personnel'];
 
 const PASSWORD_RULES = [
-  { re: /.{8,}/, label: 'Mínimo 8 caracteres' },
-  { re: /[A-Z]/, label: 'Al menos una mayúscula' },
-  { re: /[0-9]/, label: 'Al menos un número' },
+  { re: /.{8,}/,        label: 'Mínimo 8 caracteres' },
+  { re: /[A-Z]/,        label: 'Al menos una mayúscula' },
+  { re: /[a-z]/,        label: 'Al menos una minúscula' },
+  { re: /[0-9]/,        label: 'Al menos un número' },
+  { re: /[^A-Za-z0-9]/, label: 'Al menos un carácter especial' },
 ];
 
 export default function Register() {
@@ -148,7 +150,7 @@ export default function Register() {
               return (
                 <React.Fragment key={s}>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
+                    <div className="size-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
                       style={{
                         background: done ? '#22c55e' : active ? '#F2B045' : 'rgba(0,0,0,0.08)',
                         color: done || active ? '#fff' : '#AEAEB2',
@@ -213,7 +215,7 @@ export default function Register() {
                   <div className="mt-2.5 space-y-1.5">
                     {PASSWORD_RULES.map(rule => (
                       <div key={rule.label} className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0"
+                        <div className="size-4 rounded-full flex items-center justify-center shrink-0"
                           style={{ background: rule.re.test(password) ? '#22c55e' : 'rgba(0,0,0,0.08)' }}>
                           {rule.re.test(password) && <Check size={8} color="#fff" />}
                         </div>
@@ -280,7 +282,7 @@ export default function Register() {
 
               <div className="space-y-2 max-h-[260px] overflow-y-auto -mx-1 px-1">
                 {modules.length === 0 && (
-                  <p className="text-[13px] text-[#9898A3] text-center py-6">Cargando módulos...</p>
+                  <p className="text-[13px] text-[#9898A3] text-center py-6">Cargando módulos…</p>
                 )}
                 {modules.map(mod => {
                   const selected = selectedMods.includes(mod.code);
@@ -297,7 +299,7 @@ export default function Register() {
                         cursor: disabled ? 'not-allowed' : 'pointer',
                       }}>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                        <div className="size-8 rounded-lg flex items-center justify-center shrink-0"
                           style={{ background: `${mod.color || '#6366f1'}18`, color: mod.color || '#6366f1' }}>
                           {ICON_MAP[mod.icon] ?? <Package size={16} />}
                         </div>
@@ -307,7 +309,7 @@ export default function Register() {
                             <p className="text-[11px] text-[#9898A3] truncate mt-0.5">{mod.description}</p>
                           )}
                         </div>
-                        <div className="w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center ml-1"
+                        <div className="size-5 rounded-full border-2 shrink-0 flex items-center justify-center ml-1"
                           style={{ borderColor: selected ? '#F2B045' : 'rgba(0,0,0,0.18)', background: selected ? '#F2B045' : 'transparent' }}>
                           {selected && <Check size={10} color="#131316" />}
                         </div>
@@ -328,7 +330,7 @@ export default function Register() {
                   Atrás
                 </SecondaryButton>
                 <PrimaryButton onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Creando cuenta...' : <><Rocket size={14} /> Crear cuenta</>}
+                  {loading ? 'Creando cuenta…' : <><Rocket size={14} /> Crear cuenta</>}
                 </PrimaryButton>
               </div>
             </div>
@@ -337,7 +339,7 @@ export default function Register() {
           {/* ── Step 4: Success ─────────────────────────────────────── */}
           {step === 4 && (
             <div className="text-center py-3">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              <div className="size-16 rounded-full flex items-center justify-center mx-auto mb-4"
                 style={{ background: 'rgba(34,197,94,0.12)' }}>
                 <Check size={30} color="#22c55e" />
               </div>

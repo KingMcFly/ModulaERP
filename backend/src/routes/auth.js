@@ -7,6 +7,28 @@ import nodemailer from 'nodemailer';
 import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { resetPasswordEmail } from '../utils/emailTemplates.js';
+import { audit } from '../utils/audit.js';
+import { z } from 'zod';
+import { validate } from '../middleware/validate.js';
+
+// ── A03: Input validation schemas ─────────────────────────────────────────────
+const loginSchema = z.object({
+  email:    z.string().min(1).max(254).trim(),
+  password: z.string().min(1).max(128),
+});
+
+const changePasswordSchema = z.object({
+  current_password: z.string().min(1).max(128),
+  new_password:     z.string().min(8).max(128),
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email().max(254).trim().toLowerCase(),
+});
+
+const resetPasswordSchema = z.object({
+  password: z.string().min(8).max(128),
+});
 
 const router = Router();
 
@@ -35,7 +57,7 @@ function formatRutServer(rut) {
   return `${body.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${dv}`;
 }
 
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Identificador y contraseña requeridos' });
 
@@ -72,7 +94,7 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     if (!user || !passwordValid) {
       // Log de intento fallido (A09)
-      console.warn(`[${new Date().toISOString()}] LOGIN_FAILED identifier=${identifier} ip=${req.ip}`);
+      await audit.log(req, audit.EVENTS.LOGIN_FAILED, { identifier });
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
 
@@ -118,7 +140,7 @@ router.post('/login', loginLimiter, async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
     );
 
-    console.info(`[${new Date().toISOString()}] LOGIN_OK user=${user.id} tenant=${user.tenant_id}`);
+    await audit.log(req, audit.EVENTS.LOGIN_OK, { user_id: user.id, tenant_id: user.tenant_id });
 
     res.json({
       token,
@@ -135,6 +157,22 @@ router.post('/login', loginLimiter, async (req, res) => {
     });
   } catch (err) {
     console.error(`[${new Date().toISOString()}] LOGIN_ERROR:`, err.message);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// ── A07: Logout — revoke session immediately (token unusable even before expiry)
+router.post('/logout', requireAuth, async (req, res) => {
+  try {
+    // Clear active_session_id so any existing JWT with this session fails validation
+    await db.query(
+      'UPDATE users SET active_session_id = NULL WHERE id = ?',
+      [req.user.id]
+    );
+    await audit.log(req, audit.EVENTS.LOGOUT, { user_id: req.user.id });
+    res.json({ message: 'Sesión cerrada correctamente' });
+  } catch (err) {
+    console.error(`[LOGOUT_ERROR] ${err.message}`);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -186,17 +224,19 @@ router.get('/me', requireAuth, async (req, res) => {
   });
 });
 
-// ── Validación de fortaleza de contraseña (A07) ───────────────────────────
+// ── A07: Validación de fortaleza de contraseña (OWASP ASVS L2) ───────────────
 function validatePasswordStrength(password) {
   if (!password || typeof password !== 'string') return 'Contraseña requerida';
-  if (password.length < 8) return 'Mínimo 8 caracteres';
+  if (password.length < 8)   return 'Mínimo 8 caracteres';
   if (password.length > 128) return 'Máximo 128 caracteres';
   if (!/[A-Z]/.test(password)) return 'Debe contener al menos una mayúscula';
+  if (!/[a-z]/.test(password)) return 'Debe contener al menos una minúscula';
   if (!/[0-9]/.test(password)) return 'Debe contener al menos un número';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Debe contener al menos un carácter especial (!@#$%^&*…)';
   return null;
 }
 
-router.post('/change-password', requireAuth, async (req, res) => {
+router.post('/change-password', requireAuth, validate(changePasswordSchema), async (req, res) => {
   const { current_password, new_password } = req.body;
 
   const strengthError = validatePasswordStrength(new_password);
@@ -204,13 +244,27 @@ router.post('/change-password', requireAuth, async (req, res) => {
 
   const [rows] = await db.query('SELECT password FROM users WHERE id = ?', [req.user.id]);
   if (!rows.length || !(await bcrypt.compare(current_password, rows[0].password))) {
+    await audit.log(req, audit.EVENTS.PASSWORD_CHANGED, { user_id: req.user.id, success: false });
     return res.status(400).json({ error: 'Contraseña actual incorrecta' });
   }
 
   const hash = await bcrypt.hash(new_password, 12);
-  await db.query('UPDATE users SET password = ? WHERE id = ?', [hash, req.user.id]);
-  console.info(`[${new Date().toISOString()}] PASSWORD_CHANGED user=${req.user.id}`);
-  res.json({ message: 'Contraseña actualizada' });
+  // A07: Issue a new session ID — invalidates all other active sessions on password change
+  const newSessionId = randomBytes(32).toString('hex');
+  await db.query(
+    'UPDATE users SET password = ?, active_session_id = ? WHERE id = ?',
+    [hash, newSessionId, req.user.id]
+  );
+
+  // Issue a fresh token so the current device stays logged in
+  const newToken = jwt.sign(
+    { id: req.user.id, tenant_id: req.user.tenant_id, role: req.user.role, email: req.user.email, session_id: newSessionId },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+  );
+
+  await audit.log(req, audit.EVENTS.PASSWORD_CHANGED, { user_id: req.user.id, success: true });
+  res.json({ message: 'Contraseña actualizada', token: newToken });
 });
 
 // ── Password recovery ─────────────────────────────────────────────────────
@@ -233,7 +287,7 @@ function getMailer() {
   });
 }
 
-router.post('/forgot-password', forgotLimiter, async (req, res) => {
+router.post('/forgot-password', forgotLimiter, validate(forgotPasswordSchema), async (req, res) => {
   const { email } = req.body;
   if (!email || typeof email !== 'string' || email.length > 254)
     return res.status(400).json({ error: 'Email inválido' });
@@ -258,7 +312,7 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
     );
 
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${token}`;
-    console.info(`[${new Date().toISOString()}] PASSWORD_RESET_REQUESTED user=${user.id}`);
+    await audit.log(req, audit.EVENTS.PASSWORD_RESET_REQ, { user_id: user.id });
 
     const mailer = getMailer();
     if (mailer) {
@@ -282,7 +336,7 @@ router.post('/forgot-password', forgotLimiter, async (req, res) => {
   }
 });
 
-router.post('/reset-password/:token', async (req, res) => {
+router.post('/reset-password/:token', validate(resetPasswordSchema), async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
@@ -302,10 +356,14 @@ router.post('/reset-password/:token', async (req, res) => {
     if (!row) return res.status(400).json({ error: 'Token inválido o expirado' });
 
     const hash = await bcrypt.hash(password, 12);
-    await db.query('UPDATE users SET password = ? WHERE id = ?', [hash, row.user_id]);
+    // A07: Invalidate all active sessions after reset — force re-login everywhere
+    await db.query(
+      'UPDATE users SET password = ?, active_session_id = NULL WHERE id = ?',
+      [hash, row.user_id]
+    );
     await db.query('UPDATE password_reset_tokens SET used_at = NOW() WHERE id = ?', [row.id]);
 
-    console.info(`[${new Date().toISOString()}] PASSWORD_RESET_OK user=${row.user_id}`);
+    await audit.log(req, audit.EVENTS.PASSWORD_RESET_OK, { user_id: row.user_id });
     res.json({ message: 'Contraseña actualizada correctamente' });
   } catch (err) {
     console.error(`[${new Date().toISOString()}] RESET_PASSWORD_ERROR:`, err.message);
