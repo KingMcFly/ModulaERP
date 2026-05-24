@@ -20,6 +20,8 @@ function authFetch(path: string, opts?: RequestInit) {
   });
 }
 
+const isDark = () => document.documentElement.classList.contains('dark');
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Asset {
@@ -34,11 +36,16 @@ interface Supply {
   location_name: string; location_id: number; notes: string;
 }
 
-const STATUS_CFG: Record<string, { label: string; cls: string }> = {
-  available:   { label: 'Disponible', cls: 'bg-emerald-100 text-emerald-700' },
-  loaned:      { label: 'Prestado',   cls: 'bg-sky-100 text-sky-700' },
-  maintenance: { label: 'Mantención', cls: 'bg-amber-100 text-amber-700' },
-  retired:     { label: 'Retirado',   cls: 'bg-slate-100 text-slate-500' },
+const STATUS_CFG: Record<string, { label: string; bg: string; color: string }> = {
+  available:   { label: 'Disponible', bg: 'rgba(16,185,129,0.12)',  color: '#10B981' },
+  loaned:      { label: 'Prestado',   bg: 'rgba(14,165,233,0.12)',  color: '#0EA5E9' },
+  maintenance: { label: 'Mantención', bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B' },
+  retired:     { label: 'Retirado',   bg: 'rgba(107,114,128,0.12)', color: '#6B7280' },
+};
+
+const cardStyle = {
+  background: 'var(--ds-card)',
+  border: '1px solid var(--ds-border)',
 };
 
 // ── Asset Form ────────────────────────────────────────────────────────────────
@@ -87,9 +94,14 @@ function AssetForm({ asset, onClose, onSaved }: { asset?: Asset | null; onClose:
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-semibold text-slate-900 mb-5">{asset ? 'Editar Activo' : 'Nuevo Activo'}</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div
+        className="rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto"
+        style={cardStyle}
+      >
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>
+          {asset ? 'Editar Activo' : 'Nuevo Activo'}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="col-span-2">
             <AssetLookup
@@ -128,7 +140,9 @@ function AssetForm({ asset, onClose, onSaved }: { asset?: Asset | null; onClose:
               {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
             {locations.length === 0 && (
-              <p className="text-xs text-slate-400 mt-1">Agrega ubicaciones en Configuración &gt; Ubicaciones</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--ds-text-muted)' }}>
+                Agrega ubicaciones en Configuración &gt; Ubicaciones
+              </p>
             )}
           </div>
           {asset && (
@@ -191,30 +205,46 @@ function AssetsTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={handleExport} className="btn btn-ghost border border-slate-200"><Download size={15} /> Exportar</button>
-        <button type="button" onClick={() => setShowImport(true)} className="btn btn-ghost border border-slate-200"><Upload size={15} /> Importar</button>
-        {canWrite('inventory') && <button type="button" onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Activo</button>}
+        <button
+          type="button" onClick={handleExport}
+          className="btn btn-ghost"
+          style={{ border: '1px solid var(--ds-border)' }}
+        >
+          <Download size={15} /> Exportar
+        </button>
+        <button
+          type="button" onClick={() => setShowImport(true)}
+          className="btn btn-ghost"
+          style={{ border: '1px solid var(--ds-border)' }}
+        >
+          <Upload size={15} /> Importar
+        </button>
+        {canWrite('inventory') && (
+          <button type="button" onClick={() => setEditing(null)} className="btn btn-primary">
+            <Plus size={16} /> Nuevo Activo
+          </button>
+        )}
       </div>
 
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[
-            { label: 'Total',          value: stats.total,       cls: 'text-slate-900' },
-            { label: 'Disponibles',    value: stats.available,   cls: 'text-emerald-600' },
-            { label: 'Prestados',      value: stats.loaned,      cls: 'text-sky-600' },
-            { label: 'En Mantención',  value: stats.maintenance, cls: 'text-amber-600' },
+            { label: 'Total',         value: stats.total,       color: 'var(--ds-text)' },
+            { label: 'Disponibles',   value: stats.available,   color: '#10B981' },
+            { label: 'Prestados',     value: stats.loaned,      color: '#0EA5E9' },
+            { label: 'En Mantención', value: stats.maintenance, color: '#F59E0B' },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-2xl p-4 shadow-soft text-center">
-              <p className={`text-2xl font-semibold ${s.cls}`}>{s.value ?? 0}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+            <div key={s.label} className="rounded-2xl p-4 shadow-soft text-center" style={cardStyle}>
+              <p className="text-2xl font-semibold" style={{ color: s.color }}>{s.value ?? 0}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>{s.label}</p>
             </div>
           ))}
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-4 shadow-soft flex gap-3">
+      <div className="rounded-2xl p-4 shadow-soft flex gap-3" style={cardStyle}>
         <div className="relative flex-1">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ds-text-muted)' }} />
           <input className="input pl-9" placeholder="Buscar por serie, marca, modelo…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input w-40" value={statusFilter} onChange={e => setStatus(e.target.value)}>
@@ -223,52 +253,99 @@ function AssetsTab() {
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
+      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
         <table className="w-full">
           <thead>
-            <tr className="bg-[#FAFAFA] border-b border-black/[0.04]">
+            <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
               {['Activo', 'Serie', 'Marca / Modelo', 'Ubicación', 'Valor', 'Estado', ''].map(h => (
-                <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">{h}</th>
+                <th
+                  key={h}
+                  className="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3"
+                  style={{ color: 'var(--ds-text-muted)' }}
+                >
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando…</td></tr>
+              <tr>
+                <td colSpan={7} className="text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</td>
+              </tr>
             ) : assets.length === 0 ? (
-              <tr><td colSpan={7} className="py-12 text-center">
-                <Package size={32} className="mx-auto text-slate-200 mb-2" />
-                <p className="text-slate-400 text-sm">Sin activos. Haz clic en "Nuevo Activo".</p>
-              </td></tr>
-            ) : assets.map(a => {
+              <tr>
+                <td colSpan={7} className="py-12 text-center">
+                  <Package size={32} className="mx-auto mb-2" style={{ color: 'var(--ds-border-strong)' }} />
+                  <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Sin activos. Haz clic en "Nuevo Activo".</p>
+                </td>
+              </tr>
+            ) : assets.map((a, i) => {
               const sc = STATUS_CFG[a.status] || STATUS_CFG.available;
               return (
-                <tr key={a.id} className="hover:bg-slate-50 transition-colors">
+                <tr
+                  key={a.id}
+                  style={{
+                    borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none',
+                    transition: 'background 120ms',
+                  }}
+                  onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}
+                >
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="size-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="size-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(242,176,69,0.12)' }}>
                         <Package size={15} className="text-primary-500" />
                       </div>
-                      <span className="text-sm font-medium text-slate-900">{a.asset_type}</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{a.asset_type}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500 font-mono">{a.serial_number || '—'}</td>
-                  <td className="px-4 py-3.5 text-sm text-slate-600">{[a.brand, a.model].filter(Boolean).join(' ') || '—'}</td>
+                  <td className="px-4 py-3.5 text-sm font-mono" style={{ color: 'var(--ds-text-muted)' }}>{a.serial_number || '—'}</td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{[a.brand, a.model].filter(Boolean).join(' ') || '—'}</td>
                   <td className="px-4 py-3.5">
                     {a.location_name
-                      ? <span className="flex items-center gap-1.5 text-sm text-slate-600"><MapPin size={12} className="text-slate-400" />{a.location_name}</span>
-                      : <span className="text-sm text-slate-400">—</span>}
+                      ? <span className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>
+                          <MapPin size={12} style={{ color: 'var(--ds-text-subtle)' }} />{a.location_name}
+                        </span>
+                      : <span className="text-sm" style={{ color: 'var(--ds-text-subtle)' }}>—</span>}
                   </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-600">
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>
                     {a.value ? `$${Number(a.value).toLocaleString()}` : '—'}
                   </td>
-                  <td className="px-4 py-3.5"><span className={`badge ${sc.cls}`}>{sc.label}</span></td>
+                  <td className="px-4 py-3.5">
+                    <span
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold"
+                      style={{ background: sc.bg, color: sc.color }}
+                    >
+                      {sc.label}
+                    </span>
+                  </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1 justify-end">
-                      <Link to={`/inventory/asset/${a.id}`} aria-label={`Ver ficha de ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-primary-600 rounded-lg transition-colors"><ExternalLink size={14} aria-hidden="true" /></Link>
-                      <button type="button" onClick={() => setQrAsset(a)} aria-label={`Ver QR de ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-violet-600 rounded-lg transition-colors"><QrCode size={14} aria-hidden="true" /></button>
-                      {canWrite('inventory') && <button type="button" onClick={() => setEditing(a)} aria-label={`Editar ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-primary-700 rounded-lg transition-colors"><Edit2 size={14} aria-hidden="true" /></button>}
-                      {canDelete('inventory') && <button type="button" onClick={() => del(a.id)} aria-label={`Eliminar ${a.asset_type}`} className="p-1.5 text-slate-400 hover:text-red-700 rounded-lg transition-colors"><Trash2 size={14} aria-hidden="true" /></button>}
+                      <Link to={`/inventory/asset/${a.id}`} aria-label={`Ver ficha de ${a.asset_type}`}
+                        className="p-1.5 rounded-lg transition-colors hover:text-primary-600"
+                        style={{ color: 'var(--ds-text-subtle)' }}>
+                        <ExternalLink size={14} aria-hidden="true" />
+                      </Link>
+                      <button type="button" onClick={() => setQrAsset(a)} aria-label={`Ver QR de ${a.asset_type}`}
+                        className="p-1.5 rounded-lg transition-colors hover:text-violet-500"
+                        style={{ color: 'var(--ds-text-subtle)' }}>
+                        <QrCode size={14} aria-hidden="true" />
+                      </button>
+                      {canWrite('inventory') && (
+                        <button type="button" onClick={() => setEditing(a)} aria-label={`Editar ${a.asset_type}`}
+                          className="p-1.5 rounded-lg transition-colors hover:text-primary-500"
+                          style={{ color: 'var(--ds-text-subtle)' }}>
+                          <Edit2 size={14} aria-hidden="true" />
+                        </button>
+                      )}
+                      {canDelete('inventory') && (
+                        <button type="button" onClick={() => del(a.id)} aria-label={`Eliminar ${a.asset_type}`}
+                          className="p-1.5 rounded-lg transition-colors hover:text-red-500"
+                          style={{ color: 'var(--ds-text-subtle)' }}>
+                          <Trash2 size={14} aria-hidden="true" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -330,9 +407,11 @@ function SupplyForm({ supply, onClose, onSaved }: { supply?: Supply | null; onCl
   }
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-5">{supply ? 'Editar Insumo' : 'Nuevo Insumo'}</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>
+          {supply ? 'Editar Insumo' : 'Nuevo Insumo'}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="supply-name" className="label">Nombre *</label>
@@ -411,27 +490,34 @@ function MovementModal({ supply, onClose, onSaved }: { supply: Supply; onClose: 
   }
 
   const opts = [
-    { value: 'in'         as const, label: 'Entrada',  cls: 'border-emerald-300 text-emerald-700 bg-emerald-50' },
-    { value: 'out'        as const, label: 'Salida',   cls: 'border-red-300 text-red-700 bg-red-50' },
-    { value: 'adjustment' as const, label: 'Ajuste',   cls: 'border-amber-300 text-amber-700 bg-amber-50' },
+    { value: 'in'         as const, label: 'Entrada',  bg: 'rgba(16,185,129,0.12)',  color: '#10B981' },
+    { value: 'out'        as const, label: 'Salida',   bg: 'rgba(239,68,68,0.12)',   color: '#EF4444' },
+    { value: 'adjustment' as const, label: 'Ajuste',   bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B' },
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-soft-xl w-full max-w-sm p-6">
-        <h2 className="text-lg font-semibold mb-1">Movimiento de Stock</h2>
-        <p className="text-sm text-slate-500 mb-5">
-          {supply.name} · Stock actual: <strong>{supply.current_stock} {supply.unit || 'un.'}</strong>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+      <div className="rounded-3xl shadow-soft-xl w-full max-w-sm p-6" style={cardStyle}>
+        <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--ds-text)' }}>Movimiento de Stock</h2>
+        <p className="text-sm mb-5" style={{ color: 'var(--ds-text-muted)' }}>
+          {supply.name} · Stock actual: <strong style={{ color: 'var(--ds-text)' }}>{supply.current_stock} {supply.unit || 'un.'}</strong>
         </p>
         <form onSubmit={submit} className="space-y-4">
           <div>
             <p className="label" id="move-type-label">Tipo de movimiento</p>
             <div className="grid grid-cols-3 gap-2" role="group" aria-labelledby="move-type-label">
               {opts.map(opt => (
-                <button key={opt.value} type="button" onClick={() => setMoveType(opt.value)}
-                  className={`py-2 rounded-lg border text-xs font-semibold transition-all ${
-                    moveType === opt.value ? opt.cls + ' ring-2 ring-offset-1 ring-current' : 'border-slate-200 text-slate-500 hover:bg-slate-50'
-                  }`}>
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setMoveType(opt.value)}
+                  className="py-2 rounded-lg text-xs font-semibold transition-all"
+                  style={{
+                    border: `1px solid ${moveType === opt.value ? opt.color : 'var(--ds-border)'}`,
+                    background: moveType === opt.value ? opt.bg : 'transparent',
+                    color: moveType === opt.value ? opt.color : 'var(--ds-text-muted)',
+                  }}
+                >
                   {opt.label}
                 </button>
               ))}
@@ -500,82 +586,124 @@ function SuppliesTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={handleExportSupplies} className="btn btn-ghost border border-slate-200"><Download size={15} /> Exportar</button>
-        {canWrite('inventory') && <button type="button" onClick={() => setEditing(null)} className="btn btn-primary"><Plus size={16} /> Nuevo Insumo</button>}
+        <button
+          type="button" onClick={handleExportSupplies}
+          className="btn btn-ghost"
+          style={{ border: '1px solid var(--ds-border)' }}
+        >
+          <Download size={15} /> Exportar
+        </button>
+        {canWrite('inventory') && (
+          <button type="button" onClick={() => setEditing(null)} className="btn btn-primary">
+            <Plus size={16} /> Nuevo Insumo
+          </button>
+        )}
       </div>
 
       {lowStock.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+        <div
+          className="rounded-xl p-4 flex items-start gap-3"
+          style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(217,119,6,0.15)' }}
+        >
+          <AlertTriangle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-amber-800">Stock bajo en {lowStock.length} insumo(s)</p>
-            <p className="text-xs text-amber-600 mt-0.5">{lowStock.map(s => s.name).join(' · ')}</p>
+            <p className="text-sm font-semibold text-amber-600">Stock bajo en {lowStock.length} insumo(s)</p>
+            <p className="text-xs mt-0.5 text-amber-500">{lowStock.map(s => s.name).join(' · ')}</p>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl p-4 shadow-soft">
+      <div className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--ds-text-muted)' }} />
           <input className="input pl-9" placeholder="Buscar por nombre o categoría…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl overflow-hidden shadow-soft">
+      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
         <table className="w-full">
           <thead>
-            <tr className="bg-[#FAFAFA] border-b border-black/[0.04]">
+            <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
               {['Insumo', 'Categoría', 'Ubicación', 'Stock', 'Mín.', 'Costo U.', ''].map(h => (
-                <th key={h} className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider px-4 py-3">{h}</th>
+                <th
+                  key={h}
+                  className="text-left text-xs font-semibold uppercase tracking-wider px-4 py-3"
+                  style={{ color: 'var(--ds-text-muted)' }}
+                >
+                  {h}
+                </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody>
             {loading ? (
-              <tr><td colSpan={7} className="text-center py-12 text-slate-400">Cargando…</td></tr>
+              <tr><td colSpan={7} className="text-center py-12" style={{ color: 'var(--ds-text-muted)' }}>Cargando…</td></tr>
             ) : supplies.length === 0 ? (
               <tr><td colSpan={7} className="py-12 text-center">
-                <ShoppingBag size={32} className="mx-auto text-slate-200 mb-2" />
-                <p className="text-slate-400 text-sm">Sin insumos. Haz clic en "Nuevo Insumo".</p>
+                <ShoppingBag size={32} className="mx-auto mb-2" style={{ color: 'var(--ds-border-strong)' }} />
+                <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Sin insumos. Haz clic en "Nuevo Insumo".</p>
               </td></tr>
-            ) : supplies.map(s => {
+            ) : supplies.map((s, i) => {
               const isLow = s.current_stock <= s.min_stock;
               return (
-                <tr key={s.id} className="hover:bg-slate-50 transition-colors">
+                <tr
+                  key={s.id}
+                  style={{
+                    borderTop: i > 0 ? '1px solid var(--ds-border)' : 'none',
+                    transition: 'background 120ms',
+                  }}
+                  onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = isDark() ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = ''}
+                >
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2.5">
-                      <div className="size-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <ShoppingBag size={14} className="text-emerald-600" />
+                      <div className="size-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}>
+                        <ShoppingBag size={14} className="text-emerald-500" />
                       </div>
-                      <span className="text-sm font-medium text-slate-900">{s.name}</span>
+                      <span className="text-sm font-medium" style={{ color: 'var(--ds-text)' }}>{s.name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">{s.category || '—'}</td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{s.category || '—'}</td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>
                     {s.location_name
-                      ? <span className="flex items-center gap-1"><MapPin size={12} className="text-slate-400" />{s.location_name}</span>
+                      ? <span className="flex items-center gap-1">
+                          <MapPin size={12} style={{ color: 'var(--ds-text-subtle)' }} />{s.location_name}
+                        </span>
                       : '—'}
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className={`font-semibold text-sm ${isLow ? 'text-red-600' : 'text-slate-800'}`}>
+                    <span className="font-semibold text-sm" style={{ color: isLow ? '#EF4444' : 'var(--ds-text)' }}>
                       {s.current_stock} {s.unit || ''}
                     </span>
                     {isLow && <AlertTriangle size={11} className="inline ml-1 text-red-500" />}
                   </td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">{s.min_stock}</td>
-                  <td className="px-4 py-3.5 text-sm text-slate-500">
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>{s.min_stock}</td>
+                  <td className="px-4 py-3.5 text-sm" style={{ color: 'var(--ds-text-muted)' }}>
                     {s.unit_cost ? `$${Number(s.unit_cost).toLocaleString()}` : '—'}
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1 justify-end">
                       {canWrite('inventory') && (
                         <button type="button" onClick={() => setMoving(s)} title="Movimiento de stock"
-                          className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                          className="p-1.5 rounded-lg transition-colors hover:text-emerald-500"
+                          style={{ color: 'var(--ds-text-subtle)' }}>
                           <RotateCcw size={13} />
                         </button>
                       )}
-                      {canWrite('inventory') && <button type="button" onClick={() => setEditing(s)} className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"><Edit2 size={13} /></button>}
-                      {canDelete('inventory') && <button type="button" onClick={() => del(s.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={13} /></button>}
+                      {canWrite('inventory') && (
+                        <button type="button" onClick={() => setEditing(s)}
+                          className="p-1.5 rounded-lg transition-colors hover:text-primary-500"
+                          style={{ color: 'var(--ds-text-subtle)' }}>
+                          <Edit2 size={13} />
+                        </button>
+                      )}
+                      {canDelete('inventory') && (
+                        <button type="button" onClick={() => del(s.id)}
+                          className="p-1.5 rounded-lg transition-colors hover:text-red-500"
+                          style={{ color: 'var(--ds-text-subtle)' }}>
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -599,21 +727,29 @@ export default function InventoryModule() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Inventario</h1>
-        <p className="text-slate-500 text-sm mt-0.5">Gestión de activos y control de insumos</p>
+        <h1 className="text-2xl font-semibold" style={{ color: 'var(--ds-text)' }}>Inventario</h1>
+        <p className="text-sm mt-0.5" style={{ color: 'var(--ds-text-muted)' }}>Gestión de activos y control de insumos</p>
       </div>
 
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: 'var(--ds-surface)' }}>
         {([
           { id: 'assets',   label: 'Activos',  icon: Package    },
           { id: 'supplies', label: 'Insumos',  icon: ShoppingBag },
         ] as const).map(t => {
           const Icon = t.icon;
+          const active = tab === t.id;
           return (
-            <button type="button" key={t.id} onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                tab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-              }`}>
+            <button
+              type="button"
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{
+                background: active ? 'var(--ds-card)' : 'transparent',
+                color: active ? 'var(--ds-text)' : 'var(--ds-text-muted)',
+                boxShadow: active ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+              }}
+            >
               <Icon size={15} /> {t.label}
             </button>
           );

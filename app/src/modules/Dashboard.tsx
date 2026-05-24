@@ -15,13 +15,18 @@ function authFetch(path: string) {
   return fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
 }
 
+const isDark = () => document.documentElement.classList.contains('dark');
+
 function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-black/[0.05] ${className}`} />;
+  return <div className={`animate-pulse rounded-xl ${className}`} style={{ background: 'var(--ds-border)' }} />;
 }
 
 function CardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl p-5" style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+    <div
+      className="rounded-2xl p-5"
+      style={{ background: 'var(--ds-card)', border: '1px solid var(--ds-border)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
+    >
       <div className="flex items-start justify-between mb-5">
         <Skeleton className="size-11 rounded-2xl" />
         <Skeleton className="w-14 h-5 rounded-full" />
@@ -84,7 +89,6 @@ function AlertBanner({ stats }: { stats: DashStats }) {
       style={{
         background: 'rgba(245,158,11,0.07)',
         border: '1px solid rgba(217,119,6,0.15)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
       }}
     >
       <div className="flex items-center gap-2">
@@ -94,24 +98,24 @@ function AlertBanner({ stats }: { stats: DashStats }) {
         >
           <AlertTriangle size={13} className="text-amber-500" aria-hidden="true" />
         </div>
-        <span className="text-[13px] font-bold text-amber-800 tracking-[-0.01em]">
+        <span className="text-[13px] font-bold text-amber-600 tracking-[-0.01em]">
           {alerts.total} alerta{alerts.total > 1 ? 's' : ''} pendiente{alerts.total > 1 ? 's' : ''}
         </span>
       </div>
       {overdue_loans_list.length > 0 && (
         <div>
-          <p className="text-[10.5px] font-bold text-amber-700 mb-2 flex items-center gap-1 uppercase tracking-[0.07em]">
+          <p className="text-[10.5px] font-bold text-amber-600 mb-2 flex items-center gap-1 uppercase tracking-[0.07em]">
             <Clock size={10} aria-hidden="true" /> Préstamos vencidos ({alerts.overdue_loans})
           </p>
           <div className="space-y-1.5">
             {overdue_loans_list.map(l => (
               <div
                 key={l.id}
-                className="flex items-center justify-between text-[12px] text-amber-800 rounded-xl px-3 py-2"
-                style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(217,119,6,0.08)' }}
+                className="flex items-center justify-between text-[12px] rounded-xl px-3 py-2"
+                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(217,119,6,0.12)' }}
               >
-                <span className="font-semibold truncate max-w-[60%]">{l.borrower || '—'}</span>
-                <span className="text-amber-600 font-medium">{l.brand} {l.model || l.asset_type}</span>
+                <span className="font-semibold truncate max-w-[60%] text-amber-600">{l.borrower || '—'}</span>
+                <span className="text-amber-500 font-medium">{l.brand} {l.model || l.asset_type}</span>
               </div>
             ))}
           </div>
@@ -119,18 +123,18 @@ function AlertBanner({ stats }: { stats: DashStats }) {
       )}
       {low_stock_list.length > 0 && (
         <div>
-          <p className="text-[10.5px] font-bold text-amber-700 mb-2 flex items-center gap-1 uppercase tracking-[0.07em]">
+          <p className="text-[10.5px] font-bold text-amber-600 mb-2 flex items-center gap-1 uppercase tracking-[0.07em]">
             <PackageOpen size={10} aria-hidden="true" /> Stock bajo ({alerts.low_stock})
           </p>
           <div className="space-y-1.5">
             {low_stock_list.map(s => (
               <div
                 key={s.id}
-                className="flex items-center justify-between text-[12px] text-amber-800 rounded-xl px-3 py-2"
-                style={{ background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(217,119,6,0.08)' }}
+                className="flex items-center justify-between text-[12px] rounded-xl px-3 py-2"
+                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(217,119,6,0.12)' }}
               >
-                <span className="font-semibold truncate max-w-[60%]">{s.name}</span>
-                <span className="text-amber-600 font-medium">{s.current_stock}/{s.min_stock} {s.unit || 'u'}</span>
+                <span className="font-semibold truncate max-w-[60%] text-amber-600">{s.name}</span>
+                <span className="text-amber-500 font-medium">{s.current_stock}/{s.min_stock} {s.unit || 'u'}</span>
               </div>
             ))}
           </div>
@@ -143,7 +147,7 @@ function AlertBanner({ stats }: { stats: DashStats }) {
 function ActivityFeed({ items }: { items: ActivityEntry[] }) {
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center py-12 gap-2.5 text-[#AEAEB2]">
+      <div className="flex flex-col items-center py-12 gap-2.5" style={{ color: 'var(--ds-text-muted)' }}>
         <div
           className="size-11 rounded-full flex items-center justify-center"
           style={{ background: 'rgba(16,185,129,0.1)' }}
@@ -161,26 +165,28 @@ function ActivityFeed({ items }: { items: ActivityEntry[] }) {
         <div
           key={item.id}
           className="flex items-start gap-3 py-3"
-          style={{ borderBottom: i < items.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none' }}
+          style={{ borderBottom: i < items.length - 1 ? '1px solid var(--ds-border)' : 'none' }}
         >
           <div
             className="size-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold"
             style={{
-              background: 'linear-gradient(135deg, #F3F3F7, #E8E8F0)',
-              color: '#65656E',
-              border: '1px solid rgba(0,0,0,0.06)',
+              background: 'var(--ds-card-alt)',
+              color: 'var(--ds-text-muted)',
+              border: '1px solid var(--ds-border)',
             }}
           >
             {(item.user_name || '?')[0].toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[12.5px] text-[#1D1D1F] leading-relaxed">
+            <p className="text-[12.5px] leading-relaxed" style={{ color: 'var(--ds-text)' }}>
               <span className="font-semibold">{item.user_name || 'Sistema'}</span>
               {' '}{ACTION_LABELS[item.action] || item.action}{' '}
-              <span className="text-[#65656E]">{MODULE_LABELS[item.module] || item.module}</span>
-              {item.entity_id ? <span className="text-[#AEAEB2]"> #{item.entity_id}</span> : ''}
+              <span style={{ color: 'var(--ds-text-muted)' }}>{MODULE_LABELS[item.module] || item.module}</span>
+              {item.entity_id ? <span style={{ color: 'var(--ds-text-subtle)' }}> #{item.entity_id}</span> : ''}
             </p>
-            <p className="text-[11px] text-[#AEAEB2] mt-0.5 font-medium">{timeAgo(item.created_at)}</p>
+            <p className="text-[11px] mt-0.5 font-medium" style={{ color: 'var(--ds-text-subtle)' }}>
+              {timeAgo(item.created_at)}
+            </p>
           </div>
         </div>
       ))}
@@ -239,15 +245,24 @@ export default function Dashboard() {
     hasModule('personnel')   && { label: 'Agregar empleado',   to: '/personnel',   icon: Users,          color: '#10B981' },
   ].filter(Boolean) as any[];
 
+  const cardStyle = {
+    background: 'var(--ds-card)',
+    border: '1px solid var(--ds-border)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 2px 10px rgba(0,0,0,0.03)',
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
 
       {/* Header */}
       <div className="animate-fade-up">
-        <h1 className="text-[26px] font-bold text-[#0A0A0F] tracking-[-0.03em] leading-tight">
+        <h1
+          className="text-[26px] font-bold tracking-[-0.03em] leading-tight"
+          style={{ color: 'var(--ds-text)' }}
+        >
           Hola, {user?.name?.split(' ')[0]} 👋
         </h1>
-        <p className="text-[#9898A3] text-[13px] mt-1 font-medium">
+        <p className="text-[13px] mt-1 font-medium" style={{ color: 'var(--ds-text-muted)' }}>
           {user?.tenant?.name} · {new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
@@ -264,10 +279,9 @@ export default function Dashboard() {
           : cards.map(({ icon: Icon, label, value, sub, color, extra }, i) => (
             <div
               key={label}
-              className="bg-white rounded-2xl p-5 animate-fade-up group"
+              className="rounded-2xl p-5 animate-fade-up group"
               style={{
-                border: '1px solid rgba(0,0,0,0.05)',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 2px 10px rgba(0,0,0,0.03)',
+                ...cardStyle,
                 animationDelay: `${i * 55}ms`,
                 transition: 'box-shadow 250ms cubic-bezier(0.23, 1, 0.32, 1)',
               }}
@@ -275,7 +289,7 @@ export default function Dashboard() {
                 (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.09), 0 8px 32px rgba(0,0,0,0.05)';
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.06), 0 2px 10px rgba(0,0,0,0.03)';
+                (e.currentTarget as HTMLDivElement).style.boxShadow = cardStyle.boxShadow;
               }}
             >
               <div className="flex items-start justify-between mb-5">
@@ -293,12 +307,13 @@ export default function Dashboard() {
                 </div>
               </div>
               <p
-                className="text-[30px] font-bold text-[#0A0A0F] tabular-nums leading-none tracking-[-0.03em]"
+                className="text-[30px] font-bold tabular-nums leading-none tracking-[-0.03em]"
+                style={{ color: 'var(--ds-text)' }}
               >
                 {value}
               </p>
-              <p className="text-[13px] font-bold text-[#333338] mt-2 tracking-[-0.01em]">{label}</p>
-              <p className="text-[12px] text-[#9898A3] mt-0.5 font-medium">{sub}</p>
+              <p className="text-[13px] font-bold mt-2 tracking-[-0.01em]" style={{ color: 'var(--ds-text)' }}>{label}</p>
+              <p className="text-[12px] mt-0.5 font-medium" style={{ color: 'var(--ds-text-muted)' }}>{sub}</p>
               {extra && (
                 <div
                   className="mt-3 inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold"
@@ -317,17 +332,16 @@ export default function Dashboard() {
 
         {/* Recent activity */}
         <div
-          className="lg:col-span-2 bg-white rounded-2xl overflow-hidden animate-fade-up delay-150"
-          style={{
-            border: '1px solid rgba(0,0,0,0.05)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-          }}
+          className="lg:col-span-2 rounded-2xl overflow-hidden animate-fade-up delay-150"
+          style={cardStyle}
         >
           <div
             className="flex items-center justify-between px-5 py-4"
-            style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}
+            style={{ borderBottom: '1px solid var(--ds-border)' }}
           >
-            <h2 className="font-bold text-[#0A0A0F] text-[13px] tracking-[-0.02em]">Actividad reciente</h2>
+            <h2 className="font-bold text-[13px] tracking-[-0.02em]" style={{ color: 'var(--ds-text)' }}>
+              Actividad reciente
+            </h2>
             <Link
               to="/reports"
               className="text-[12px] font-semibold flex items-center gap-0.5"
@@ -360,13 +374,12 @@ export default function Dashboard() {
         <div className="space-y-4">
           {quickActions.length > 0 && (
             <div
-              className="bg-white rounded-2xl p-4 animate-fade-up delay-200"
-              style={{
-                border: '1px solid rgba(0,0,0,0.05)',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-              }}
+              className="rounded-2xl p-4 animate-fade-up delay-200"
+              style={cardStyle}
             >
-              <h2 className="font-bold text-[#0A0A0F] text-[13px] mb-3 tracking-[-0.02em]">Acciones rápidas</h2>
+              <h2 className="font-bold text-[13px] mb-3 tracking-[-0.02em]" style={{ color: 'var(--ds-text)' }}>
+                Acciones rápidas
+              </h2>
               <div className="space-y-0.5">
                 {quickActions.map(({ label, to, icon: Icon, color }) => (
                   <Link
@@ -374,7 +387,7 @@ export default function Dashboard() {
                     to={to}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl group"
                     style={{ transition: 'background-color 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,0,0,0.03)'}
+                    onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'}
                     onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = ''}
                   >
                     <div
@@ -383,8 +396,8 @@ export default function Dashboard() {
                     >
                       <Icon size={14} style={{ color }} aria-hidden="true" />
                     </div>
-                    <span className="text-[13px] font-semibold text-[#333338] flex-1">{label}</span>
-                    <Plus size={12} className="text-[#C3C3C8]" aria-hidden="true" />
+                    <span className="text-[13px] font-semibold flex-1" style={{ color: 'var(--ds-text)' }}>{label}</span>
+                    <Plus size={12} style={{ color: 'var(--ds-text-subtle)' }} aria-hidden="true" />
                   </Link>
                 ))}
               </div>
@@ -393,13 +406,12 @@ export default function Dashboard() {
 
           {/* Modules grid */}
           <div
-            className="bg-white rounded-2xl p-4 animate-fade-up delay-240"
-            style={{
-              border: '1px solid rgba(0,0,0,0.05)',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-            }}
+            className="rounded-2xl p-4 animate-fade-up delay-240"
+            style={cardStyle}
           >
-            <h2 className="font-bold text-[#0A0A0F] text-[13px] mb-3 tracking-[-0.02em]">Módulos</h2>
+            <h2 className="font-bold text-[13px] mb-3 tracking-[-0.02em]" style={{ color: 'var(--ds-text)' }}>
+              Módulos
+            </h2>
             <div className="grid grid-cols-2 gap-2">
               {loading
                 ? [0, 1, 2, 3].map(i => <Skeleton key={i} className="h-14 rounded-xl" />)
@@ -409,7 +421,7 @@ export default function Dashboard() {
                     to={`/${m.code}`}
                     className="flex flex-col items-center gap-1.5 p-3 rounded-xl text-center group"
                     style={{ transition: 'background-color 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,0,0,0.03)'}
+                    onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'}
                     onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = ''}
                   >
                     <div
@@ -418,7 +430,9 @@ export default function Dashboard() {
                     >
                       <AlertCircle size={14} style={{ color: m.color || '#F2B045' }} aria-hidden="true" />
                     </div>
-                    <span className="text-[11px] font-semibold text-[#9898A3] leading-tight">{m.name}</span>
+                    <span className="text-[11px] font-semibold leading-tight" style={{ color: 'var(--ds-text-muted)' }}>
+                      {m.name}
+                    </span>
                   </Link>
                 ))
               }
