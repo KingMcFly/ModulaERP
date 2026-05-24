@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Boxes, Eye, EyeOff, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, AlertTriangle, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { cleanRut, formatRut, looksLikeRut, validateRut } from '../utils/rut';
@@ -102,39 +102,31 @@ function PasswordField({
   );
 }
 
-// ── Decorative rings around logo ───────────────────────────────────────────────
-function LogoRings() {
+// ── Logo with blend ───────────────────────────────────────────────────────────
+function Logo() {
   return (
-    <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
-      {/* Rings */}
-      {[68, 90, 112].map((r, i) => (
-        <div
-          key={r}
-          className="absolute rounded-full"
-          style={{
-            width: r * 2,
-            height: r * 2,
-            border: `1px solid rgba(242,176,69,${0.12 - i * 0.04})`,
-          }}
-        />
-      ))}
-      {/* Pulsing outer ring */}
+    <div className="relative flex items-center justify-center">
+      {/* Amber glow behind the logo so las letras brillen */}
       <div
-        className="absolute rounded-full animate-ping"
-        style={{ width: 224, height: 224, border: '1px solid rgba(242,176,69,0.06)', animationDuration: '3s' }}
-      />
-      {/* Icon container */}
-      <div
-        className="relative z-10 flex items-center justify-center rounded-2xl"
+        aria-hidden="true"
+        className="absolute"
         style={{
-          width: 60,
-          height: 60,
-          background: 'linear-gradient(135deg, #F2B045 0%, #C8831A 100%)',
-          boxShadow: '0 0 0 1px rgba(242,176,69,0.3), 0 8px 32px rgba(242,176,69,0.35), 0 0 60px rgba(242,176,69,0.15)',
+          width: 320, height: 120,
+          background: 'radial-gradient(ellipse, rgba(242,176,69,0.18) 0%, transparent 70%)',
+          filter: 'blur(12px)',
         }}
-      >
-        <Boxes size={26} color="#0D0D12" />
-      </div>
+      />
+      <img
+        src="/logo.png"
+        alt="FB Core"
+        draggable={false}
+        style={{
+          width: 220,
+          position: 'relative',
+          mixBlendMode: 'lighten',
+          userSelect: 'none',
+        }}
+      />
     </div>
   );
 }
@@ -205,21 +197,13 @@ export default function Login() {
       {/* ── Content ── */}
       <div className="relative z-10 w-full max-w-[400px] flex flex-col items-center">
 
-        {/* Logo + rings */}
-        <LogoRings />
+        {/* Logo */}
+        <Logo />
 
-        {/* Brand name */}
-        <div className="mt-5 mb-1 text-center">
-          <h1
-            className="font-bold tracking-tight"
-            style={{ fontSize: 28, color: 'rgba(255,255,255,0.92)', letterSpacing: '-0.03em' }}
-          >
-            FB Core
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Ingresa a tu espacio de trabajo
-          </p>
-        </div>
+        {/* Subtitle */}
+        <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          Ingresa a tu espacio de trabajo
+        </p>
 
         {/* Session replaced banner */}
         {sessionMessage && (
@@ -339,18 +323,16 @@ export default function Login() {
         </Link>
 
         {/* Footer */}
-        <div className="mt-8 flex items-center gap-4 text-[11.5px]" style={{ color: 'rgba(255,255,255,0.20)' }}>
-          <span>FB Core · FBSystems</span>
-          <span>·</span>
-          <Link
-            to="/status"
-            className="flex items-center gap-1.5 transition-colors hover:text-[rgba(255,255,255,0.45)]"
-            style={{ color: 'rgba(255,255,255,0.20)' }}
-          >
-            <span className="size-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-            Estado del sistema
-          </Link>
-        </div>
+        <Link
+          to="/status"
+          className="mt-8 flex items-center gap-1.5 text-[11.5px] transition-colors"
+          style={{ color: 'rgba(255,255,255,0.20)' }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.20)')}
+        >
+          <span className="size-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+          Estado del sistema
+        </Link>
       </div>
     </div>
   );
