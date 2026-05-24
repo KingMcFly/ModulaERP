@@ -14,8 +14,6 @@ function ForgotInfo({ dark }: { dark: boolean }) {
   const col = c(dark);
   return (
     <InfoPanel dark={dark}>
-      <Brand dark={dark} />
-
       <div className="flex flex-1 flex-col justify-center">
         <div className="max-w-[440px]">
           <div

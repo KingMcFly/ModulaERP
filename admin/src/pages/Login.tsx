@@ -178,8 +178,6 @@ function InfoPanel() {
           boxShadow: '0 20px 60px rgba(0,0,0,0.20)',
         }}
       >
-        <Brand />
-
         <div className="flex flex-1 flex-col justify-center">
           <div className="max-w-[440px]">
             <div

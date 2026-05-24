@@ -167,8 +167,6 @@ function InfoCard({ dark }: ThemeProps) {
           boxShadow: dark ? '0 20px 60px rgba(0,0,0,0.20)' : '0 20px 60px rgba(17,24,39,0.06)',
         }}
       >
-        <Brand dark={dark} />
-
         <div className="flex flex-1 flex-col justify-center">
           <div className="max-w-[440px]">
             <div
