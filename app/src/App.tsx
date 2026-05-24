@@ -28,7 +28,7 @@ const Purchases      = lazy(() => import('./modules/purchases'));
 function ModuleGuard({ code, children }: { code: string; children: React.ReactNode }) {
   const { hasModule } = useAuth();
   if (!hasModule(code)) return (
-    <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+    <div className="flex flex-col items-center justify-center h-64" style={{ color: 'var(--ds-text-muted)' }}>
       <p className="font-medium">Módulo no disponible</p>
       <p className="text-sm mt-1">Contacta al administrador para habilitarlo.</p>
     </div>
@@ -39,7 +39,10 @@ function ModuleGuard({ code, children }: { code: string; children: React.ReactNo
 function Spinner() {
   return (
     <div className="flex items-center justify-center h-48">
-      <div className="size-7 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+      <div
+        className="size-7 rounded-full animate-spin"
+        style={{ border: '3px solid var(--ds-border)', borderTopColor: 'var(--ds-accent)' }}
+      />
     </div>
   );
 }
@@ -75,8 +78,14 @@ export default function App() {
   const { user, loading } = useAuth();
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900">
-      <div className="size-9 border-4 border-primary-800 border-t-primary-400 rounded-full animate-spin" />
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{ background: 'var(--ds-surface)' }}
+    >
+      <div
+        className="size-9 rounded-full animate-spin"
+        style={{ border: '3px solid var(--ds-border)', borderTopColor: 'var(--ds-accent)' }}
+      />
     </div>
   );
 

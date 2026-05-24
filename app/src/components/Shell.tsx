@@ -4,9 +4,10 @@ import {
   Menu, X, LogOut, Bell, ChevronDown, Boxes, Package, ArrowRightLeft,
   Wrench, Users, Activity, LayoutDashboard, Settings, BarChart2,
   AlertCircle, AlertTriangle, CheckCircle, Truck, ClipboardList,
-  FileCheck, LifeBuoy, PieChart, ShoppingCart, Zap,
+  FileCheck, LifeBuoy, PieChart, ShoppingCart, Zap, Sun, Moon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../hooks/useTheme';
 
 interface PlanInfo {
   plan: string;
@@ -70,85 +71,75 @@ function getWhatsappUrl(tenantName: string) {
 }
 
 function PlanBanner({
-  plan, tenantName, dismissed, onDismiss,
+  plan, tenantName, dismissed, onDismiss, dark,
 }: {
-  plan: PlanInfo | null; tenantName: string; dismissed: boolean; onDismiss: () => void;
+  plan: PlanInfo | null; tenantName: string; dismissed: boolean; onDismiss: () => void; dark: boolean;
 }) {
   if (!plan || dismissed) return null;
 
   const isStarterFree = plan.plan === 'starter_free';
-  const trialDays = plan.trial_days_left;
-  const urgentTrial = trialDays !== null && trialDays <= 7;
-  const warnTrial   = trialDays !== null && trialDays <= 15 && !urgentTrial;
+  const trialDays     = plan.trial_days_left;
+  const urgentTrial   = trialDays !== null && trialDays <= 7;
+  const warnTrial     = trialDays !== null && trialDays <= 15 && !urgentTrial;
 
-  const assetsLimit  = plan.limits.assets  ?? -1;
-  const usersLimit   = plan.limits.users   ?? -1;
-  const nearAssets   = assetsLimit > 0 && plan.usage.assets  >= assetsLimit * 0.8;
-  const nearUsers    = usersLimit  > 0 && plan.usage.users   >= usersLimit  * 0.8;
-  const nearLimit    = nearAssets || nearUsers;
+  const assetsLimit = plan.limits.assets ?? -1;
+  const usersLimit  = plan.limits.users  ?? -1;
+  const nearAssets  = assetsLimit > 0 && plan.usage.assets >= assetsLimit * 0.8;
+  const nearUsers   = usersLimit  > 0 && plan.usage.users  >= usersLimit  * 0.8;
+  const nearLimit   = nearAssets || nearUsers;
 
   const expiringMods = plan.trial_modules.filter(m => m.days_left !== null && m.days_left <= 7);
 
   if (!urgentTrial && !warnTrial && !nearLimit && expiringMods.length === 0 && !isStarterFree) return null;
 
   const waUrl = getWhatsappUrl(tenantName);
+  const dismissBtn = (
+    <button type="button" onClick={onDismiss}
+      className="text-[18px] leading-none shrink-0"
+      style={{ color: dark ? 'rgba(255,255,255,0.28)' : '#AEAEB2' }}
+    >&times;</button>
+  );
 
-  if (urgentTrial) {
-    return (
-      <div
-        className="flex items-center justify-between gap-4 rounded-2xl px-5 py-3.5 mb-5 text-[13px]"
-        style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)' }}
-      >
-        <div className="flex items-center gap-3">
-          <AlertTriangle size={15} className="text-red-500 shrink-0" />
-          <span className="font-semibold text-red-600">
-            Tu prueba vence en {trialDays} día{trialDays !== 1 ? 's' : ''}.
-          </span>
-          <span className="text-[#65656E] hidden sm:inline">No pierdas acceso a tus módulos.</span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold"
-            style={{ background: '#F2B045', color: '#131316' }}
-          >
-            <Zap size={12} /> Extender ahora
-          </a>
-          <button type="button" onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none">&times;</button>
-        </div>
+  if (urgentTrial) return (
+    <div className="flex items-center justify-between gap-4 rounded-2xl px-5 py-3.5 mb-5 text-[13px]"
+      style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)' }}>
+      <div className="flex items-center gap-3">
+        <AlertTriangle size={15} className="text-red-500 shrink-0" />
+        <span className="font-semibold text-red-500">Tu prueba vence en {trialDays} día{trialDays !== 1 ? 's' : ''}.</span>
+        <span className="hidden sm:inline" style={{ color: dark ? 'rgba(255,255,255,0.45)' : '#65656E' }}>No pierdas acceso a tus módulos.</span>
       </div>
-    );
-  }
+      <div className="flex items-center gap-2 shrink-0">
+        <a href={waUrl} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-bold"
+          style={{ background: '#C6922B', color: '#17120A' }}>
+          <Zap size={12} /> Extender ahora
+        </a>
+        {dismissBtn}
+      </div>
+    </div>
+  );
 
   if (warnTrial || expiringMods.length > 0) {
     const modNames = expiringMods.map(m => m.name).join(', ');
     return (
-      <div
-        className="flex items-center justify-between gap-4 rounded-2xl px-5 py-3.5 mb-5 text-[13px]"
-        style={{ background: 'rgba(242,176,69,0.08)', border: '1px solid rgba(242,176,69,0.20)' }}
-      >
+      <div className="flex items-center justify-between gap-4 rounded-2xl px-5 py-3.5 mb-5 text-[13px]"
+        style={{ background: 'rgba(198,146,43,0.08)', border: '1px solid rgba(198,146,43,0.20)' }}>
         <div className="flex items-center gap-3">
-          <AlertTriangle size={15} style={{ color: '#F2B045' }} className="shrink-0" />
-          <span style={{ color: '#65656E' }}>
+          <AlertTriangle size={15} style={{ color: '#C6922B' }} className="shrink-0" />
+          <span style={{ color: dark ? 'rgba(255,255,255,0.55)' : '#65656E' }}>
             {warnTrial
-              ? <><strong className="text-[#0A0A0F]">Tu prueba vence en {trialDays} días.</strong> Mejora tu plan para no perder acceso.</>
-              : <><strong className="text-[#0A0A0F]">Módulos por vencer:</strong> {modNames} — menos de 7 días.</>
+              ? <><strong style={{ color: dark ? '#F3F4F6' : '#0A0A0F' }}>Tu prueba vence en {trialDays} días.</strong> Mejora tu plan para no perder acceso.</>
+              : <><strong style={{ color: dark ? '#F3F4F6' : '#0A0A0F' }}>Módulos por vencer:</strong> {modNames} — menos de 7 días.</>
             }
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <a href={waUrl} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold"
-            style={{ background: 'rgba(242,176,69,0.15)', color: '#D4940B', border: '1px solid rgba(242,176,69,0.30)' }}
-          >
+            style={{ background: 'rgba(198,146,43,0.12)', color: '#C6922B', border: '1px solid rgba(198,146,43,0.25)' }}>
             Ver planes
           </a>
-          <button type="button" onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none">&times;</button>
+          {dismissBtn}
         </div>
       </div>
     );
@@ -157,17 +148,15 @@ function PlanBanner({
   if (nearLimit && isStarterFree) {
     const what = nearAssets ? `activos (${plan.usage.assets}/${assetsLimit})` : `usuarios (${plan.usage.users}/${usersLimit})`;
     return (
-      <div
-        className="flex items-center justify-between gap-4 rounded-2xl px-5 py-3 mb-5 text-[12.5px]"
-        style={{ background: 'rgba(242,176,69,0.06)', border: '1px solid rgba(242,176,69,0.15)' }}
-      >
-        <span style={{ color: '#9898A3' }}>
-          Estás al límite de tu plan en <strong className="text-[#0A0A0F]">{what}</strong>.{' '}
-          <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#F2B045', fontWeight: 600 }}>
+      <div className="flex items-center justify-between gap-4 rounded-2xl px-5 py-3 mb-5 text-[12.5px]"
+        style={{ background: 'rgba(198,146,43,0.06)', border: '1px solid rgba(198,146,43,0.15)' }}>
+        <span style={{ color: dark ? 'rgba(255,255,255,0.45)' : '#9898A3' }}>
+          Estás al límite de tu plan en <strong style={{ color: dark ? '#F3F4F6' : '#0A0A0F' }}>{what}</strong>.{' '}
+          <a href={waUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#C6922B', fontWeight: 600 }}>
             Vuélvete Plus →
           </a>
         </span>
-        <button type="button" onClick={onDismiss} className="text-[#AEAEB2] hover:text-[#65656E] text-[18px] leading-none shrink-0">&times;</button>
+        {dismissBtn}
       </div>
     );
   }
@@ -186,26 +175,25 @@ function useIsMobile() {
 }
 
 export default function Shell({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
-  const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768);
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [notifOpen, setNotifOpen]     = useState(false);
-  const [notifs, setNotifs]           = useState<NotifSummary>({ total: 0, items: [] });
-  const [plan, setPlan]               = useState<PlanInfo | null>(null);
+  const { user, logout }          = useAuth();
+  const { theme, toggle }         = useTheme();
+  const dark                      = theme === 'dark';
+  const isMobile                  = useIsMobile();
+  const [sidebarOpen, setSidebarOpen]       = useState(() => window.innerWidth >= 768);
+  const [profileOpen, setProfileOpen]       = useState(false);
+  const [notifOpen,   setNotifOpen]         = useState(false);
+  const [notifs,      setNotifs]            = useState<NotifSummary>({ total: 0, items: [] });
+  const [plan,        setPlan]              = useState<PlanInfo | null>(null);
   const [bannerDismissed, setBannerDismissed] = useState(() =>
     localStorage.getItem('plan_banner_dismissed') === new Date().toDateString()
   );
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const token    = localStorage.getItem('token');
 
-  // Close sidebar on mobile after nav
-  useEffect(() => {
-    if (isMobile) setSidebarOpen(false);
-  }, [isMobile]);
+  useEffect(() => { if (isMobile) setSidebarOpen(false); }, [isMobile]);
 
-  const primaryColor = user?.tenant?.primary_color || '#F2B045';
+  const primaryColor = user?.tenant?.primary_color || '#C6922B';
 
   function handleLogout() { logout(); navigate('/login'); }
 
@@ -238,11 +226,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // Nav link styles
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `group flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[13px] font-semibold ${
-      isActive
-        ? ''
-        : 'hover:bg-black/[0.038]'
+    `group flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[13px] font-semibold transition-all ${
+      isActive ? '' : dark ? 'hover:bg-white/[0.05]' : 'hover:bg-black/[0.04]'
     }`;
 
   const navLinkStyle = ({ isActive }: { isActive: boolean }) =>
@@ -250,22 +237,48 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       ? {
           color: primaryColor,
           background: `linear-gradient(135deg, ${primaryColor}18, ${primaryColor}0A)`,
-          boxShadow: `0 0 0 1px ${primaryColor}1E, inset 0 1px 0 rgba(255,255,255,0.55)`,
+          boxShadow: `0 0 0 1px ${primaryColor}1E, inset 0 1px 0 ${dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.55)'}`,
           transition: 'all 200ms cubic-bezier(0.23, 1, 0.32, 1)',
         }
       : {
-          color: '#65656E',
+          color: dark ? '#9CA3AF' : '#65656E',
           transition: 'all 200ms cubic-bezier(0.23, 1, 0.32, 1)',
         };
 
+  // Shared icon button style
+  const iconBtn = (hoverRed = false) => ({
+    base: `size-8 flex items-center justify-center rounded-xl transition-all duration-150`,
+    style: {
+      color: dark ? '#6B7280' : '#AEAEB2',
+      transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)',
+    } as React.CSSProperties,
+    onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.background = hoverRed
+        ? (dark ? 'rgba(239,68,68,0.12)' : '#FEF2F2')
+        : (dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)');
+      e.currentTarget.style.color = hoverRed ? '#EF4444' : (dark ? '#F3F4F6' : '#111827');
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.currentTarget.style.background = '';
+      e.currentTarget.style.color = dark ? '#6B7280' : '#AEAEB2';
+    },
+  });
+
+  const sidebarBg    = dark ? 'rgba(17,20,27,0.98)' : 'rgba(255,255,255,0.96)';
+  const sidebarBdr   = dark ? '#252B36' : 'rgba(0,0,0,0.06)';
+  const topbarBg     = dark ? 'rgba(15,17,21,0.92)' : 'rgba(255,255,255,0.92)';
+  const sectionLabel = dark ? '#6B7280' : '#C3C3C8';
+  const dividerColor = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#F3F3F7' }}>
+    <div className="flex h-screen overflow-hidden"
+      style={{ background: dark ? '#0F1115' : '#F5F6F8' }}>
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
 
       {/* Mobile backdrop */}
       {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+        <div className="fixed inset-0 z-40 backdrop-blur-sm"
+          style={{ background: dark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.30)' }}
           aria-hidden="true"
           onClick={() => setSidebarOpen(false)}
         />
@@ -281,11 +294,13 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           left: isMobile ? 0 : undefined,
           height: isMobile ? '100dvh' : undefined,
           zIndex: isMobile ? 50 : undefined,
-          background: 'rgba(255,255,255,0.96)',
-          backdropFilter: 'blur(8px) saturate(220%)',
-          WebkitBackdropFilter: 'blur(8px) saturate(220%)',
-          borderRight: '1px solid rgba(0,0,0,0.06)',
-          boxShadow: isMobile && sidebarOpen ? '4px 0 24px rgba(0,0,0,0.12)' : '1px 0 0 rgba(255,255,255,0.6) inset',
+          background: sidebarBg,
+          backdropFilter: 'blur(12px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+          borderRight: `1px solid ${sidebarBdr}`,
+          boxShadow: isMobile && sidebarOpen
+            ? dark ? '4px 0 32px rgba(0,0,0,0.45)' : '4px 0 24px rgba(0,0,0,0.12)'
+            : 'none',
           transition: 'width 280ms cubic-bezier(0.32, 0.72, 0, 1)',
           overflow: 'hidden',
         }}
@@ -294,14 +309,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         {/* Branding */}
         <div
           className="flex items-center gap-3 px-4 h-[58px] flex-shrink-0 relative overflow-hidden"
-          style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}
+          style={{ borderBottom: `1px solid ${dividerColor}` }}
         >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden="true"
-            style={{
-              background: `radial-gradient(ellipse at 0% 50%, ${primaryColor}14, transparent 70%)`,
-            }}
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+            style={{ background: `radial-gradient(ellipse at 0% 50%, ${primaryColor}14, transparent 70%)` }}
           />
           <div
             className="size-8 rounded-[10px] flex items-center justify-center flex-shrink-0 text-white font-bold text-sm relative z-10"
@@ -317,17 +328,20 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </div>
           {sidebarOpen && (
             <div className="min-w-0 flex-1 relative z-10">
-              <p className="font-bold text-[#0A0A0F] text-[13px] truncate leading-tight tracking-[-0.02em]">
+              <p className="font-bold text-[13px] truncate leading-tight tracking-[-0.02em]"
+                style={{ color: dark ? '#F3F4F6' : '#0A0A0F' }}>
                 {user?.tenant?.name || 'FB Core'}
               </p>
-              <p className="text-[10.5px] text-[#AEAEB2] truncate font-medium mt-0.5">Sistema de gestión</p>
+              <p className="text-[10.5px] truncate font-medium mt-0.5"
+                style={{ color: dark ? '#6B7280' : '#AEAEB2' }}>
+                Sistema de gestión
+              </p>
             </div>
           )}
         </div>
 
         {/* Nav */}
         <nav aria-label="Módulos" className="flex-1 py-3 px-2 overflow-y-auto space-y-0.5">
-
           <div className="animate-fade-up" style={{ animationDelay: '0ms' }}>
             <NavLink to="/" end className={navLinkClass} style={navLinkStyle}
               onClick={() => isMobile && setSidebarOpen(false)}>
@@ -339,14 +353,13 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           {user?.modules && user.modules.filter(m => MODULE_ROUTES[m.code]).length > 0 && (
             <>
               {sidebarOpen
-                ? <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold text-[#C3C3C8] uppercase tracking-[0.1em]">Operación</p>
-                : <div className="my-3 mx-2 border-t border-black/[0.06]" role="separator" />}
+                ? <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold uppercase tracking-[0.1em]"
+                    style={{ color: sectionLabel }}>Operación</p>
+                : <div className="my-3 mx-2 border-t" role="separator"
+                    style={{ borderColor: dividerColor }} />}
               {user.modules.filter(m => MODULE_ROUTES[m.code]).map((m, idx) => (
-                <div
-                  key={m.code}
-                  className="animate-fade-up"
-                  style={{ animationDelay: `${(idx + 1) * 35}ms` }}
-                >
+                <div key={m.code} className="animate-fade-up"
+                  style={{ animationDelay: `${(idx + 1) * 35}ms` }}>
                   <NavLink to={MODULE_ROUTES[m.code]} className={navLinkClass} style={navLinkStyle}
                     onClick={() => isMobile && setSidebarOpen(false)}>
                     <span className="flex-shrink-0 text-current" aria-hidden="true">
@@ -362,8 +375,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           )}
 
           {sidebarOpen
-            ? <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold text-[#C3C3C8] uppercase tracking-[0.1em]">Análisis</p>
-            : <div className="my-3 mx-2 border-t border-black/[0.06]" role="separator" />}
+            ? <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold uppercase tracking-[0.1em]"
+                style={{ color: sectionLabel }}>Análisis</p>
+            : <div className="my-3 mx-2 border-t" role="separator"
+                style={{ borderColor: dividerColor }} />}
           <div className="animate-fade-up" style={{ animationDelay: '240ms' }}>
             <NavLink to="/reports" className={navLinkClass} style={navLinkStyle}
               onClick={() => isMobile && setSidebarOpen(false)}>
@@ -373,8 +388,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </div>
 
           {sidebarOpen
-            ? <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold text-[#C3C3C8] uppercase tracking-[0.1em]">Sistema</p>
-            : <div className="my-3 mx-2 border-t border-black/[0.06]" role="separator" />}
+            ? <p className="px-3 pt-5 pb-1.5 text-[10px] font-bold uppercase tracking-[0.1em]"
+                style={{ color: sectionLabel }}>Sistema</p>
+            : <div className="my-3 mx-2 border-t" role="separator"
+                style={{ borderColor: dividerColor }} />}
           <div className="animate-fade-up" style={{ animationDelay: '280ms' }}>
             <NavLink to="/settings" className={navLinkClass} style={navLinkStyle}
               onClick={() => isMobile && setSidebarOpen(false)}>
@@ -385,7 +402,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* User profile */}
-        <div className="p-2 flex-shrink-0" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+        <div className="p-2 flex-shrink-0"
+          style={{ borderTop: `1px solid ${dividerColor}` }}>
           {sidebarOpen ? (
             <>
               <button
@@ -394,8 +412,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 aria-expanded={profileOpen}
                 aria-haspopup="menu"
                 aria-label={`Menú de usuario: ${user?.name}`}
-                className="w-full flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-black/[0.04] transition-colors text-left"
+                className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-colors"
                 style={{ transition: 'background-color 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                onMouseEnter={e => { e.currentTarget.style.background = dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = ''; }}
               >
                 <div
                   className="size-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
@@ -408,30 +428,34 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                   {user?.name?.[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-bold text-[#0A0A0F] truncate leading-tight">{user?.name}</p>
-                  <p className="text-[10px] text-[#AEAEB2] truncate capitalize font-medium">{user?.role?.replace('_', ' ')}</p>
+                  <p className="text-[12px] font-bold truncate leading-tight"
+                    style={{ color: dark ? '#F3F4F6' : '#0A0A0F' }}>{user?.name}</p>
+                  <p className="text-[10px] truncate capitalize font-medium"
+                    style={{ color: dark ? '#6B7280' : '#AEAEB2' }}>{user?.role?.replace('_', ' ')}</p>
                 </div>
                 <ChevronDown
                   size={12}
-                  className={`text-[#AEAEB2] flex-shrink-0 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`}
-                  style={{ transition: 'transform 200ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                  className={`flex-shrink-0 transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`}
+                  style={{ color: dark ? '#6B7280' : '#AEAEB2' }}
                   aria-hidden="true"
                 />
               </button>
               {profileOpen && (
                 <div
                   role="menu"
-                  className="mt-1.5 bg-white rounded-xl overflow-hidden animate-slide-up"
+                  className="mt-1.5 rounded-xl overflow-hidden animate-slide-up"
                   style={{
-                    border: '1px solid rgba(0,0,0,0.07)',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.09)',
+                    background: dark ? '#1A1F2A' : '#FFFFFF',
+                    border: `1px solid ${dark ? '#252B36' : 'rgba(0,0,0,0.07)'}`,
+                    boxShadow: dark ? '0 8px 24px rgba(0,0,0,0.32)' : '0 8px 24px rgba(0,0,0,0.09)',
                   }}
                 >
                   <button
                     type="button" role="menuitem"
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-red-500 hover:bg-red-50 font-semibold"
-                    style={{ transition: 'background-color 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-[13px] text-red-500 font-semibold transition-colors"
+                    onMouseEnter={e => { e.currentTarget.style.background = dark ? 'rgba(239,68,68,0.10)' : '#FEF2F2'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ''; }}
                   >
                     <LogOut size={13} aria-hidden="true" /> Cerrar sesión
                   </button>
@@ -443,8 +467,15 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               type="button"
               onClick={handleLogout}
               aria-label="Cerrar sesión"
-              className="w-full flex items-center justify-center p-2.5 rounded-xl text-[#AEAEB2] hover:bg-red-50 hover:text-red-500"
-              style={{ transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+              className="w-full flex items-center justify-center p-2.5 rounded-xl transition-colors text-red-400"
+              onMouseEnter={e => {
+                e.currentTarget.style.background = dark ? 'rgba(239,68,68,0.12)' : '#FEF2F2';
+                e.currentTarget.style.color = '#EF4444';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = '';
+                e.currentTarget.style.color = '';
+              }}
             >
               <LogOut size={15} aria-hidden="true" />
             </button>
@@ -457,31 +488,49 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
         {/* Topbar */}
         <header
-          className="h-[58px] flex items-center justify-between px-5 flex-shrink-0"
+          className="h-[58px] flex items-center justify-between px-4 flex-shrink-0"
           style={{
-            background: 'rgba(255,255,255,0.92)',
-            backdropFilter: 'blur(8px) saturate(200%)',
-            WebkitBackdropFilter: 'blur(8px) saturate(200%)',
-            borderBottom: '1px solid rgba(0,0,0,0.06)',
-            boxShadow: '0 1px 0 rgba(255,255,255,0.7) inset',
+            background: topbarBg,
+            backdropFilter: 'blur(12px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+            borderBottom: `1px solid ${sidebarBdr}`,
           }}
         >
+          {/* Left: sidebar toggle */}
           <button
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
             aria-expanded={sidebarOpen}
             aria-controls="sidebar"
             aria-label={sidebarOpen ? 'Cerrar menú lateral' : 'Abrir menú lateral'}
-            className="size-8 flex items-center justify-center text-[#AEAEB2] hover:text-[#0A0A0F] hover:bg-black/[0.05] rounded-xl"
-            style={{ transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+            className={iconBtn().base}
+            style={iconBtn().style}
+            onMouseEnter={iconBtn().onMouseEnter}
+            onMouseLeave={iconBtn().onMouseLeave}
           >
-            {sidebarOpen
-              ? <X size={16} aria-hidden="true" />
-              : <Menu size={16} aria-hidden="true" />}
+            {sidebarOpen ? <X size={16} aria-hidden="true" /> : <Menu size={16} aria-hidden="true" />}
           </button>
 
-          <div className="flex items-center gap-1.5">
-            {/* Notification bell */}
+          {/* Right: actions */}
+          <div className="flex items-center gap-1">
+
+            {/* Theme toggle */}
+            <button
+              type="button"
+              onClick={toggle}
+              aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              className={iconBtn().base}
+              style={iconBtn().style}
+              onMouseEnter={iconBtn().onMouseEnter}
+              onMouseLeave={iconBtn().onMouseLeave}
+            >
+              {dark
+                ? <Sun  size={15} strokeWidth={2} aria-hidden="true" />
+                : <Moon size={15} strokeWidth={2} aria-hidden="true" />
+              }
+            </button>
+
+            {/* Notifications */}
             <div className="relative" ref={notifRef}>
               <button
                 type="button"
@@ -489,15 +538,17 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 aria-label={notifs.total > 0 ? `${notifs.total} notificaciones pendientes` : 'Sin notificaciones'}
                 aria-expanded={notifOpen}
                 aria-haspopup="dialog"
-                className="relative size-8 flex items-center justify-center text-[#AEAEB2] hover:text-[#0A0A0F] hover:bg-black/[0.05] rounded-xl"
-                style={{ transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                className={`relative ${iconBtn().base}`}
+                style={iconBtn().style}
+                onMouseEnter={iconBtn().onMouseEnter}
+                onMouseLeave={iconBtn().onMouseLeave}
               >
-                <Bell size={16} aria-hidden="true" />
+                <Bell size={15} aria-hidden="true" />
                 {notifs.total > 0 && (
                   <span
                     aria-hidden="true"
                     className="absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none px-1"
-                    style={{ boxShadow: '0 2px 6px rgba(239,68,68,0.4)' }}
+                    style={{ boxShadow: '0 2px 6px rgba(239,68,68,0.45)' }}
                   >
                     {notifs.total > 9 ? '9+' : notifs.total}
                   </span>
@@ -509,40 +560,49 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                   role="dialog"
                   aria-label="Notificaciones"
                   aria-live="polite"
-                  className="absolute right-0 top-11 w-80 bg-white rounded-2xl z-50 overflow-hidden animate-slide-up"
+                  className="absolute right-0 top-11 w-80 rounded-2xl z-50 overflow-hidden animate-slide-up"
                   style={{
-                    border: '1px solid rgba(0,0,0,0.07)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
+                    background: dark ? '#151922' : '#FFFFFF',
+                    border: `1px solid ${dark ? '#252B36' : 'rgba(0,0,0,0.07)'}`,
+                    boxShadow: dark
+                      ? '0 8px 32px rgba(0,0,0,0.40), 0 2px 8px rgba(0,0,0,0.22)'
+                      : '0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
                   }}
                 >
-                  <div
-                    className="px-4 py-3.5 flex items-center justify-between"
-                    style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}
-                  >
-                    <span className="font-bold text-[13px] text-[#0A0A0F] tracking-[-0.02em]">Notificaciones</span>
+                  <div className="px-4 py-3.5 flex items-center justify-between"
+                    style={{ borderBottom: `1px solid ${dark ? '#252B36' : 'rgba(0,0,0,0.05)'}` }}>
+                    <span className="font-bold text-[13px] tracking-[-0.02em]"
+                      style={{ color: dark ? '#F3F4F6' : '#0A0A0F' }}>
+                      Notificaciones
+                    </span>
                     {notifs.total > 0 && (
-                      <span className="px-2 py-0.5 bg-red-100 text-red-600 text-[10px] font-bold rounded-full">
+                      <span className="px-2 py-0.5 bg-red-500/10 text-red-500 text-[10px] font-bold rounded-full">
                         {notifs.total}
                       </span>
                     )}
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {(notifs.items ?? []).length === 0 ? (
-                      <div className="flex flex-col items-center py-10 gap-2 text-[#AEAEB2]">
+                      <div className="flex flex-col items-center py-10 gap-2">
                         <CheckCircle size={20} className="text-emerald-400" aria-hidden="true" />
-                        <span className="text-[13px] font-semibold">Todo al día</span>
+                        <span className="text-[13px] font-semibold"
+                          style={{ color: dark ? '#6B7280' : '#AEAEB2' }}>Todo al día</span>
                       </div>
                     ) : (notifs.items ?? []).map((item, i) => (
                       <div
                         key={`${item.type}:${item.message}`}
-                        className="flex items-start gap-3 px-4 py-3 hover:bg-black/[0.02]"
+                        className="flex items-start gap-3 px-4 py-3 transition-colors"
                         style={{
-                          borderBottom: i < notifs.items.length - 1 ? '1px solid rgba(0,0,0,0.04)' : 'none',
-                          transition: 'background-color 160ms cubic-bezier(0.23, 1, 0.32, 1)',
+                          borderBottom: i < notifs.items.length - 1
+                            ? `1px solid ${dark ? '#252B36' : 'rgba(0,0,0,0.04)'}`
+                            : 'none',
                         }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = ''; }}
                       >
-                        {NOTIF_ICONS[item.type] || <AlertCircle size={13} className="text-[#AEAEB2] flex-shrink-0" />}
-                        <p className="text-[12px] text-[#3C3C43] leading-relaxed">{item.message}</p>
+                        {NOTIF_ICONS[item.type] || <AlertCircle size={13} style={{ color: dark ? '#6B7280' : '#AEAEB2' }} className="flex-shrink-0" />}
+                        <p className="text-[12px] leading-relaxed"
+                          style={{ color: dark ? '#9CA3AF' : '#3C3C43' }}>{item.message}</p>
                       </div>
                     ))}
                   </div>
@@ -550,15 +610,18 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
+            {/* Logout (collapsed sidebar only) */}
             {!sidebarOpen && (
               <button
                 type="button"
                 onClick={handleLogout}
                 aria-label="Cerrar sesión"
-                className="size-8 flex items-center justify-center text-[#AEAEB2] hover:text-red-500 hover:bg-red-50 rounded-xl"
-                style={{ transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                className={iconBtn(true).base}
+                style={iconBtn(true).style}
+                onMouseEnter={iconBtn(true).onMouseEnter}
+                onMouseLeave={iconBtn(true).onMouseLeave}
               >
-                <LogOut size={16} aria-hidden="true" />
+                <LogOut size={15} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -570,6 +633,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             plan={plan}
             tenantName={user?.tenant?.name || 'tu empresa'}
             dismissed={bannerDismissed}
+            dark={dark}
             onDismiss={() => {
               localStorage.setItem('plan_banner_dismissed', new Date().toDateString());
               setBannerDismissed(true);
