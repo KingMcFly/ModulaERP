@@ -1,10 +1,72 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Mail, ShieldCheck } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
+import {
+  AuthShell, InfoPanel, FormCard, Brand, Field, PrimaryBtn,
+  ErrorBanner, CheckItem, c,
+} from './auth-shared';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
+// ── Left panel ────────────────────────────────────────────────────────────────
+function ForgotInfo({ dark }: { dark: boolean }) {
+  const col = c(dark);
+  return (
+    <InfoPanel dark={dark}>
+      <Brand dark={dark} />
+
+      <div className="flex flex-1 flex-col justify-center">
+        <div className="max-w-[440px]">
+          <div
+            className="mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em]"
+            style={{
+              background: dark ? '#171B24' : '#FFFFFF',
+              borderColor: col.border,
+              color: col.accent,
+            }}
+          >
+            <ShieldCheck size={14} strokeWidth={2.2} />
+            Recuperación segura
+          </div>
+
+          <h2 className="max-w-[420px] text-[38px] font-black leading-[1.02] tracking-[-0.055em]" style={{ color: col.text }}>
+            Recupera tu acceso en segundos.
+          </h2>
+
+          <p className="mt-5 max-w-[420px] text-[15px] leading-7" style={{ color: col.muted }}>
+            Te enviamos un enlace seguro a tu correo. Úsalo para crear una nueva contraseña y volver a ingresar.
+          </p>
+
+          <div
+            className="mt-10 rounded-2xl border p-5"
+            style={{ background: dark ? '#151922' : '#FFFFFF', borderColor: col.border }}
+          >
+            <p className="mb-4 text-[13px] font-black uppercase tracking-[0.12em]" style={{ color: col.text }}>
+              Cómo funciona
+            </p>
+            <div className="space-y-4">
+              <CheckItem dark={dark}>Ingresa el correo asociado a tu cuenta.</CheckItem>
+              <CheckItem dark={dark}>Recibirás un enlace de recuperación válido por 1 hora.</CheckItem>
+              <CheckItem dark={dark}>Crea tu nueva contraseña de forma segura.</CheckItem>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-[12px] leading-5" style={{ color: col.subtle }}>
+        Si no encuentras el correo, revisa tu bandeja de spam.
+      </p>
+    </InfoPanel>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function ForgotPassword() {
+  const { theme, toggle } = useTheme();
+  const dark = theme === 'dark';
+  const col  = c(dark);
+
   const [email, setEmail]     = useState('');
   const [loading, setLoading] = useState(false);
   const [done, setDone]       = useState(false);
@@ -30,77 +92,86 @@ export default function ForgotPassword() {
     }
   }
 
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(145deg, #F5F5F7 0%, #EBEBF0 100%)' }}
-    >
-      <div className="w-full max-w-[360px]">
-        <div
-          className="bg-white rounded-3xl p-7 shadow-soft-xl"
-          style={{ border: '1px solid rgba(0,0,0,0.06)' }}
-        >
-          {done ? (
-            <div className="text-center space-y-4 py-2">
-              <div className="size-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto shadow-soft">
-                <CheckCircle size={26} className="text-emerald-500" aria-hidden="true" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-[#1D1D1F]">Revisa tu correo</h1>
-                <p className="text-sm text-[#6E6E73] mt-2 leading-relaxed">
-                  Si el correo <strong className="text-[#1D1D1F]">{email}</strong> existe en el sistema, recibirás instrucciones para restablecer tu contraseña.
-                </p>
-              </div>
-              <Link to="/login" className="btn btn-primary w-full justify-center mt-2">
+  const formCard = (
+    <FormCard dark={dark}>
+      <Brand dark={dark} />
+
+      <div className="flex flex-1 flex-col justify-center pt-8 lg:pt-0">
+        {done ? (
+          <div className="flex flex-col items-center py-8 text-center">
+            <div className="mb-6 grid size-16 place-items-center rounded-2xl" style={{ background: '#22c55e18' }}>
+              <CheckCircle2 size={30} style={{ color: '#22c55e' }} />
+            </div>
+            <h2 className="text-[22px] font-black tracking-[-0.03em]" style={{ color: col.text }}>
+              Revisa tu correo
+            </h2>
+            <p className="mt-3 max-w-[300px] text-[14px] leading-6" style={{ color: col.muted }}>
+              Si el correo <strong style={{ color: col.text }}>{email}</strong> existe en el sistema, recibirás instrucciones para restablecer tu contraseña.
+            </p>
+            <div className="mt-8 w-full">
+              <Link
+                to="/login"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-black transition hover:-translate-y-0.5"
+                style={{ background: col.accent, color: col.accentText }}
+              >
                 Volver al inicio de sesión
               </Link>
             </div>
-          ) : (
-            <>
-              <div className="flex items-center gap-3 mb-6">
-                <Link
-                  to="/login"
-                  className="p-2 text-[#AEAEB2] hover:text-[#1D1D1F] hover:bg-black/[0.05] rounded-xl transition-colors"
-                  aria-label="Volver"
-                >
-                  <ArrowLeft size={16} aria-hidden="true" />
-                </Link>
-                <div>
-                  <h1 className="text-lg font-semibold text-[#1D1D1F]">Recuperar contraseña</h1>
-                  <p className="text-xs text-[#6E6E73] mt-0.5">Te enviaremos instrucciones por correo</p>
-                </div>
-              </div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-8">
+              <Link
+                to="/login"
+                className="mb-6 inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-[13px] font-bold transition hover:-translate-y-0.5"
+                style={{ background: col.cardAlt, borderColor: col.border, color: col.muted }}
+              >
+                <ArrowLeft size={14} strokeWidth={2.2} />
+                Volver al login
+              </Link>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="forgot-email" className="label">Correo electrónico</label>
-                  <div className="relative">
-                    <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#AEAEB2]" aria-hidden="true" />
-                    <input
-                      id="forgot-email"
-                      type="email"
-                      className="input pl-10"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      required
-                      autoComplete="email"
-                      placeholder="correo@empresa.com"
-                    />
-                  </div>
-                </div>
+              <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: col.accent }}>
+                Recuperar acceso
+              </p>
+              <h1 className="text-[31px] font-black leading-tight tracking-[-0.045em]" style={{ color: col.text }}>
+                ¿Olvidaste tu contraseña?
+              </h1>
+              <p className="mt-3 text-[14px] leading-6" style={{ color: col.muted }}>
+                Ingresa tu correo y te enviamos un enlace de recuperación.
+              </p>
+            </div>
 
-                {error && (
-                  <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2.5">{error}</p>
-                )}
+            {error && <div className="mb-5"><ErrorBanner dark={dark} message={error} /></div>}
 
-                <button type="submit" disabled={loading} className="btn btn-primary w-full justify-center">
-                  {loading ? 'Enviando…' : 'Enviar instrucciones'}
-                </button>
-              </form>
-            </>
-          )}
-        </div>
+            <form onSubmit={handleSubmit} noValidate className="space-y-5">
+              <Field
+                id="forgot-email"
+                label="Correo electrónico"
+                type="email"
+                value={email}
+                onChange={setEmail}
+                placeholder="correo@empresa.com"
+                autoComplete="email"
+                dark={dark}
+                icon={<Mail size={17} strokeWidth={2.1} />}
+              />
+
+              <PrimaryBtn type="submit" dark={dark} loading={loading} loadingText="Enviando…" disabled={!email.trim()}>
+                Enviar instrucciones
+              </PrimaryBtn>
+            </form>
+          </>
+        )}
       </div>
-    </div>
+    </FormCard>
+  );
+
+  return (
+    <AuthShell
+      dark={dark}
+      toggle={toggle}
+      left={<ForgotInfo dark={dark} />}
+      right={formCard}
+    />
   );
 }

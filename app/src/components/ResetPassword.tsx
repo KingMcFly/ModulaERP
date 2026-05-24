@@ -1,35 +1,109 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle2, ShieldCheck } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
+import {
+  AuthShell, InfoPanel, FormCard, Brand, PasswordField, PrimaryBtn,
+  ErrorBanner, CheckItem, c,
+} from './auth-shared';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
-function PasswordStrength({ password }: { password: string }) {
-  const checks = [
-    { label: 'Mínimo 8 caracteres', ok: password.length >= 8 },
-    { label: 'Una mayúscula',       ok: /[A-Z]/.test(password) },
-    { label: 'Un número',           ok: /[0-9]/.test(password) },
-  ];
+const PASSWORD_RULES = [
+  { re: /.{8,}/,  label: 'Mínimo 8 caracteres' },
+  { re: /[A-Z]/,  label: 'Una mayúscula'        },
+  { re: /[0-9]/,  label: 'Un número'            },
+];
+
+// ── Left panel ────────────────────────────────────────────────────────────────
+function ResetInfo({ dark }: { dark: boolean }) {
+  const col = c(dark);
+  return (
+    <InfoPanel dark={dark}>
+      <Brand dark={dark} />
+
+      <div className="flex flex-1 flex-col justify-center">
+        <div className="max-w-[440px]">
+          <div
+            className="mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em]"
+            style={{
+              background: dark ? '#171B24' : '#FFFFFF',
+              borderColor: col.border,
+              color: col.accent,
+            }}
+          >
+            <ShieldCheck size={14} strokeWidth={2.2} />
+            Acceso seguro
+          </div>
+
+          <h2 className="max-w-[420px] text-[38px] font-black leading-[1.02] tracking-[-0.055em]" style={{ color: col.text }}>
+            Crea una contraseña nueva y segura.
+          </h2>
+
+          <p className="mt-5 max-w-[420px] text-[15px] leading-7" style={{ color: col.muted }}>
+            Elige una contraseña fuerte para mantener tu cuenta protegida. Este enlace es válido por 1 hora.
+          </p>
+
+          <div
+            className="mt-10 rounded-2xl border p-5"
+            style={{ background: dark ? '#151922' : '#FFFFFF', borderColor: col.border }}
+          >
+            <p className="mb-4 text-[13px] font-black uppercase tracking-[0.12em]" style={{ color: col.text }}>
+              Requisitos de seguridad
+            </p>
+            <div className="space-y-4">
+              <CheckItem dark={dark}>Mínimo 8 caracteres de longitud.</CheckItem>
+              <CheckItem dark={dark}>Al menos una letra mayúscula.</CheckItem>
+              <CheckItem dark={dark}>Al menos un número.</CheckItem>
+              <CheckItem dark={dark}>Evita contraseñas usadas anteriormente.</CheckItem>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-[12px] leading-5" style={{ color: col.subtle }}>
+        Una vez confirmada, se cerrará la sesión en todos los dispositivos.
+      </p>
+    </InfoPanel>
+  );
+}
+
+// ── Password strength checker ─────────────────────────────────────────────────
+function StrengthBar({ password, dark }: { password: string; dark: boolean }) {
+  const col = c(dark);
   if (!password) return null;
   return (
-    <div className="space-y-1.5 mt-2.5">
-      {checks.map(c => (
-        <div key={c.label} className="flex items-center gap-1.5">
-          {c.ok
-            ? <CheckCircle size={11} className="text-emerald-500" aria-hidden="true" />
-            : <AlertCircle size={11} className="text-[#AEAEB2]" aria-hidden="true" />}
-          <span className={`text-xs ${c.ok ? 'text-emerald-600' : 'text-[#AEAEB2]'}`}>{c.label}</span>
+    <div className="space-y-2 pl-1">
+      {PASSWORD_RULES.map(rule => (
+        <div key={rule.label} className="flex items-center gap-2">
+          <div
+            className="grid size-4 shrink-0 place-items-center rounded-full"
+            style={{ background: rule.re.test(password) ? '#22c55e' : col.border }}
+          >
+            {rule.re.test(password) && (
+              <svg width="8" height="7" viewBox="0 0 8 7" fill="none">
+                <path d="M1 3.5l2 2L7 1" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+          <span className="text-[12px]" style={{ color: rule.re.test(password) ? '#22c55e' : col.subtle }}>
+            {rule.label}
+          </span>
         </div>
       ))}
     </div>
   );
 }
 
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function ResetPassword() {
-  const { token } = useParams<{ token: string }>();
-  const navigate  = useNavigate();
+  const { token }  = useParams<{ token: string }>();
+  const navigate   = useNavigate();
+  const { theme, toggle } = useTheme();
+  const dark = theme === 'dark';
+  const col  = c(dark);
+
   const [password, setPassword] = useState('');
-  const [show, setShow]         = useState(false);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const [done, setDone]         = useState(false);
@@ -55,77 +129,78 @@ export default function ResetPassword() {
     }
   }
 
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ background: 'linear-gradient(145deg, #F5F5F7 0%, #EBEBF0 100%)' }}
-    >
-      <div className="w-full max-w-[360px]">
-        <div
-          className="bg-white rounded-3xl p-7 shadow-soft-xl"
-          style={{ border: '1px solid rgba(0,0,0,0.06)' }}
-        >
-          {done ? (
-            <div className="text-center space-y-4 py-2">
-              <div className="size-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto shadow-soft">
-                <CheckCircle size={26} className="text-emerald-500" aria-hidden="true" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-[#1D1D1F]">¡Contraseña actualizada!</h1>
-                <p className="text-sm text-[#6E6E73] mt-1">Serás redirigido al inicio de sesión…</p>
-              </div>
-              <Link to="/login" className="btn btn-primary w-full justify-center">Ir al login</Link>
+  const passOk = PASSWORD_RULES.every(r => r.re.test(password));
+
+  const formCard = (
+    <FormCard dark={dark}>
+      <Brand dark={dark} />
+
+      <div className="flex flex-1 flex-col justify-center pt-8 lg:pt-0">
+        {done ? (
+          <div className="flex flex-col items-center py-8 text-center">
+            <div className="mb-6 grid size-16 place-items-center rounded-2xl" style={{ background: '#22c55e18' }}>
+              <CheckCircle2 size={30} style={{ color: '#22c55e' }} />
             </div>
-          ) : (
-            <>
-              <div className="mb-6">
-                <div className="size-11 bg-primary-50 rounded-2xl flex items-center justify-center mb-4 shadow-soft">
-                  <Lock size={18} className="text-primary-500" aria-hidden="true" />
-                </div>
-                <h1 className="text-xl font-semibold text-[#1D1D1F]">Nueva contraseña</h1>
-                <p className="text-xs text-[#6E6E73] mt-1">Elige una contraseña segura para tu cuenta</p>
-              </div>
+            <h2 className="text-[22px] font-black tracking-[-0.03em]" style={{ color: col.text }}>
+              ¡Contraseña actualizada!
+            </h2>
+            <p className="mt-3 text-[14px] leading-6" style={{ color: col.muted }}>
+              Serás redirigido al inicio de sesión en unos segundos…
+            </p>
+            <div className="mt-8 w-full">
+              <Link
+                to="/login"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-black transition hover:-translate-y-0.5"
+                style={{ background: col.accent, color: col.accentText }}
+              >
+                Ir al inicio de sesión
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="mb-8">
+              <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: col.accent }}>
+                Nueva contraseña
+              </p>
+              <h1 className="text-[31px] font-black leading-tight tracking-[-0.045em]" style={{ color: col.text }}>
+                Elige una contraseña segura
+              </h1>
+              <p className="mt-3 text-[14px] leading-6" style={{ color: col.muted }}>
+                Crea una nueva contraseña para recuperar el acceso a tu cuenta.
+              </p>
+            </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="reset-password" className="label">Nueva contraseña</label>
-                  <div className="relative">
-                    <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#AEAEB2]" aria-hidden="true" />
-                    <input
-                      id="reset-password"
-                      type={show ? 'text' : 'password'}
-                      className="input pl-10 pr-11"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      required
-                      autoComplete="new-password"
-                      minLength={8}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShow(!show)}
-                      aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                      aria-controls="reset-password"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#AEAEB2] hover:text-[#6E6E73] transition-colors p-1"
-                    >
-                      {show ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
-                    </button>
-                  </div>
-                  <PasswordStrength password={password} />
-                </div>
+            {error && <div className="mb-5"><ErrorBanner dark={dark} message={error} /></div>}
 
-                {error && (
-                  <p role="alert" className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2.5">{error}</p>
-                )}
+            <form onSubmit={handleSubmit} noValidate className="space-y-5">
+              <PasswordField
+                id="reset-password"
+                label="Nueva contraseña"
+                value={password}
+                onChange={setPassword}
+                autoComplete="new-password"
+                dark={dark}
+              />
 
-                <button type="submit" disabled={loading} className="btn btn-primary w-full justify-center">
-                  {loading ? 'Guardando…' : 'Guardar contraseña'}
-                </button>
-              </form>
-            </>
-          )}
-        </div>
+              <StrengthBar password={password} dark={dark} />
+
+              <PrimaryBtn type="submit" dark={dark} loading={loading} loadingText="Guardando…" disabled={!passOk}>
+                Guardar contraseña
+              </PrimaryBtn>
+            </form>
+          </>
+        )}
       </div>
-    </div>
+    </FormCard>
+  );
+
+  return (
+    <AuthShell
+      dark={dark}
+      toggle={toggle}
+      left={<ResetInfo dark={dark} />}
+      right={formCard}
+    />
   );
 }

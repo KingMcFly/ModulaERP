@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Boxes, Eye, EyeOff, Check, ChevronRight, AlertCircle, Rocket,
-  Package, ArrowRightLeft, Wrench, Users, Activity,
-  Truck, ShoppingCart, ClipboardList, FileCheck, LifeBuoy, PieChart,
+  ArrowRight, Building2, Check, CheckCircle2,
+  Mail, Package, ArrowRightLeft, Wrench, Users,
+  Activity, Truck, ShoppingCart, ClipboardList,
+  FileCheck, LifeBuoy, PieChart, Rocket, Server,
+  ShieldCheck,
 } from 'lucide-react';
+import { useTheme } from '../hooks/useTheme';
 import { useAuth } from '../context/AuthContext';
+import {
+  AuthShell, InfoPanel, FormCard, Brand, Field, PasswordField,
+  PrimaryBtn, SecondaryBtn, ErrorBanner, CheckItem, c,
+} from './auth-shared';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -35,9 +42,115 @@ const PASSWORD_RULES = [
   { re: /[^A-Za-z0-9]/, label: 'Al menos un carácter especial' },
 ];
 
+const STEP_LABELS = ['Tu cuenta', 'Tu empresa', 'Módulos'] as const;
+
+// ── Left panel ────────────────────────────────────────────────────────────────
+function RegisterInfo({ dark }: { dark: boolean }) {
+  const col = c(dark);
+  return (
+    <InfoPanel dark={dark}>
+      <Brand dark={dark} />
+
+      <div className="flex flex-1 flex-col justify-center">
+        <div className="max-w-[440px]">
+          <div
+            className="mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-black uppercase tracking-[0.14em]"
+            style={{
+              background: dark ? '#171B24' : '#FFFFFF',
+              borderColor: col.border,
+              color: col.accent,
+            }}
+          >
+            <Rocket size={14} strokeWidth={2.2} />
+            Plan Starter Free
+          </div>
+
+          <h2 className="max-w-[420px] text-[38px] font-black leading-[1.02] tracking-[-0.055em]" style={{ color: col.text }}>
+            Empieza gratis, sin tarjeta de crédito.
+          </h2>
+
+          <p className="mt-5 max-w-[420px] text-[15px] leading-7" style={{ color: col.muted }}>
+            Crea tu empresa en minutos y accede a las herramientas que tu equipo necesita para operar con claridad.
+          </p>
+
+          <div
+            className="mt-10 rounded-2xl border p-5"
+            style={{ background: dark ? '#151922' : '#FFFFFF', borderColor: col.border }}
+          >
+            <div className="mb-4 flex items-center gap-2">
+              <Server size={17} style={{ color: col.accent }} />
+              <span className="text-[13px] font-black uppercase tracking-[0.12em]" style={{ color: col.text }}>
+                Qué incluye
+              </span>
+            </div>
+            <div className="space-y-4">
+              <CheckItem dark={dark}>Módulos base: Inventario y Personal.</CheckItem>
+              <CheckItem dark={dark}>Hasta 5 usuarios y 30 activos registrados.</CheckItem>
+              <CheckItem dark={dark}>2 módulos adicionales de prueba por 30 días.</CheckItem>
+              <CheckItem dark={dark}>Sin restricciones de funcionalidades base.</CheckItem>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <ShieldCheck size={14} style={{ color: col.subtle }} />
+        <p className="text-[12px] leading-5" style={{ color: col.subtle }}>
+          Sin compromisos. Cancela cuando quieras.
+        </p>
+      </div>
+    </InfoPanel>
+  );
+}
+
+// ── Step progress bar ─────────────────────────────────────────────────────────
+function StepBar({ step, dark }: { step: number; dark: boolean }) {
+  const col = c(dark);
+  return (
+    <div className="mb-8 flex items-center gap-1">
+      {STEP_LABELS.map((label, i) => {
+        const s     = i + 1;
+        const done  = step > s;
+        const active = step === s;
+        return (
+          <React.Fragment key={s}>
+            <div className="flex items-center gap-2">
+              <div
+                className="grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-black"
+                style={{
+                  background: done ? '#22c55e' : active ? col.accent : col.border,
+                  color: done || active ? (done ? '#fff' : col.accentText) : col.subtle,
+                }}
+              >
+                {done ? <Check size={11} /> : s}
+              </div>
+              <span
+                className="hidden text-[12px] font-bold whitespace-nowrap sm:block"
+                style={{ color: active ? col.text : col.subtle }}
+              >
+                {label}
+              </span>
+            </div>
+            {i < 2 && (
+              <div
+                className="mx-2 h-px flex-1"
+                style={{ background: step > s ? '#22c55e' : col.border }}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function Register() {
   const navigate = useNavigate();
   const { loginWithToken } = useAuth();
+  const { theme, toggle }  = useTheme();
+  const dark = theme === 'dark';
+  const col  = c(dark);
 
   const [step, setStep]                 = useState(1);
   const [loading, setLoading]           = useState(false);
@@ -47,7 +160,6 @@ export default function Register() {
   const [name, setName]                 = useState('');
   const [email, setEmail]               = useState('');
   const [password, setPassword]         = useState('');
-  const [showPass, setShowPass]         = useState(false);
   const [company, setCompany]           = useState('');
   const [selectedMods, setSelectedMods] = useState<string[]>([]);
 
@@ -60,31 +172,21 @@ export default function Register() {
 
   function toggleMod(code: string) {
     setSelectedMods(prev =>
-      prev.includes(code)
-        ? prev.filter(c => c !== code)
-        : prev.length < 2 ? [...prev, code] : prev
+      prev.includes(code) ? prev.filter(c => c !== code) : prev.length < 2 ? [...prev, code] : prev
     );
   }
 
   function validateStep1() {
     if (!name.trim()) return 'Ingresa tu nombre completo';
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return 'Correo electrónico inválido';
-    for (const rule of PASSWORD_RULES) {
-      if (!rule.re.test(password)) return rule.label;
-    }
+    for (const rule of PASSWORD_RULES) if (!rule.re.test(password)) return rule.label;
     return '';
   }
 
   function next() {
     setError('');
-    if (step === 1) {
-      const err = validateStep1();
-      if (err) { setError(err); return; }
-    }
-    if (step === 2 && !company.trim()) {
-      setError('Ingresa el nombre de tu empresa');
-      return;
-    }
+    if (step === 1) { const err = validateStep1(); if (err) { setError(err); return; } }
+    if (step === 2 && !company.trim()) { setError('Ingresa el nombre de tu empresa'); return; }
     setStep(s => s + 1);
   }
 
@@ -96,11 +198,8 @@ export default function Register() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_name: name.trim(),
-          email: email.trim(),
-          password,
-          company_name: company.trim(),
-          trial_modules: selectedMods,
+          user_name: name.trim(), email: email.trim(), password,
+          company_name: company.trim(), trial_modules: selectedMods,
         }),
       });
       const data = await res.json();
@@ -115,279 +214,200 @@ export default function Register() {
 
   const passOk = PASSWORD_RULES.every(r => r.re.test(password));
 
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-      style={{ background: '#F3F3F7' }}
-    >
-      {/* Background glow */}
-      <div aria-hidden="true" className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-60 -right-60 w-[600px] h-[600px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(242,176,69,0.10) 0%, transparent 65%)' }} />
-        <div className="absolute -bottom-60 -left-60 w-[500px] h-[500px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(242,176,69,0.07) 0%, transparent 65%)' }} />
-      </div>
+  const formCard = (
+    <FormCard dark={dark}>
+      <Brand dark={dark} />
 
-      <div className="w-full max-w-[420px] relative">
-
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-7">
-          <div className="w-[56px] h-[56px] rounded-[18px] flex items-center justify-center mb-4"
-            style={{ background: 'linear-gradient(135deg, #F2B045 0%, #EDA135 100%)', boxShadow: '0 8px 28px rgba(242,176,69,0.40)' }}>
-            <Boxes size={24} style={{ color: '#131316' }} />
-          </div>
-          <h1 className="text-[22px] font-bold text-[#0A0A0F] tracking-[-0.03em]">Crear cuenta gratis</h1>
-          <p className="text-[13px] text-[#9898A3] mt-1">Plan Starter Free · sin tarjeta de crédito</p>
-        </div>
-
-        {/* Step bar */}
+      <div className="flex flex-1 flex-col justify-center pt-8 lg:pt-0">
         {step < 4 && (
-          <div className="flex items-center mb-6 px-2">
-            {(['Tu cuenta', 'Tu empresa', 'Módulos'] as const).map((label, i) => {
-              const s = i + 1;
-              const done = step > s;
-              const active = step === s;
-              return (
-                <React.Fragment key={s}>
-                  <div className="flex items-center gap-2">
-                    <div className="size-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
-                      style={{
-                        background: done ? '#22c55e' : active ? '#F2B045' : 'rgba(0,0,0,0.08)',
-                        color: done || active ? '#fff' : '#AEAEB2',
-                      }}>
-                      {done ? <Check size={11} /> : s}
+          <>
+            <div className="mb-6">
+              <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: col.accent }}>
+                Crear cuenta
+              </p>
+              <h1 className="text-[31px] font-black leading-tight tracking-[-0.045em]" style={{ color: col.text }}>
+                {step === 1 ? 'Tus datos personales' : step === 2 ? 'Tu empresa' : 'Elige módulos'}
+              </h1>
+              <p className="mt-3 text-[14px] leading-6" style={{ color: col.muted }}>
+                {step === 1 ? 'Crea tu cuenta de administrador.' : step === 2 ? 'Con qué nombre registramos tu empresa.' : 'Hasta 2 módulos de prueba gratis por 30 días.'}
+              </p>
+            </div>
+
+            <StepBar step={step} dark={dark} />
+
+            {error && <div className="mb-5"><ErrorBanner dark={dark} message={error} /></div>}
+          </>
+        )}
+
+        {/* ── Step 1 ── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            <Field id="reg-name" label="Nombre completo" value={name} onChange={setName}
+              placeholder="Juan Pérez" autoComplete="name" dark={dark}
+              icon={<Users size={17} strokeWidth={2.1} />} />
+
+            <Field id="reg-email" label="Correo electrónico" type="email" value={email} onChange={setEmail}
+              placeholder="juan@empresa.com" autoComplete="email" dark={dark}
+              icon={<Mail size={17} strokeWidth={2.1} />} />
+
+            <PasswordField id="reg-pass" label="Contraseña" value={password} onChange={setPassword}
+              autoComplete="new-password" dark={dark} />
+
+            {password && (
+              <div className="space-y-2 pl-1">
+                {PASSWORD_RULES.map(rule => (
+                  <div key={rule.label} className="flex items-center gap-2">
+                    <div
+                      className="grid size-4 shrink-0 place-items-center rounded-full"
+                      style={{ background: rule.re.test(password) ? '#22c55e' : col.border }}
+                    >
+                      {rule.re.test(password) && <Check size={8} color="#fff" />}
                     </div>
-                    <span className="text-[11px] font-medium whitespace-nowrap"
-                      style={{ color: active ? '#0A0A0F' : '#AEAEB2' }}>
-                      {label}
+                    <span className="text-[12px]" style={{ color: rule.re.test(password) ? '#22c55e' : col.subtle }}>
+                      {rule.label}
                     </span>
                   </div>
-                  {i < 2 && (
-                    <div className="flex-1 h-px mx-2"
-                      style={{ background: step > s ? '#22c55e' : 'rgba(0,0,0,0.10)' }} />
-                  )}
-                </React.Fragment>
-              );
-            })}
+                ))}
+              </div>
+            )}
+
+            <PrimaryBtn dark={dark} disabled={!name || !email || !passOk} onClick={next}>
+              Continuar <ArrowRight size={16} strokeWidth={2.4} />
+            </PrimaryBtn>
           </div>
         )}
 
-        {/* Card */}
-        <div className="bg-white rounded-3xl p-7"
-          style={{ border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)' }}>
+        {/* ── Step 2 ── */}
+        {step === 2 && (
+          <div className="space-y-5">
+            <Field id="reg-company" label="Nombre de la empresa" value={company} onChange={setCompany}
+              placeholder="Mi Empresa Ltda." autoComplete="organization" dark={dark}
+              icon={<Building2 size={17} strokeWidth={2.1} />} />
 
-          {/* Error banner */}
-          {error && (
-            <div className="flex items-center gap-2 rounded-xl p-3 mb-5 text-[13px]"
-              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.20)', color: '#ef4444' }}>
-              <AlertCircle size={14} className="shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* ── Step 1: Account ─────────────────────────────────────── */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <div>
-                <label className="label">Nombre completo</label>
-                <input type="text" className="input" placeholder="Juan Pérez"
-                  value={name} onChange={e => setName(e.target.value)}
-                  autoComplete="name" autoFocus onKeyDown={e => e.key === 'Enter' && next()} />
-              </div>
-              <div>
-                <label className="label">Correo electrónico</label>
-                <input type="email" className="input" placeholder="juan@empresa.com"
-                  value={email} onChange={e => setEmail(e.target.value)}
-                  autoComplete="email" onKeyDown={e => e.key === 'Enter' && next()} />
-              </div>
-              <div>
-                <label className="label">Contraseña</label>
-                <div className="relative">
-                  <input type={showPass ? 'text' : 'password'} className="input pr-11" placeholder="••••••••"
-                    value={password} onChange={e => setPassword(e.target.value)}
-                    autoComplete="new-password" onKeyDown={e => e.key === 'Enter' && next()} />
-                  <button type="button" onClick={() => setShowPass(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-[#AEAEB2] hover:text-[#65656E]">
-                    {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-                {password && (
-                  <div className="mt-2.5 space-y-1.5">
-                    {PASSWORD_RULES.map(rule => (
-                      <div key={rule.label} className="flex items-center gap-2">
-                        <div className="size-4 rounded-full flex items-center justify-center shrink-0"
-                          style={{ background: rule.re.test(password) ? '#22c55e' : 'rgba(0,0,0,0.08)' }}>
-                          {rule.re.test(password) && <Check size={8} color="#fff" />}
-                        </div>
-                        <span className="text-[11px]"
-                          style={{ color: rule.re.test(password) ? '#22c55e' : '#9898A3' }}>
-                          {rule.label}
-                        </span>
-                      </div>
-                    ))}
+            <div
+              className="rounded-xl border p-4"
+              style={{ background: dark ? `${col.accent}12` : `${col.accent}10`, borderColor: `${col.accent}33` }}
+            >
+              <p className="mb-3 text-[12.5px] font-black" style={{ color: col.text }}>Plan Starter Free incluye:</p>
+              <div className="space-y-2.5">
+                {['Inventario y Personal sin límite de registros', 'Hasta 5 usuarios activos · 30 activos', '2 módulos de prueba por 30 días'].map(t => (
+                  <div key={t} className="flex items-center gap-2 text-[12.5px]" style={{ color: col.muted }}>
+                    <Check size={12} style={{ color: '#22c55e', flexShrink: 0 }} />
+                    {t}
                   </div>
-                )}
-              </div>
-              <PrimaryButton onClick={next} disabled={!name || !email || !passOk}>
-                Continuar <ChevronRight size={15} />
-              </PrimaryButton>
-            </div>
-          )}
-
-          {/* ── Step 2: Company ─────────────────────────────────────── */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div>
-                <label className="label">Nombre de tu empresa</label>
-                <input type="text" className="input" placeholder="Mi Empresa Ltda."
-                  value={company} onChange={e => setCompany(e.target.value)}
-                  autoFocus onKeyDown={e => e.key === 'Enter' && next()} />
-              </div>
-
-              <div className="rounded-xl p-4"
-                style={{ background: 'rgba(242,176,69,0.07)', border: '1px solid rgba(242,176,69,0.20)' }}>
-                <p className="text-[12.5px] font-semibold text-[#0A0A0F] mb-2">Plan Starter Free incluye:</p>
-                <ul className="space-y-1.5">
-                  {[
-                    'Módulos base: Inventario y Personal',
-                    'Hasta 5 usuarios · 30 activos',
-                    '2 módulos adicionales de prueba (30 días)',
-                  ].map(t => (
-                    <li key={t} className="flex items-center gap-2 text-[12px] text-[#65656E]">
-                      <Check size={12} color="#22c55e" className="shrink-0" />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="flex gap-2.5">
-                <SecondaryButton onClick={() => { setError(''); setStep(1); }}>
-                  Atrás
-                </SecondaryButton>
-                <PrimaryButton onClick={next} disabled={!company.trim()}>
-                  Continuar <ChevronRight size={15} />
-                </PrimaryButton>
+                ))}
               </div>
             </div>
-          )}
 
-          {/* ── Step 3: Modules ─────────────────────────────────────── */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-[14px] font-semibold text-[#0A0A0F]">Elige hasta 2 módulos de prueba</p>
-                <p className="text-[12px] text-[#9898A3] mt-0.5">30 días gratis, sin compromiso. Puedes cambiarlos después.</p>
-              </div>
+            <div className="flex gap-3">
+              <SecondaryBtn dark={dark} onClick={() => { setError(''); setStep(1); }}>Atrás</SecondaryBtn>
+              <PrimaryBtn dark={dark} disabled={!company.trim()} onClick={next}>
+                Continuar <ArrowRight size={16} strokeWidth={2.4} />
+              </PrimaryBtn>
+            </div>
+          </div>
+        )}
 
-              <div className="space-y-2 max-h-[260px] overflow-y-auto -mx-1 px-1">
-                {modules.length === 0 && (
-                  <p className="text-[13px] text-[#9898A3] text-center py-6">Cargando módulos…</p>
-                )}
-                {modules.map(mod => {
-                  const selected = selectedMods.includes(mod.code);
-                  const disabled = !selected && selectedMods.length >= 2;
-                  return (
-                    <button key={mod.code} type="button"
-                      onClick={() => !disabled && toggleMod(mod.code)}
-                      disabled={disabled}
-                      className="w-full text-left rounded-xl p-3.5 transition-all"
-                      style={{
-                        border: selected ? '1.5px solid #F2B045' : '1px solid rgba(0,0,0,0.08)',
-                        background: selected ? 'rgba(242,176,69,0.07)' : 'transparent',
-                        opacity: disabled ? 0.38 : 1,
-                        cursor: disabled ? 'not-allowed' : 'pointer',
-                      }}>
-                      <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ background: `${mod.color || '#6366f1'}18`, color: mod.color || '#6366f1' }}>
-                          {ICON_MAP[mod.icon] ?? <Package size={16} />}
-                        </div>
-                        <div className="flex-1 min-w-0 text-left">
-                          <p className="text-[13px] font-semibold text-[#0A0A0F] truncate">{mod.name}</p>
-                          {mod.description && (
-                            <p className="text-[11px] text-[#9898A3] truncate mt-0.5">{mod.description}</p>
-                          )}
-                        </div>
-                        <div className="size-5 rounded-full border-2 shrink-0 flex items-center justify-center ml-1"
-                          style={{ borderColor: selected ? '#F2B045' : 'rgba(0,0,0,0.18)', background: selected ? '#F2B045' : 'transparent' }}>
-                          {selected && <Check size={10} color="#131316" />}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {selectedMods.length > 0 && (
-                <p className="text-center text-[11.5px] text-[#9898A3]">
-                  {selectedMods.length} de 2 seleccionado{selectedMods.length !== 1 ? 's' : ''}
-                </p>
+        {/* ── Step 3 ── */}
+        {step === 3 && (
+          <div className="space-y-5">
+            <div className="max-h-[280px] space-y-2 overflow-y-auto -mx-1 px-1">
+              {modules.length === 0 && (
+                <p className="py-8 text-center text-[13px]" style={{ color: col.muted }}>Cargando módulos…</p>
               )}
-
-              <div className="flex gap-2.5">
-                <SecondaryButton onClick={() => { setError(''); setStep(2); }}>
-                  Atrás
-                </SecondaryButton>
-                <PrimaryButton onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Creando cuenta…' : <><Rocket size={14} /> Crear cuenta</>}
-                </PrimaryButton>
-              </div>
+              {modules.map(mod => {
+                const selected = selectedMods.includes(mod.code);
+                const disabled = !selected && selectedMods.length >= 2;
+                return (
+                  <button
+                    key={mod.code}
+                    type="button"
+                    onClick={() => !disabled && toggleMod(mod.code)}
+                    disabled={disabled}
+                    className="w-full rounded-xl border p-3.5 text-left transition-all"
+                    style={{
+                      background: selected ? `${col.accent}12` : dark ? col.cardAlt : '#FAFAFA',
+                      borderColor: selected ? col.accent : col.border,
+                      borderWidth: selected ? 1.5 : 1,
+                      opacity: disabled ? 0.35 : 1,
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="grid size-9 shrink-0 place-items-center rounded-lg"
+                        style={{ background: `${mod.color || '#6366f1'}18`, color: mod.color || '#6366f1' }}
+                      >
+                        {ICON_MAP[mod.icon] ?? <Package size={16} />}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-bold" style={{ color: col.text }}>{mod.name}</p>
+                        {mod.description && (
+                          <p className="truncate text-[11.5px]" style={{ color: col.subtle }}>{mod.description}</p>
+                        )}
+                      </div>
+                      <div
+                        className="grid size-5 shrink-0 place-items-center rounded-full border-2"
+                        style={{ borderColor: selected ? col.accent : col.border, background: selected ? col.accent : 'transparent' }}
+                      >
+                        {selected && <Check size={10} color={dark ? '#17120A' : '#fff'} />}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          )}
 
-          {/* ── Step 4: Success ─────────────────────────────────────── */}
-          {step === 4 && (
-            <div className="text-center py-3">
-              <div className="size-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ background: 'rgba(34,197,94,0.12)' }}>
-                <Check size={30} color="#22c55e" />
-              </div>
-              <h2 className="text-[18px] font-bold text-[#0A0A0F] mb-1">¡Todo listo!</h2>
-              <p className="text-[13px] text-[#65656E] mb-6 leading-relaxed">
-                <strong>{company}</strong> está activa con el plan Starter Free.
+            {selectedMods.length > 0 && (
+              <p className="text-center text-[12px]" style={{ color: col.subtle }}>
+                {selectedMods.length} de 2 seleccionado{selectedMods.length !== 1 ? 's' : ''}
               </p>
-              <PrimaryButton onClick={() => navigate('/', { replace: true })}>
-                Ir al panel →
-              </PrimaryButton>
+            )}
+
+            <div className="flex gap-3">
+              <SecondaryBtn dark={dark} onClick={() => { setError(''); setStep(2); }}>Atrás</SecondaryBtn>
+              <PrimaryBtn dark={dark} loading={loading} loadingText="Creando cuenta…" onClick={handleSubmit}>
+                <Rocket size={15} strokeWidth={2} /> Crear cuenta
+              </PrimaryBtn>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* ── Step 4: Success ── */}
+        {step === 4 && (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="mb-6 grid size-16 place-items-center rounded-2xl" style={{ background: '#22c55e18' }}>
+              <CheckCircle2 size={30} style={{ color: '#22c55e' }} />
+            </div>
+            <h2 className="text-[22px] font-black tracking-[-0.03em]" style={{ color: col.text }}>¡Todo listo!</h2>
+            <p className="mt-2 text-[14px] leading-6" style={{ color: col.muted }}>
+              <strong>{company}</strong> está activa con el plan Starter Free.
+            </p>
+            <div className="mt-8 w-full">
+              <PrimaryBtn dark={dark} onClick={() => navigate('/', { replace: true })}>
+                Ir al panel <ArrowRight size={16} strokeWidth={2.4} />
+              </PrimaryBtn>
+            </div>
+          </div>
+        )}
 
         {step < 4 && (
-          <p className="text-center text-[#9898A3] text-[12px] mt-5">
+          <p className="mt-7 text-center text-[12px] font-semibold" style={{ color: col.subtle }}>
             ¿Ya tienes cuenta?{' '}
-            <Link to="/login" style={{ color: '#F2B045', fontWeight: 600 }}>Inicia sesión</Link>
+            <Link to="/login" className="font-black transition hover:underline" style={{ color: col.accent }}>
+              Inicia sesión
+            </Link>
           </p>
         )}
-        <p className="text-center text-[#C3C3C8] text-[11.5px] mt-3 font-medium">
-          FB Core · by FBSystems
-        </p>
       </div>
-    </div>
+    </FormCard>
   );
-}
 
-function PrimaryButton({
-  onClick, disabled = false, children,
-}: {
-  onClick: () => void; disabled?: boolean; children: React.ReactNode;
-}) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled}
-      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-bold disabled:opacity-50 transition-all"
-      style={{ background: 'linear-gradient(135deg, #F2B045 0%, #EDA135 100%)', color: '#131316', boxShadow: '0 2px 8px rgba(242,176,69,0.32)' }}>
-      {children}
-    </button>
-  );
-}
-
-function SecondaryButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" onClick={onClick}
-      className="flex items-center justify-center py-3 px-5 rounded-xl text-[13px] font-semibold text-[#65656E] hover:bg-black/[0.04] transition-colors shrink-0"
-      style={{ border: '1px solid rgba(0,0,0,0.10)' }}>
-      {children}
-    </button>
+    <AuthShell
+      dark={dark}
+      toggle={toggle}
+      left={<RegisterInfo dark={dark} />}
+      right={formCard}
+    />
   );
 }
