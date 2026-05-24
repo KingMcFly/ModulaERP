@@ -497,14 +497,35 @@ function LoginCard({
 
           <Link
             to="/register"
-            className="flex h-12 w-full items-center justify-center rounded-xl border text-[14px] font-black transition hover:-translate-y-0.5"
+            className="group flex h-12 w-full items-center justify-center gap-2 rounded-xl border text-[14px] font-black"
             style={{
               background: dark ? colors.dark.cardAlt : colors.light.cardAlt,
               borderColor: c.border,
               color: c.text,
+              transition: 'transform 160ms cubic-bezier(0.23,1,0.32,1), background 160ms, border-color 160ms, box-shadow 160ms',
             }}
+            onMouseEnter={e => Object.assign(e.currentTarget.style, {
+              background: dark ? '#1A1F2C' : '#EFF1F5',
+              borderColor: c.borderStrong,
+              transform: 'translateY(-2px)',
+              boxShadow: dark ? '0 8px 24px rgba(0,0,0,0.28)' : '0 8px 24px rgba(17,24,39,0.10)',
+            })}
+            onMouseLeave={e => Object.assign(e.currentTarget.style, {
+              background: dark ? colors.dark.cardAlt : colors.light.cardAlt,
+              borderColor: c.border,
+              transform: '',
+              boxShadow: 'none',
+            })}
+            onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.97)'; }}
+            onMouseUp={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
           >
             Crear empresa gratis
+            <ArrowRight
+              size={15}
+              strokeWidth={2.4}
+              style={{ transition: 'transform 200ms cubic-bezier(0.23,1,0.32,1)' }}
+              className="group-hover:translate-x-1"
+            />
           </Link>
         </div>
       </div>
