@@ -9,24 +9,21 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 min
 let _cache   = null;
 let _cacheAt = 0;
 
-function toArray(val) {
-  return Array.isArray(val) ? val : val?.data ?? [];
+// Derive current status from today's summary row ({ count, ok })
+function statusFromSummary(days) {
+  const today = days?.[0];
+  if (!today || today.count === 0) return 'unknown';
+  if (today.ok === today.count)    return 'operational';
+  if (today.ok === 0)              return 'down';
+  return 'degraded';
 }
 
-const STATUS_MAP = {
-  operational: 'operational',
-  active:      'operational',
-  up:          'operational',
-  degraded:    'degraded',
-  warning:     'degraded',
-  down:        'down',
-  error:       'down',
-  inactive:    'down',
-  critical:    'down',
-};
-
-function normalizeStatus(raw) {
-  return STATUS_MAP[String(raw).toLowerCase()] ?? 'unknown';
+// 30-day uptime percentage from summary array
+function uptimeFromSummary(days) {
+  const total = days.reduce((s, d) => s + d.count, 0);
+  const ok    = days.reduce((s, d) => s + d.ok,    0);
+  if (total === 0) return null;
+  return Math.round((ok / total) * 10000) / 100; // e.g. 99.95
 }
 
 function deriveOverall(monitors) {
@@ -40,23 +37,39 @@ function deriveOverall(monitors) {
 async function fetchStatus(apiKey) {
   const headers = { 'x-openstatus-key': apiKey };
 
+  // Fetch monitor list and status reports in parallel
   const [monRes, incRes] = await Promise.all([
     fetch(`${OS_BASE}/monitor`,       { headers }),
     fetch(`${OS_BASE}/status_report`, { headers }),
   ]);
 
-  const monitors = toArray(monRes.ok ? await monRes.json() : [])
-    .filter(m => m.active !== false)
-    .map(m => ({
-      id:          m.id,
-      name:        m.name,
-      url:         m.url,
-      status:      normalizeStatus(m.status),
-      uptime:      m.uptime ?? m.uptimeDay ?? null,
-      description: m.description ?? null,
-    }));
+  const monitorList = monRes.ok ? await monRes.json() : [];
+  const active      = (Array.isArray(monitorList) ? monitorList : [])
+    .filter(m => m.active !== false);
 
-  const incidents = toArray(incRes.ok ? await incRes.json() : [])
+  // Fetch summary for each active monitor (derives real-time status)
+  const monitorsWithStatus = await Promise.all(
+    active.map(async m => {
+      try {
+        const r    = await fetch(`${OS_BASE}/monitor/${m.id}/summary`, { headers });
+        const body = r.ok ? await r.json() : {};
+        const days = body.data ?? [];
+        return {
+          id:          m.id,
+          name:        m.name,
+          url:         m.url,
+          description: m.description || null,
+          status:      statusFromSummary(days),
+          uptime:      uptimeFromSummary(days),
+        };
+      } catch {
+        return { id: m.id, name: m.name, url: m.url, description: null, status: 'unknown', uptime: null };
+      }
+    })
+  );
+
+  const incidentList = incRes.ok ? await incRes.json() : [];
+  const incidents = (Array.isArray(incidentList) ? incidentList : [])
     .filter(i => i.status !== 'resolved')
     .slice(0, 5)
     .map(i => ({
@@ -69,8 +82,8 @@ async function fetchStatus(apiKey) {
     }));
 
   return {
-    overall:    deriveOverall(monitors),
-    monitors,
+    overall:    deriveOverall(monitorsWithStatus),
+    monitors:   monitorsWithStatus,
     incidents,
     updated_at: new Date().toISOString(),
   };
