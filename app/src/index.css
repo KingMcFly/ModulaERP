@@ -190,3 +190,29 @@ body::after {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── View Transitions — circular theme reveal (rdsx.dev pattern) ─────── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* Switching TO light: new (light) view expands from click point */
+::view-transition-new(root) {
+  animation: vt-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Switching TO dark: old (light) view collapses, dark is underneath */
+.dark::view-transition-old(root) {
+  animation: vt-reveal 420ms cubic-bezier(0.22, 1, 0.36, 1) reverse both;
+}
+.dark::view-transition-new(root) {
+  animation: none;
+}
+@keyframes vt-reveal {
+  from { clip-path: circle(0px at var(--vt-x, 50%) var(--vt-y, 50%)); }
+  to   { clip-path: circle(var(--vt-r, 100vmax) at var(--vt-x, 50%) var(--vt-y, 50%)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none !important; }
+}

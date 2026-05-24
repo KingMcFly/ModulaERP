@@ -1,33 +1,122 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, EyeOff, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, AlertTriangle, ArrowRight, Sun, Moon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../hooks/useTheme';
 import { cleanRut, formatRut, looksLikeRut, validateRut } from '../utils/rut';
 
-// ── Dark-glass input with amber focus glow ────────────────────────────────────
+// ── Logo — fiel al PNG ────────────────────────────────────────────────────────
+function Logo({ dark }: { dark: boolean }) {
+  return (
+    <div className="flex flex-col items-center gap-2.5 select-none">
+      {/* Wordmark */}
+      <div className="flex items-baseline" style={{ lineHeight: 1 }}>
+        <span
+          style={{
+            fontFamily: '"Plus Jakarta Sans", system-ui',
+            fontSize: 56,
+            fontWeight: 900,
+            letterSpacing: '-0.04em',
+            background: 'linear-gradient(135deg, #FFD166 0%, #F2A115 55%, #C8720A 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            filter: dark
+              ? 'drop-shadow(0 0 18px rgba(242,176,69,0.45))'
+              : 'drop-shadow(0 2px 6px rgba(180,100,0,0.18))',
+          }}
+        >
+          FB
+        </span>
+        <span
+          style={{
+            fontFamily: '"Plus Jakarta Sans", system-ui',
+            fontSize: 56,
+            fontWeight: 300,
+            letterSpacing: '-0.03em',
+            marginLeft: 8,
+            color: dark ? 'rgba(255,255,255,0.92)' : '#1A1A1E',
+          }}
+        >
+          Core
+        </span>
+      </div>
+
+      {/* Byline — matches the "— by FB Systems —" del PNG */}
+      <div className="flex items-center gap-2">
+        <div
+          style={{
+            width: 30, height: 1.5, borderRadius: 1,
+            background: `linear-gradient(90deg, transparent, ${dark ? '#F2A115' : '#C8720A'})`,
+            opacity: dark ? 0.7 : 0.5,
+          }}
+        />
+        <span
+          style={{
+            fontSize: 10,
+            letterSpacing: '0.20em',
+            textTransform: 'uppercase',
+            color: dark ? 'rgba(255,255,255,0.38)' : '#9898A3',
+          }}
+        >
+          by{' '}
+          <strong
+            style={{
+              fontWeight: 800,
+              color: dark ? '#F2A115' : '#C8720A',
+            }}
+          >
+            FB
+          </strong>{' '}
+          Systems
+        </span>
+        <div
+          style={{
+            width: 30, height: 1.5, borderRadius: 1,
+            background: `linear-gradient(90deg, ${dark ? '#F2A115' : '#C8720A'}, transparent)`,
+            opacity: dark ? 0.7 : 0.5,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Input ─────────────────────────────────────────────────────────────────────
 function Field({
-  id, label, type = 'text', value, onChange, placeholder, autoComplete, children,
+  id, label, type = 'text', value, onChange, placeholder, autoComplete, dark, right,
 }: {
   id: string; label: string; type?: string; value: string;
   onChange: (v: string) => void; placeholder: string; autoComplete: string;
-  children?: React.ReactNode;
+  dark: boolean; right?: React.ReactNode;
 }) {
   const [focused, setFocused] = useState(false);
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="flex items-center justify-between">
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+      <div className="flex items-center justify-between">
+        <label
+          htmlFor={id}
+          style={{
+            fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: dark ? 'rgba(255,255,255,0.35)' : '#8E8E93',
+          }}
+        >
           {label}
-        </span>
-        {children}
-      </label>
+        </label>
+        {right}
+      </div>
       <div
-        className="relative flex items-center rounded-xl overflow-hidden transition-all duration-200"
+        className="flex items-center rounded-xl overflow-hidden transition-all duration-200"
         style={{
-          background: 'rgba(255,255,255,0.05)',
-          border: `1px solid ${focused ? 'rgba(242,176,69,0.55)' : 'rgba(255,255,255,0.08)'}`,
-          boxShadow: focused ? '0 0 0 3px rgba(242,176,69,0.10)' : 'none',
+          background: dark ? 'rgba(255,255,255,0.05)' : '#EDEDF2',
+          border: `1.5px solid ${
+            focused
+              ? 'rgba(242,176,69,0.60)'
+              : dark ? 'rgba(255,255,255,0.07)' : 'transparent'
+          }`,
+          boxShadow: focused ? '0 0 0 3px rgba(242,176,69,0.12)' : 'none',
         }}
       >
         <input
@@ -40,37 +129,50 @@ function Field({
           required
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className="w-full bg-transparent py-3 px-4 text-sm outline-none placeholder:text-[rgba(255,255,255,0.18)]"
-          style={{ color: 'rgba(255,255,255,0.88)' }}
+          className="w-full bg-transparent py-3 px-4 text-sm outline-none"
+          style={{
+            color: dark ? 'rgba(255,255,255,0.88)' : '#0A0A0F',
+          }}
         />
       </div>
     </div>
   );
 }
 
-// ── Password field variant ─────────────────────────────────────────────────────
+// ── Password field ────────────────────────────────────────────────────────────
 function PasswordField({
-  id, label, value, onChange, placeholder, autoComplete, forgotLink,
+  id, label, value, onChange, autoComplete, dark, right,
 }: {
   id: string; label: string; value: string; onChange: (v: string) => void;
-  placeholder: string; autoComplete: string; forgotLink?: React.ReactNode;
+  autoComplete: string; dark: boolean; right?: React.ReactNode;
 }) {
   const [focused, setFocused] = useState(false);
-  const [show, setShow]       = useState(false);
+  const [show, setShow] = useState(false);
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="flex items-center justify-between">
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+      <div className="flex items-center justify-between">
+        <label
+          htmlFor={id}
+          style={{
+            fontSize: 11, fontWeight: 600, letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: dark ? 'rgba(255,255,255,0.35)' : '#8E8E93',
+          }}
+        >
           {label}
-        </span>
-        {forgotLink}
-      </label>
+        </label>
+        {right}
+      </div>
       <div
         className="relative flex items-center rounded-xl overflow-hidden transition-all duration-200"
         style={{
-          background: 'rgba(255,255,255,0.05)',
-          border: `1px solid ${focused ? 'rgba(242,176,69,0.55)' : 'rgba(255,255,255,0.08)'}`,
-          boxShadow: focused ? '0 0 0 3px rgba(242,176,69,0.10)' : 'none',
+          background: dark ? 'rgba(255,255,255,0.05)' : '#EDEDF2',
+          border: `1.5px solid ${
+            focused
+              ? 'rgba(242,176,69,0.60)'
+              : dark ? 'rgba(255,255,255,0.07)' : 'transparent'
+          }`,
+          boxShadow: focused ? '0 0 0 3px rgba(242,176,69,0.12)' : 'none',
         }}
       >
         <input
@@ -78,22 +180,22 @@ function PasswordField({
           type={show ? 'text' : 'password'}
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder="••••••••"
           autoComplete={autoComplete}
           required
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className="w-full bg-transparent py-3 pl-4 pr-12 text-sm outline-none placeholder:text-[rgba(255,255,255,0.18)]"
-          style={{ color: 'rgba(255,255,255,0.88)' }}
+          className="w-full bg-transparent py-3 pl-4 pr-12 text-sm outline-none"
+          style={{ color: dark ? 'rgba(255,255,255,0.88)' : '#0A0A0F' }}
         />
         <button
           type="button"
           onClick={() => setShow(s => !s)}
-          aria-label={show ? 'Ocultar' : 'Mostrar'}
+          aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           className="absolute right-3 p-1.5 rounded-lg transition-colors"
-          style={{ color: 'rgba(255,255,255,0.25)' }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.60)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.25)')}
+          style={{ color: dark ? 'rgba(255,255,255,0.28)' : '#AEAEB2' }}
+          onMouseEnter={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.65)' : '#65656E')}
+          onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.28)' : '#AEAEB2')}
         >
           {show ? <EyeOff size={14} /> : <Eye size={14} />}
         </button>
@@ -102,55 +204,61 @@ function PasswordField({
   );
 }
 
-// ── Logo recreado en HTML — sin imagen, sin seams ─────────────────────────────
-function Logo() {
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+function ThemeToggle({ dark, onToggle }: { dark: boolean; onToggle: (e: React.MouseEvent) => void }) {
   return (
-    <div className="flex flex-col items-center gap-2 select-none">
-      {/* Wordmark */}
-      <div className="flex items-baseline" style={{ letterSpacing: '-0.03em', lineHeight: 1 }}>
-        <span
-          style={{
-            fontSize: 54,
-            fontWeight: 900,
-            color: '#F2B045',
-            textShadow: '0 0 48px rgba(242,176,69,0.50), 0 0 16px rgba(242,176,69,0.30)',
-          }}
-        >
-          FB
-        </span>
-        <span
-          style={{
-            fontSize: 54,
-            fontWeight: 300,
-            color: 'rgba(255,255,255,0.92)',
-            marginLeft: 10,
-          }}
-        >
-          Core
-        </span>
-      </div>
-
-      {/* Byline */}
-      <div className="flex items-center gap-2.5">
-        <div style={{ width: 28, height: 1.5, background: 'linear-gradient(90deg, transparent, #F2B045)', opacity: 0.6 }} />
-        <span style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.40)', textTransform: 'uppercase' }}>
-          by <strong style={{ color: '#F2B045', fontWeight: 700 }}>FB</strong> Systems
-        </span>
-        <div style={{ width: 28, height: 1.5, background: 'linear-gradient(90deg, #F2B045, transparent)', opacity: 0.6 }} />
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+      className="flex items-center justify-center rounded-xl size-9 transition-all duration-200"
+      style={{
+        background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+        border: `1px solid ${dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)'}`,
+        color: dark ? 'rgba(255,255,255,0.55)' : '#65656E',
+      }}
+      onMouseEnter={e => Object.assign((e.currentTarget as HTMLButtonElement).style, {
+        background: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.09)',
+        color: dark ? 'rgba(255,255,255,0.85)' : '#0A0A0F',
+      })}
+      onMouseLeave={e => Object.assign((e.currentTarget as HTMLButtonElement).style, {
+        background: dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+        color: dark ? 'rgba(255,255,255,0.55)' : '#65656E',
+      })}
+    >
+      {dark
+        ? <Sun  size={15} strokeWidth={2} />
+        : <Moon size={15} strokeWidth={2} />
+      }
+    </button>
   );
 }
 
-// ── Noise / grain overlay ──────────────────────────────────────────────────────
-const NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`;
+// ── Background decorations ────────────────────────────────────────────────────
+function BgDecor({ dark }: { dark: boolean }) {
+  if (!dark) return (
+    <>
+      <div className="pointer-events-none fixed" style={{ top: -180, right: -180, width: 600, height: 600, background: 'radial-gradient(circle, rgba(242,176,69,0.08) 0%, transparent 60%)' }} />
+      <div className="pointer-events-none fixed" style={{ bottom: -150, left: -150, width: 500, height: 500, background: 'radial-gradient(circle, rgba(242,176,69,0.05) 0%, transparent 60%)' }} />
+    </>
+  );
+  return (
+    <>
+      <div className="pointer-events-none fixed" style={{ top: -200, right: -200, width: 700, height: 700, background: 'radial-gradient(circle, rgba(242,176,69,0.07) 0%, transparent 60%)' }} />
+      <div className="pointer-events-none fixed" style={{ bottom: -200, left: -200, width: 600, height: 600, background: 'radial-gradient(circle, rgba(242,176,69,0.04) 0%, transparent 60%)' }} />
+    </>
+  );
+}
 
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function Login() {
   const { login, sessionMessage } = useAuth();
+  const { theme, toggle }         = useTheme();
+  const dark = theme === 'dark';
+
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword]     = useState('');
   const [loading, setLoading]       = useState(false);
-  const btnRef = useRef<HTMLButtonElement>(null);
 
   function handleIdentifierChange(val: string) {
     if (looksLikeRut(val) || looksLikeRut(val.replace(/[.\-]/g, ''))) {
@@ -177,42 +285,27 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4" style={{ background: '#0D0D12' }}>
+    <div
+      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 transition-colors duration-300"
+      style={{ background: dark ? '#0D0D12' : '#F0F0F5' }}
+    >
+      <BgDecor dark={dark} />
 
-      {/* Grain texture */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 opacity-[0.03]"
-        style={{ backgroundImage: NOISE_SVG, backgroundRepeat: 'repeat', backgroundSize: '128px 128px' }}
-      />
+      {/* Theme toggle — top right */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle dark={dark} onToggle={toggle} />
+      </div>
 
-      {/* Ambient glow — top right */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed"
-        style={{
-          top: -200, right: -200, width: 700, height: 700,
-          background: 'radial-gradient(circle, rgba(242,176,69,0.07) 0%, transparent 60%)',
-        }}
-      />
-      {/* Ambient glow — bottom left */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed"
-        style={{
-          bottom: -200, left: -200, width: 600, height: 600,
-          background: 'radial-gradient(circle, rgba(242,176,69,0.04) 0%, transparent 60%)',
-        }}
-      />
-
-      {/* ── Content ── */}
       <div className="relative z-10 w-full max-w-[400px] flex flex-col items-center">
 
         {/* Logo */}
-        <Logo />
+        <Logo dark={dark} />
 
         {/* Subtitle */}
-        <p className="mt-1 text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
+        <p
+          className="mt-3 text-sm"
+          style={{ color: dark ? 'rgba(255,255,255,0.35)' : '#9898A3' }}
+        >
           Ingresa a tu espacio de trabajo
         </p>
 
@@ -220,7 +313,11 @@ export default function Login() {
         {sessionMessage && (
           <div
             className="w-full mt-6 flex items-start gap-3 rounded-2xl p-4 text-[13px]"
-            style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.20)', color: '#f87171' }}
+            style={{
+              background: 'rgba(239,68,68,0.10)',
+              border: '1px solid rgba(239,68,68,0.20)',
+              color: '#f87171',
+            }}
           >
             <AlertTriangle size={15} className="mt-0.5 shrink-0" />
             <span>{sessionMessage}</span>
@@ -228,11 +325,8 @@ export default function Login() {
         )}
 
         {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-          className="w-full mt-8 space-y-4"
-        >
+        <form onSubmit={handleSubmit} noValidate className="w-full mt-8 space-y-4">
+
           <Field
             id="login-id"
             label="Correo electrónico o RUT"
@@ -240,6 +334,7 @@ export default function Login() {
             onChange={handleIdentifierChange}
             placeholder="correo@empresa.com o 12.345.678-9"
             autoComplete="username"
+            dark={dark}
           />
 
           <PasswordField
@@ -247,42 +342,48 @@ export default function Login() {
             label="Contraseña"
             value={password}
             onChange={setPassword}
-            placeholder="••••••••"
             autoComplete="current-password"
-            forgotLink={
+            dark={dark}
+            right={
               <Link
                 to="/forgot-password"
                 className="text-[11px] font-semibold transition-colors"
-                style={{ color: 'rgba(242,176,69,0.70)' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#F2B045')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(242,176,69,0.70)')}
+                style={{ color: dark ? 'rgba(242,176,69,0.65)' : '#C8820A' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#F2A115')}
+                onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(242,176,69,0.65)' : '#C8820A')}
               >
                 ¿Olvidaste tu contraseña?
               </Link>
             }
           />
 
+          {/* Submit */}
           <div className="pt-1">
             <button
-              ref={btnRef}
               type="submit"
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-[13.5px] transition-all duration-150 disabled:opacity-40"
               style={{
-                background: 'linear-gradient(135deg, #F2B045 0%, #C8831A 100%)',
-                color: '#0D0D12',
-                boxShadow: '0 1px 0 rgba(255,255,255,0.12) inset, 0 4px 20px rgba(242,176,69,0.25)',
+                background: 'linear-gradient(135deg, #FFD166 0%, #F2A115 50%, #C8720A 100%)',
+                color: '#1A0F00',
+                boxShadow: dark
+                  ? '0 1px 0 rgba(255,255,255,0.10) inset, 0 4px 20px rgba(242,176,69,0.28)'
+                  : '0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 16px rgba(200,114,10,0.22)',
               }}
               onMouseEnter={e => {
                 if (loading) return;
                 Object.assign((e.currentTarget as HTMLButtonElement).style, {
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.12) inset, 0 6px 28px rgba(242,176,69,0.40)',
+                  boxShadow: dark
+                    ? '0 1px 0 rgba(255,255,255,0.10) inset, 0 6px 28px rgba(242,176,69,0.42)'
+                    : '0 1px 0 rgba(255,255,255,0.18) inset, 0 6px 24px rgba(200,114,10,0.34)',
                   transform: 'translateY(-1px)',
                 });
               }}
               onMouseLeave={e => {
                 Object.assign((e.currentTarget as HTMLButtonElement).style, {
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.12) inset, 0 4px 20px rgba(242,176,69,0.25)',
+                  boxShadow: dark
+                    ? '0 1px 0 rgba(255,255,255,0.10) inset, 0 4px 20px rgba(242,176,69,0.28)'
+                    : '0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 16px rgba(200,114,10,0.22)',
                   transform: '',
                 });
               }}
@@ -290,10 +391,10 @@ export default function Login() {
               onMouseUp={e    => { (e.currentTarget as HTMLButtonElement).style.transform = ''; }}
             >
               {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="size-4 border-2 border-[#0D0D12]/30 border-t-[#0D0D12] rounded-full animate-spin" />
+                <>
+                  <span className="size-4 border-2 border-[#1A0F00]/25 border-t-[#1A0F00] rounded-full animate-spin" />
                   Ingresando…
-                </span>
+                </>
               ) : (
                 <>Ingresar <ArrowRight size={15} /></>
               )}
@@ -303,9 +404,11 @@ export default function Login() {
 
         {/* Divider */}
         <div className="w-full my-7 flex items-center gap-4">
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-          <span className="text-[11px]" style={{ color: 'rgba(255,255,255,0.20)' }}>¿Empresa nueva?</span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          <div className="flex-1 h-px" style={{ background: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)' }} />
+          <span className="text-[11px]" style={{ color: dark ? 'rgba(255,255,255,0.20)' : '#AEAEB2' }}>
+            ¿Empresa nueva?
+          </span>
+          <div className="flex-1 h-px" style={{ background: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)' }} />
         </div>
 
         {/* Register CTA */}
@@ -313,22 +416,19 @@ export default function Login() {
           to="/register"
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-150"
           style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: 'rgba(255,255,255,0.65)',
+            background: dark ? 'rgba(255,255,255,0.05)' : 'white',
+            border: `1.5px solid ${dark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.08)'}`,
+            color: dark ? 'rgba(255,255,255,0.60)' : '#65656E',
+            boxShadow: dark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
           }}
-          onMouseEnter={e => {
-            Object.assign((e.currentTarget as HTMLAnchorElement).style, {
-              background: 'rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.88)',
-            });
-          }}
-          onMouseLeave={e => {
-            Object.assign((e.currentTarget as HTMLAnchorElement).style, {
-              background: 'rgba(255,255,255,0.05)',
-              color: 'rgba(255,255,255,0.65)',
-            });
-          }}
+          onMouseEnter={e => Object.assign((e.currentTarget as HTMLAnchorElement).style, {
+            background: dark ? 'rgba(255,255,255,0.09)' : '#FAFAFA',
+            color: dark ? 'rgba(255,255,255,0.88)' : '#0A0A0F',
+          })}
+          onMouseLeave={e => Object.assign((e.currentTarget as HTMLAnchorElement).style, {
+            background: dark ? 'rgba(255,255,255,0.05)' : 'white',
+            color: dark ? 'rgba(255,255,255,0.60)' : '#65656E',
+          })}
         >
           Crea tu empresa gratis
         </Link>
@@ -337,11 +437,11 @@ export default function Login() {
         <Link
           to="/status"
           className="mt-8 flex items-center gap-1.5 text-[11.5px] transition-colors"
-          style={{ color: 'rgba(255,255,255,0.20)' }}
-          onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.45)')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.20)')}
+          style={{ color: dark ? 'rgba(255,255,255,0.18)' : '#C3C3C8' }}
+          onMouseEnter={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.45)' : '#8E8E93')}
+          onMouseLeave={e => (e.currentTarget.style.color = dark ? 'rgba(255,255,255,0.18)' : '#C3C3C8')}
         >
-          <span className="size-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+          <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
           Estado del sistema
         </Link>
       </div>
