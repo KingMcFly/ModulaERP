@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import {
   Package, ArrowRightLeft, Wrench, Users, Activity, Pencil, Check, X,
   Truck, ShoppingCart, ClipboardList, FileCheck, LifeBuoy, PieChart,
@@ -9,7 +9,7 @@ import { api } from '../api';
 
 interface Module { id: number; code: string; name: string; description: string; icon: string; color: string; is_active: boolean; sort_order: number; }
 
-const ICONS: Record<string, JSX.Element> = {
+const ICONS: Record<string, ReactElement> = {
   // By icon name stored in DB
   Package:       <Package        size={20} />,
   ArrowRightLeft:<ArrowRightLeft size={20} />,
