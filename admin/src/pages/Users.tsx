@@ -75,16 +75,16 @@ export default function Users() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between animate-fade-up">
-        <div>
-          <h1 className="text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Usuarios del panel</h1>
+    <div className="space-y-5 sm:space-y-6 max-w-5xl mx-auto">
+      <div className="flex items-center justify-between gap-3 animate-fade-up">
+        <div className="min-w-0">
+          <h1 className="text-[22px] sm:text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Usuarios del panel</h1>
           <p className="text-slate-400 text-[13px] mt-0.5 font-medium">
             Administradores con acceso a FB Core Admin
           </p>
         </div>
-        <button onClick={openCreate} className="btn-primary">
-          <UserPlus size={15} /> Nuevo usuario
+        <button onClick={openCreate} className="btn-primary flex-shrink-0">
+          <UserPlus size={15} /> <span className="hidden sm:inline">Nuevo usuario</span><span className="sm:hidden">Nuevo</span>
         </button>
       </div>
 
@@ -175,9 +175,98 @@ export default function Users() {
         </div>
       )}
 
-      {/* Table */}
+      {/* ─── MOBILE / TABLET: card list ─────────────────────────── */}
+      <div className="lg:hidden space-y-3 animate-fade-up delay-80">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl p-4" style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-11 h-11 rounded-xl flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="w-2/3 h-3.5 rounded" />
+                  <Skeleton className="w-1/2 h-2.5 rounded" />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : users.length === 0 ? (
+          <div className="bg-white rounded-2xl py-14 flex flex-col items-center gap-2.5" style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center">
+              <UsersIcon size={20} className="text-slate-300" />
+            </div>
+            <p className="text-[13px] font-semibold text-slate-400">Sin usuarios</p>
+          </div>
+        ) : users.map(u => (
+          <div
+            key={u.id}
+            className="bg-white rounded-2xl p-4"
+            style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-[15px] flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #F2B045, #EDA135)', boxShadow: '0 2px 6px rgba(242,176,69,0.28)', color: '#131316' }}
+              >
+                {u.name[0]?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-slate-900 text-[15px] tracking-[-0.01em] truncate">{u.name}</p>
+                <p className="text-[12px] text-slate-400 font-medium mt-0.5 truncate">{u.email}</p>
+              </div>
+              {u.is_active
+                ? <span className="badge bg-emerald-100 text-emerald-700 text-[10.5px] flex-shrink-0"><Check size={9} /> Activo</span>
+                : <span className="badge bg-slate-100 text-slate-400 text-[10.5px] flex-shrink-0"><X size={9} /> Inactivo</span>}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold"
+                style={u.role === 'super_admin'
+                  ? { background: 'rgba(139,92,246,0.10)', color: '#7c3aed' }
+                  : { background: 'rgba(59,130,246,0.10)', color: '#2563eb' }}
+              >
+                <Shield size={10} />
+                {u.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+              </span>
+              <span className="text-[12px] font-medium text-slate-400 px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                {u.last_login
+                  ? new Date(u.last_login).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
+                  : 'Nunca'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+              <button
+                onClick={() => openEdit(u)}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold text-slate-700"
+                style={{ background: 'rgba(0,0,0,0.04)' }}
+              >
+                <Pencil size={14} /> Editar
+              </button>
+              <button
+                onClick={() => { setPwdUserId(u.id); setNewPwd(''); }}
+                className="inline-flex items-center justify-center w-[42px] h-[42px] rounded-xl text-amber-600"
+                style={{ background: 'rgba(245,158,11,0.10)' }}
+                aria-label="Cambiar contraseña"
+              >
+                <KeyRound size={15} />
+              </button>
+              <button
+                onClick={() => toggleStatus(u)}
+                className={`inline-flex items-center justify-center w-[42px] h-[42px] rounded-xl ${u.is_active ? 'text-red-600' : 'text-emerald-700'}`}
+                style={{ background: u.is_active ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.10)' }}
+                aria-label={u.is_active ? 'Desactivar' : 'Activar'}
+              >
+                {u.is_active ? <X size={15} /> : <Check size={15} />}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ─── DESKTOP: table ─────────────────────────────────────── */}
       <div
-        className="bg-white rounded-2xl overflow-hidden animate-fade-up delay-80"
+        className="hidden lg:block bg-white rounded-2xl overflow-hidden animate-fade-up delay-80"
         style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
       >
         <div className="overflow-x-auto">

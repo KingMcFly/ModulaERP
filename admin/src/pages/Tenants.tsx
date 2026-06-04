@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Building2, ExternalLink, CheckCircle2, PauseCircle, Lock, Trash2 } from 'lucide-react';
+import { Plus, Search, Building2, ExternalLink, CheckCircle2, PauseCircle, Lock, Trash2, Users, Puzzle } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
 
@@ -86,9 +86,9 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
           paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
         }}
       >
-        <h2 className="text-[17px] font-bold text-slate-900 mb-5 tracking-[-0.02em]">Nueva empresa</h2>
+        <h2 className="text-[18px] sm:text-[17px] font-bold text-slate-900 mb-5 tracking-[-0.02em]">Nueva empresa</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="tenant-name" className="label">Nombre</label>
               <input id="tenant-name" className="input" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Empresa S.A." required />
@@ -98,7 +98,7 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
               <input id="tenant-slug" className="input" value={form.slug} onChange={e => set('slug', e.target.value.toLowerCase().replace(/\s+/g, '-'))} placeholder="empresa-sa" required />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="tenant-email" className="label">Email</label>
               <input id="tenant-email" className="input" type="email" value={form.contact_email} onChange={e => set('contact_email', e.target.value)} />
@@ -108,7 +108,7 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
               <input id="tenant-country" className="input" value={form.country} onChange={e => set('country', e.target.value)} placeholder="Chile" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="tenant-plan" className="label">Plan</label>
               <select id="tenant-plan" className="input" value={form.plan} onChange={e => set('plan', e.target.value)}>
@@ -135,7 +135,7 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
           </div>
           <div>
             <p className="label mb-2" id="modules-label">Módulos</p>
-            <div className="grid grid-cols-2 gap-2 mb-2" role="group">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2" role="group">
               {MANDATORY_MODULES.map(m => (
                 <div
                   key={m.code}
@@ -278,16 +278,16 @@ export default function Tenants() {
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between animate-fade-up">
-        <div>
-          <h1 className="text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Empresas</h1>
+    <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between gap-3 animate-fade-up">
+        <div className="min-w-0">
+          <h1 className="text-[22px] sm:text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Empresas</h1>
           <p className="text-slate-400 text-[13px] mt-0.5 font-medium">
             {tenants.length} empresa{tenants.length !== 1 ? 's' : ''} registradas
           </p>
         </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary">
-          <Plus size={15} /> Nueva empresa
+        <button onClick={() => setShowModal(true)} className="btn-primary flex-shrink-0">
+          <Plus size={15} /> <span className="hidden sm:inline">Nueva empresa</span><span className="sm:hidden">Nueva</span>
         </button>
       </div>
 
@@ -308,9 +308,101 @@ export default function Tenants() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* ─── MOBILE / TABLET: card list ─────────────────────────── */}
+      <div className="lg:hidden space-y-3 animate-fade-up delay-80">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-2xl p-4" style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
+              <div className="flex items-center gap-3">
+                <Skeleton className="w-11 h-11 rounded-xl flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="w-2/3 h-3.5 rounded" />
+                  <Skeleton className="w-1/2 h-2.5 rounded" />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
+          <div className="bg-white rounded-2xl py-14 flex flex-col items-center gap-2.5"
+            style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center">
+              <Building2 size={20} className="text-slate-300" />
+            </div>
+            <p className="text-[13px] font-semibold text-slate-400">Sin resultados</p>
+            <p className="text-[12px] text-slate-300">Intenta con otro término de búsqueda</p>
+          </div>
+        ) : filtered.map(t => {
+          const s = STATUS_LABELS[t.status];
+          const planColor = PLAN_COLORS[t.plan] || '#F2B045';
+          return (
+            <div
+              key={t.id}
+              className="bg-white rounded-2xl p-4"
+              style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+            >
+              {/* Top row: avatar + name + status */}
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-[15px] flex-shrink-0"
+                  style={{ background: 'linear-gradient(135deg, #F2B045, #EDA135)', boxShadow: '0 2px 6px rgba(242,176,69,0.28)', color: '#131316' }}
+                >
+                  {t.name[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-slate-900 text-[15px] tracking-[-0.01em] truncate">{t.name}</p>
+                  <p className="text-[12px] text-slate-400 font-medium mt-0.5 truncate">{t.contact_email || t.slug}</p>
+                </div>
+                <span className={`badge text-[10.5px] flex-shrink-0 ${s?.cls}`}>{s?.label}</span>
+              </div>
+
+              {/* Meta chips */}
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <span className="text-[12px] font-bold px-2.5 py-1 rounded-lg" style={{ background: `${planColor}12`, color: planColor }}>
+                  {PLAN_LABELS[t.plan] || t.plan}
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-slate-500 px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                  <Users size={12} /> {t.user_count}
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-slate-500 px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                  <Puzzle size={12} /> {t.module_count}
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                <Link
+                  to={`/tenants/${t.id}`}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-[13px] font-bold text-slate-700"
+                  style={{ background: 'rgba(0,0,0,0.04)' }}
+                >
+                  <ExternalLink size={14} /> Gestionar
+                </Link>
+                <button
+                  onClick={() => toggleStatus(t)}
+                  className={`inline-flex items-center justify-center gap-1.5 py-2.5 px-3.5 rounded-xl text-[13px] font-bold ${
+                    t.status === 'active' ? 'text-red-600' : 'text-emerald-700'
+                  }`}
+                  style={{ background: t.status === 'active' ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.10)' }}
+                >
+                  {t.status === 'active' ? <PauseCircle size={14} /> : <CheckCircle2 size={14} />}
+                </button>
+                <button
+                  onClick={() => setDeletingTenant(t)}
+                  className="inline-flex items-center justify-center w-[42px] h-[42px] rounded-xl text-slate-400"
+                  style={{ background: 'rgba(0,0,0,0.04)' }}
+                  aria-label="Eliminar empresa"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ─── DESKTOP: table ─────────────────────────────────────── */}
       <div
-        className="bg-white rounded-2xl overflow-hidden animate-fade-up delay-80"
+        className="hidden lg:block bg-white rounded-2xl overflow-hidden animate-fade-up delay-80"
         style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
       >
         <div className="overflow-x-auto">

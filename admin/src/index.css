@@ -24,8 +24,8 @@
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
     /* Prevent overscroll bounce behind fixed elements on iOS */
-    overscroll-behavior: none;
-    height: 100%;
+    overscroll-behavior-y: none;
+    width: 100%;
   }
 
   body {
@@ -33,14 +33,17 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     letter-spacing: -0.011em;
     @apply bg-[#F2F2F6] text-slate-900 antialiased;
-    height: 100%;
+    min-height: 100dvh;
+    width: 100%;
+    /* clip (not hidden) kills horizontal scroll WITHOUT creating a scroll
+       container — so position: sticky on the mobile header keeps working. */
+    overflow-x: clip;
     /* Prevent text size inflation on mobile rotation */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
 
   #root {
-    height: 100%;
     min-height: 100dvh;
   }
 
@@ -176,6 +179,19 @@ body::after {
 /* Mobile bottom sheet enter animation */
 @media (max-width: 639px) {
   .modal-sheet { animation: sheet-up 0.30s cubic-bezier(0.32, 0.72, 0, 1) both !important; }
+}
+
+/* ── CRITICAL: prevent iOS Safari auto-zoom when focusing a field ──────────
+   iOS zooms into any input/select/textarea whose font-size is < 16px and
+   does NOT zoom back out afterwards. Forcing 16px on touch breakpoints kills
+   the bug while keeping the compact 14px design on desktop. ─────────────── */
+@media (max-width: 1023px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  select,
+  textarea,
+  .input {
+    font-size: 16px !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
