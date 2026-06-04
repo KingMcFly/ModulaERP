@@ -21,7 +21,7 @@ const col = {
 // ── Background ────────────────────────────────────────────────────────────────
 function PageBackground() {
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       <div className="absolute inset-0" style={{ background: col.page }} />
       <div
         className="absolute inset-0 opacity-[0.04]"
@@ -243,7 +243,10 @@ export default function Login({ onLogin }: Props) {
   }
 
   return (
-    <main className="relative min-h-[100dvh] overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
+    <main
+      className="relative overflow-hidden px-4 py-5 sm:px-6 lg:px-8"
+      style={{ minHeight: '100dvh', background: col.page }}
+    >
       <PageBackground />
 
       <section className="relative z-10 mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-6xl flex-col justify-center">
