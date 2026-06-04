@@ -38,7 +38,7 @@ export default function Dashboard() {
   const active    = tenants.filter(t => t.status === 'active').length;
   const trial     = tenants.filter(t => t.status === 'trial').length;
   const suspended = tenants.filter(t => t.status === 'suspended').length;
-  const totalUsers = tenants.reduce((s, t) => s + t.user_count, 0);
+  const totalUsers = tenants.reduce((s, t) => s + Number(t.user_count), 0);
 
   const planData = ['starter', 'professional', 'enterprise'].map((plan, i) => ({
     name: plan.charAt(0).toUpperCase() + plan.slice(1),
