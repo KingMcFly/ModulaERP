@@ -158,6 +158,31 @@ router.patch('/:id/users/:userId/status', w(async (req, res) => {
   res.json({ message: 'Estado actualizado' });
 }));
 
+router.delete('/:id', w(async (req, res) => {
+  const id = Number(req.params.id);
+  if (id === 1) return res.status(403).json({ error: 'No se puede eliminar la empresa principal' });
+
+  const [[tenant]] = await db.query('SELECT id FROM tenants WHERE id = ?', [id]);
+  if (!tenant) return res.status(404).json({ error: 'Empresa no encontrada' });
+
+  const conn = await db.getConnection();
+  await conn.beginTransaction();
+  try {
+    await conn.query('DELETE FROM user_module_permissions WHERE tenant_id = ?', [id]);
+    await conn.query('DELETE FROM tenant_modules WHERE tenant_id = ?', [id]);
+    await conn.query('DELETE FROM users WHERE tenant_id = ?', [id]);
+    await conn.query('DELETE FROM tenants WHERE id = ?', [id]);
+    await conn.commit();
+    conn.release();
+    console.info(`[${new Date().toISOString()}] TENANT_DELETED id=${id} by=${req.user.id}`);
+    res.json({ message: 'Empresa eliminada' });
+  } catch (e) {
+    await conn.rollback();
+    conn.release();
+    throw e;
+  }
+}));
+
 // PATCH /api/admin/tenants/:id/module-trial — extend or set unlimited for a module
 router.patch('/:id/module-trial', w(async (req, res) => {
   const { module_id, action, days = 30 } = req.body;

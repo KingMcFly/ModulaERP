@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Package, ArrowRightLeft, Wrench, Users, Activity, UserPlus,
@@ -8,7 +8,7 @@ import {
 import { toast } from 'sonner';
 import { api } from '../api';
 
-const MODULE_ICONS: Record<string, React.ReactNode> = {
+const MODULE_ICONS: Record<string, ReactNode> = {
   inventory:    <Package size={15} />,
   loans:        <ArrowRightLeft size={15} />,
   maintenance:  <Wrench size={15} />,
@@ -84,7 +84,6 @@ export default function TenantDetail() {
   const [loading, setLoading] = useState(true);
   const [showAddUser, setShowAddUser] = useState(false);
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'operator' });
-  const [trialAction, setTrialAction] = useState<{ modId: number; modName: string } | null>(null);
 
   function load() {
     api.get<TenantDetail>(`/admin/tenants/${id}`).then(setTenant).finally(() => setLoading(false));
@@ -105,7 +104,7 @@ export default function TenantDetail() {
     } catch (err: any) { toast.error(err.message); }
   }
 
-  async function addUser(e: React.FormEvent) {
+  async function addUser(e: FormEvent) {
     e.preventDefault();
     try {
       await api.post(`/admin/tenants/${id}/users`, userForm);
@@ -120,7 +119,6 @@ export default function TenantDetail() {
     try {
       await api.patch(`/admin/tenants/${id}/module-trial`, { module_id: modId, action, days });
       toast.success(action === 'set_unlimited' ? 'Módulo activado como ilimitado' : `Extendido ${days} días`);
-      setTrialAction(null);
       load();
     } catch (err: any) { toast.error(err.message); }
   }

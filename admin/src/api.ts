@@ -8,14 +8,26 @@ function headers() {
   };
 }
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 async function req<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: headers(),
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method,
+      headers: headers(),
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error('Error de red');
+  }
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Error de red');
+  if (!res.ok) throw new ApiError(data.error || 'Error de red', res.status);
   return data as T;
 }
 

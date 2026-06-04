@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Building2, Users, CheckCircle2, PauseCircle, TrendingUp, Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { api } from '../api';
@@ -19,7 +19,7 @@ const STATUS_LABELS: Record<string, string> = {
   active: 'Activo', trial: 'Prueba', suspended: 'Suspendido', cancelled: 'Cancelado',
 };
 
-const PLAN_COLORS = ['#F2B045', '#0ea5e9', '#10b981'];
+const PLAN_COLORS = ['#94a3b8', '#F2B045', '#0ea5e9', '#10b981'];
 
 function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse bg-slate-100 rounded-xl ${className}`} />;
@@ -40,11 +40,16 @@ export default function Dashboard() {
   const suspended = tenants.filter(t => t.status === 'suspended').length;
   const totalUsers = tenants.reduce((s, t) => s + Number(t.user_count), 0);
 
-  const planData = ['starter', 'professional', 'enterprise'].map((plan, i) => ({
-    name: plan.charAt(0).toUpperCase() + plan.slice(1),
-    value: tenants.filter(t => t.plan === plan).length,
-    color: PLAN_COLORS[i],
-  }));
+  const planData = [
+    { key: 'starter_free', name: 'Starter Free' },
+    { key: 'starter',      name: 'Starter'      },
+    { key: 'professional', name: 'Professional' },
+    { key: 'enterprise',   name: 'Enterprise'   },
+  ].map(({ key, name }, i) => ({
+    name,
+    value: tenants.filter(t => t.plan === key).length,
+    color: PLAN_COLORS[Math.min(i, PLAN_COLORS.length - 1)],
+  })).filter(p => p.value > 0 || p.name !== 'Starter Free');
 
   const stats = [
     {
@@ -103,7 +108,7 @@ export default function Dashboard() {
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="animate-fade-up">
-        <h1 className="text-[26px] font-bold text-slate-900 tracking-[-0.03em] leading-tight">Dashboard</h1>
+        <h1 className="text-[22px] sm:text-[26px] font-bold text-slate-900 tracking-[-0.03em] leading-tight">Dashboard</h1>
         <p className="text-slate-400 text-[13px] mt-1 font-medium">Vista general de la plataforma FB Core</p>
       </div>
 
@@ -198,7 +203,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           )}
           {!loading && (
-            <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-3 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
               {planData.map((p, i) => (
                 <div key={i} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
                   <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />

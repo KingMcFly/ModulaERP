@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { UserPlus, Pencil, KeyRound, Check, X, Shield, Users as UsersIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
@@ -40,7 +40,7 @@ export default function Users() {
     setShowForm(true);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     try {
       if (editing) {
@@ -63,7 +63,7 @@ export default function Users() {
     } catch (err: any) { toast.error(err.message); }
   }
 
-  async function resetPassword(e: React.FormEvent) {
+  async function resetPassword(e: FormEvent) {
     e.preventDefault();
     if (!pwdUserId) return;
     try {
@@ -112,8 +112,8 @@ export default function Users() {
             {!editing && (
               <div>
                 <label htmlFor="user-password" className="label">Contraseña</label>
-                <input id="user-password" className="input" type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} autoComplete="new-password" />
-                <p className="text-[11px] text-slate-400 mt-1 font-medium">Deja vacío para usar "changeme123"</p>
+                <input id="user-password" className="input" type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} autoComplete="new-password" minLength={8} required />
+                <p className="text-[11px] text-slate-400 mt-1 font-medium">Mínimo 8 caracteres</p>
               </div>
             )}
             <div>
@@ -134,7 +134,7 @@ export default function Users() {
       {/* Reset password modal */}
       {pwdUserId !== null && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
           style={{
             background: 'rgba(0,0,0,0.45)',
             backdropFilter: 'blur(12px)',
@@ -143,12 +143,12 @@ export default function Users() {
           }}
         >
           <div
-            className="bg-white w-full max-w-sm p-6"
+            className="bg-white w-full sm:max-w-sm p-5 sm:p-6 rounded-t-[24px] sm:rounded-[24px]"
             style={{
-              borderRadius: '24px',
               border: '1px solid rgba(0,0,0,0.07)',
-              boxShadow: '0 16px 48px rgba(0,0,0,0.14)',
+              boxShadow: '0 -8px 48px rgba(0,0,0,0.14), 0 16px 48px rgba(0,0,0,0.14)',
               animation: 'slide-up 0.22s cubic-bezier(0.23, 1, 0.32, 1) both',
+              paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
             }}
           >
             <h2 className="font-bold text-slate-900 text-[15px] mb-4 tracking-[-0.02em]">Cambiar contraseña</h2>
@@ -161,7 +161,7 @@ export default function Users() {
                   type="password"
                   value={newPwd}
                   onChange={e => setNewPwd(e.target.value)}
-                  minLength={6}
+                  minLength={8}
                   required
                   autoComplete="new-password"
                 />
@@ -180,6 +180,7 @@ export default function Users() {
         className="bg-white rounded-2xl overflow-hidden animate-fade-up delay-80"
         style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
       >
+        <div className="overflow-x-auto">
         {loading ? (
           <div className="p-6 space-y-4">
             {[0, 1, 2].map(i => (
@@ -195,7 +196,7 @@ export default function Users() {
             ))}
           </div>
         ) : (
-          <table className="w-full text-[13px]">
+          <table className="w-full min-w-[560px] text-[13px]">
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', background: 'rgba(0,0,0,0.015)' }}>
                 {['Usuario', 'Rol', 'Último acceso', 'Estado', ''].map(h => (
@@ -310,6 +311,7 @@ export default function Users() {
             </tbody>
           </table>
         )}
+        </div>
       </div>
     </div>
   );

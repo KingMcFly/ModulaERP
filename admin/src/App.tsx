@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import Layout from './components/Layout';
@@ -9,7 +9,7 @@ import TenantDetail from './pages/TenantDetail';
 import Modules from './pages/Modules';
 import Users from './pages/Users';
 import AdminSettings from './pages/AdminSettings';
-import { api } from './api';
+import { api, ApiError } from './api';
 
 interface AuthUser { id: number; name: string; email: string; role: string; }
 
@@ -23,7 +23,11 @@ export default function App() {
     if (!token) { setLoading(false); return; }
     api.get<AuthUser>('/auth/me')
       .then(setUser)
-      .catch(() => localStorage.removeItem('token'))
+      .catch((err: unknown) => {
+        if (err instanceof ApiError && err.status === 401) {
+          localStorage.removeItem('token');
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -38,7 +42,7 @@ export default function App() {
   function handleLogout() { localStorage.removeItem('token'); setUser(null); }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="flex items-center justify-center bg-slate-50" style={{ minHeight: '100dvh' }}>
       <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
     </div>
   );

@@ -1,5 +1,4 @@
-import React from 'react';
-import { Settings, Shield, Globe, Bell, Palette, Terminal, Database, Cpu, Server } from 'lucide-react';
+import { Settings, Shield, Globe, Bell, Palette, Terminal, Database, Cpu, Server, ChevronRight, Clock } from 'lucide-react';
 
 const sections = [
   {
@@ -8,6 +7,7 @@ const sections = [
     description: 'Política de contraseñas, autenticación de dos factores y gestión de sesiones.',
     color: '#7c3aed',
     bg: 'rgba(139,92,246,0.09)',
+    soon: true,
   },
   {
     icon: Globe,
@@ -15,6 +15,7 @@ const sections = [
     description: 'Zona horaria, idioma predeterminado y formato de fechas y números.',
     color: '#2563eb',
     bg: 'rgba(59,130,246,0.09)',
+    soon: true,
   },
   {
     icon: Bell,
@@ -22,6 +23,7 @@ const sections = [
     description: 'Configuración de alertas por correo electrónico y eventos críticos del sistema.',
     color: '#d97706',
     bg: 'rgba(245,158,11,0.09)',
+    soon: true,
   },
   {
     icon: Palette,
@@ -29,14 +31,15 @@ const sections = [
     description: 'Personalización de tema, logotipo corporativo y colores del panel de control.',
     color: '#059669',
     bg: 'rgba(16,185,129,0.09)',
+    soon: true,
   },
 ];
 
 const sysInfo = [
-  { icon: Terminal, label: 'Versión',        value: '1.0.0',          color: '#F2B045' },
-  { icon: Server,   label: 'Entorno',        value: 'Producción',     color: '#10b981' },
-  { icon: Database, label: 'Base de datos',  value: 'MySQL / MariaDB',color: '#0ea5e9' },
-  { icon: Cpu,      label: 'Node.js',        value: 'v24',            color: '#f59e0b' },
+  { icon: Terminal, label: 'Versión',        value: '1.0.0',      color: '#F2B045' },
+  { icon: Server,   label: 'Entorno',        value: 'Producción', color: '#10b981' },
+  { icon: Database, label: 'Base de datos',  value: 'PostgreSQL', color: '#0ea5e9' },
+  { icon: Cpu,      label: 'Node.js',        value: 'v24',        color: '#f59e0b' },
 ];
 
 export default function AdminSettings() {
@@ -49,23 +52,15 @@ export default function AdminSettings() {
 
       {/* Settings cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {sections.map(({ icon: Icon, title, description, color, bg }, i) => (
+        {sections.map(({ icon: Icon, title, description, color, bg, soon }, i) => (
           <div
             key={title}
-            className="bg-white rounded-2xl p-5 flex items-start gap-4 cursor-pointer animate-fade-up group"
+            className="bg-white rounded-2xl p-5 flex items-start gap-4 animate-fade-up relative overflow-hidden"
             style={{
               border: '1px solid rgba(0,0,0,0.05)',
               boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               animationDelay: `${i * 55}ms`,
-              transition: 'box-shadow 250ms cubic-bezier(0.23, 1, 0.32, 1), transform 200ms cubic-bezier(0.23, 1, 0.32, 1)',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.09), 0 8px 32px rgba(0,0,0,0.05)';
-              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-              (e.currentTarget as HTMLDivElement).style.transform = '';
+              opacity: soon ? 0.72 : 1,
             }}
           >
             <div
@@ -75,9 +70,20 @@ export default function AdminSettings() {
               <Icon size={20} style={{ color }} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-bold text-slate-900 text-[14px] tracking-[-0.02em]">{title}</p>
-              <p className="text-[12px] text-slate-400 mt-1 font-medium leading-relaxed">{description}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="font-bold text-slate-900 text-[14px] tracking-[-0.02em]">{title}</p>
+                {soon && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold"
+                    style={{ background: 'rgba(100,116,139,0.10)', color: '#64748b' }}>
+                    <Clock size={8} /> Próximamente
+                  </span>
+                )}
+              </div>
+              <p className="text-[12px] text-slate-400 font-medium leading-relaxed">{description}</p>
             </div>
+            {!soon && (
+              <ChevronRight size={16} className="text-slate-300 flex-shrink-0 mt-0.5" />
+            )}
           </div>
         ))}
       </div>
@@ -110,6 +116,7 @@ export default function AdminSettings() {
                 </p>
               </div>
               <p className="font-bold text-white text-[13px] font-mono tracking-tight">{value}</p>
+              <div className="mt-1.5 h-0.5 rounded-full w-8" style={{ background: color, opacity: 0.5 }} />
             </div>
           ))}
         </div>

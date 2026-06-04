@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type ReactNode, type FormEvent } from 'react';
 import { Eye, EyeOff, LockKeyhole, Mail, ArrowRight, ShieldCheck, CheckCircle2, Server } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -59,7 +59,7 @@ function Brand() {
 }
 
 // ── Check item ────────────────────────────────────────────────────────────────
-function CheckItem({ children }: { children: React.ReactNode }) {
+function CheckItem({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-start gap-3">
       <div className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full" style={{ background: `${col.accent}22` }}>
@@ -78,7 +78,7 @@ function Field({
 }: {
   id: string; label: string; type?: string; value: string;
   onChange: (v: string) => void; placeholder: string; autoComplete: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
 }) {
   const [focused, setFocused] = useState(false);
   return (
@@ -234,7 +234,7 @@ export default function Login({ onLogin }: Props) {
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     try { await onLogin(email, password); }

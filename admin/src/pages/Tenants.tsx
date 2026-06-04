@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Building2, ExternalLink, CheckCircle2, PauseCircle, Lock } from 'lucide-react';
+import { Plus, Search, Building2, ExternalLink, CheckCircle2, PauseCircle, Lock, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
 
@@ -17,7 +17,7 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
 };
 
 const PLAN_LABELS: Record<string, string> = {
-  starter: 'Starter', professional: 'Professional', enterprise: 'Enterprise',
+  starter_free: 'Starter Free', starter: 'Starter', professional: 'Professional', enterprise: 'Enterprise',
 };
 const PLAN_COLORS: Record<string, string> = {
   starter: '#F2B045', professional: '#0ea5e9', enterprise: '#10b981',
@@ -52,7 +52,7 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
     setModules(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form.name || !form.slug) return toast.error('Nombre y slug requeridos');
     setLoading(true);
@@ -68,7 +68,7 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       style={{
         background: 'rgba(0,0,0,0.45)',
         backdropFilter: 'blur(12px)',
@@ -77,12 +77,13 @@ function CreateModal({ onClose, onCreated }: CreateModalProps) {
       }}
     >
       <div
-        className="bg-white w-full max-w-lg p-6"
+        className="bg-white w-full sm:max-w-lg p-5 sm:p-6 overflow-y-auto rounded-t-[24px] sm:rounded-[24px]"
         style={{
-          borderRadius: '24px',
-          boxShadow: '0 16px 48px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08)',
+          maxHeight: '92dvh',
+          boxShadow: '0 -8px 48px rgba(0,0,0,0.14), 0 16px 48px rgba(0,0,0,0.14)',
           border: '1px solid rgba(0,0,0,0.06)',
           animation: 'slide-up 0.22s cubic-bezier(0.23, 1, 0.32, 1) both',
+          paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
         }}
       >
         <h2 className="text-[17px] font-bold text-slate-900 mb-5 tracking-[-0.02em]">Nueva empresa</h2>
@@ -187,10 +188,74 @@ function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`animate-pulse bg-slate-100 rounded-xl ${className}`} />;
 }
 
+interface DeleteModalProps { tenant: Tenant; onClose: () => void; onDeleted: () => void; }
+
+function DeleteModal({ tenant, onClose, onDeleted }: DeleteModalProps) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleDelete() {
+    setLoading(true);
+    try {
+      await api.delete(`/admin/tenants/${tenant.id}`);
+      toast.success('Empresa eliminada');
+      onDeleted();
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{
+        background: 'rgba(0,0,0,0.45)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        animation: 'fade-in 0.18s cubic-bezier(0.23, 1, 0.32, 1) both',
+      }}
+    >
+      <div
+        className="bg-white w-full sm:max-w-sm p-5 sm:p-6 rounded-t-[24px] sm:rounded-[24px]"
+        style={{
+          boxShadow: '0 -8px 48px rgba(0,0,0,0.14), 0 16px 48px rgba(0,0,0,0.08)',
+          border: '1px solid rgba(0,0,0,0.06)',
+          animation: 'slide-up 0.22s cubic-bezier(0.23, 1, 0.32, 1) both',
+          paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
+        }}
+      >
+        <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(239,68,68,0.10)' }}>
+          <Trash2 size={20} className="text-red-500" />
+        </div>
+        <h2 className="text-[17px] font-bold text-slate-900 tracking-[-0.02em]">Eliminar empresa</h2>
+        <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">
+          ¿Estás seguro que deseas eliminar <span className="font-bold text-slate-700">{tenant.name}</span>? Esta acción eliminará todos sus usuarios y módulos y no se puede deshacer.
+        </p>
+        <div className="flex gap-3 mt-5">
+          <button type="button" onClick={onClose} className="btn-ghost flex-1">Cancelar</button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={handleDelete}
+            className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-[13px] font-bold text-white"
+            style={{
+              background: loading ? '#fca5a5' : '#ef4444',
+              transition: 'background 160ms cubic-bezier(0.23, 1, 0.32, 1)',
+            }}
+          >
+            {loading ? 'Eliminando...' : 'Eliminar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Tenants() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [search, setSearch]   = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [deletingTenant, setDeletingTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
 
   function load() {
@@ -200,9 +265,11 @@ export default function Tenants() {
 
   async function toggleStatus(t: Tenant) {
     const newStatus = t.status === 'active' ? 'suspended' : 'active';
-    await api.patch(`/admin/tenants/${t.id}/status`, { status: newStatus });
-    toast.success('Estado actualizado');
-    load();
+    try {
+      await api.patch(`/admin/tenants/${t.id}/status`, { status: newStatus });
+      toast.success('Estado actualizado');
+      load();
+    } catch (err: any) { toast.error(err.message); }
   }
 
   const filtered = tenants.filter(t =>
@@ -246,7 +313,8 @@ export default function Tenants() {
         className="bg-white rounded-2xl overflow-hidden animate-fade-up delay-80"
         style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
       >
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr style={{ borderBottom: '1px solid rgba(0,0,0,0.05)', background: 'rgba(0,0,0,0.015)' }}>
               {['Empresa', 'Plan', 'Estado', 'Usuarios', 'Módulos', ''].map(h => (
@@ -361,6 +429,14 @@ export default function Tenants() {
                           : <><CheckCircle2 size={13} /> Activar</>
                         }
                       </button>
+                      <button
+                        onClick={() => setDeletingTenant(t)}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50"
+                        style={{ transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                        title="Eliminar empresa"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -368,9 +444,17 @@ export default function Tenants() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showModal && <CreateModal onClose={() => setShowModal(false)} onCreated={load} />}
+      {deletingTenant && (
+        <DeleteModal
+          tenant={deletingTenant}
+          onClose={() => setDeletingTenant(null)}
+          onDeleted={load}
+        />
+      )}
     </div>
   );
 }

@@ -23,6 +23,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
+    /* Prevent overscroll bounce behind fixed elements on iOS */
+    overscroll-behavior: none;
+    height: 100%;
   }
 
   body {
@@ -30,6 +33,21 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     letter-spacing: -0.011em;
     @apply bg-[#F2F2F6] text-slate-900 antialiased;
+    height: 100%;
+    /* Prevent text size inflation on mobile rotation */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  #root {
+    height: 100%;
+    min-height: 100dvh;
+  }
+
+  /* Better tap behavior on iOS */
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   :focus { outline: none; }
@@ -150,9 +168,15 @@ body::after {
   .delay-300 { animation-delay: 300ms; }
 }
 
-@keyframes fade-in  { from { opacity: 0; }                               to { opacity: 1; } }
-@keyframes fade-up  { from { opacity: 0; transform: translateY(10px); }  to { opacity: 1; transform: translateY(0); } }
-@keyframes slide-up { from { opacity: 0; transform: translateY(7px); }   to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in    { from { opacity: 0; }                               to { opacity: 1; } }
+@keyframes fade-up    { from { opacity: 0; transform: translateY(10px); }  to { opacity: 1; transform: translateY(0); } }
+@keyframes slide-up   { from { opacity: 0; transform: translateY(7px); }   to { opacity: 1; transform: translateY(0); } }
+@keyframes sheet-up   { from { opacity: 0; transform: translateY(24px); }  to { opacity: 1; transform: translateY(0); } }
+
+/* Mobile bottom sheet enter animation */
+@media (max-width: 639px) {
+  .modal-sheet { animation: sheet-up 0.30s cubic-bezier(0.32, 0.72, 0, 1) both !important; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

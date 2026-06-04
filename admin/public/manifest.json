@@ -1,0 +1,41 @@
+{
+  "name": "FB Core Admin",
+  "short_name": "FB Core",
+  "description": "Panel de administración de FB Core — Gestión de empresas, módulos y usuarios.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0A0A12",
+  "theme_color": "#F2B045",
+  "lang": "es",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Empresas",
+      "short_name": "Empresas",
+      "url": "/tenants",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Módulos",
+      "short_name": "Módulos",
+      "url": "/modules",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    }
+  ]
+}

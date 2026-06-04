@@ -1,16 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { Package, ArrowRightLeft, Wrench, Users, Activity, Pencil, Check, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  Package, ArrowRightLeft, Wrench, Users, Activity, Pencil, Check, X,
+  Truck, ShoppingCart, ClipboardList, FileCheck, LifeBuoy, PieChart,
+  FlaskConical, Boxes,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
 
 interface Module { id: number; code: string; name: string; description: string; icon: string; color: string; is_active: boolean; sort_order: number; }
 
-const ICONS: Record<string, React.ReactNode> = {
+const ICONS: Record<string, JSX.Element> = {
+  // By icon name stored in DB
   Package:       <Package        size={20} />,
   ArrowRightLeft:<ArrowRightLeft size={20} />,
   Wrench:        <Wrench         size={20} />,
   Users:         <Users          size={20} />,
   Activity:      <Activity       size={20} />,
+  Truck:         <Truck          size={20} />,
+  ShoppingCart:  <ShoppingCart   size={20} />,
+  ClipboardList: <ClipboardList  size={20} />,
+  FileCheck:     <FileCheck      size={20} />,
+  LifeBuoy:      <LifeBuoy       size={20} />,
+  PieChart:      <PieChart       size={20} />,
+  FlaskConical:  <FlaskConical   size={20} />,
+  Boxes:         <Boxes          size={20} />,
+  // By module code (fallback)
+  inventory:     <Package        size={20} />,
+  loans:         <ArrowRightLeft size={20} />,
+  maintenance:   <Wrench         size={20} />,
+  personnel:     <Users          size={20} />,
+  monitoring:    <Activity       size={20} />,
+  providers:     <Truck          size={20} />,
+  purchases:     <ShoppingCart   size={20} />,
+  requests:      <ClipboardList  size={20} />,
+  contracts:     <FileCheck      size={20} />,
+  tickets:       <LifeBuoy       size={20} />,
+  cost_centers:  <PieChart       size={20} />,
+  supplies:      <FlaskConical   size={20} />,
 };
 
 function Skeleton() {
@@ -126,7 +152,7 @@ export default function Modules() {
                         color: m.color || '#F2B045',
                       }}
                     >
-                      {ICONS[m.icon] || <Package size={20} />}
+                      {ICONS[m.icon] ?? ICONS[m.code] ?? <Package size={20} />}
                     </div>
                     <div className="flex items-center gap-2">
                       <span
