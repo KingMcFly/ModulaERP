@@ -1,13 +1,15 @@
 import { Settings, Shield, Globe, Bell, Palette, Terminal, Database, Cpu, Server, ChevronRight, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const sections = [
   {
     icon: Shield,
     title: 'Seguridad',
-    description: 'Política de contraseñas, autenticación de dos factores y gestión de sesiones.',
+    description: 'Autenticación de dos factores (2FA) y gestión de sesiones activas.',
     color: '#7c3aed',
     bg: 'rgba(139,92,246,0.09)',
-    soon: true,
+    soon: false,
+    to: '/settings/security',
   },
   {
     icon: Globe,
@@ -16,6 +18,7 @@ const sections = [
     color: '#2563eb',
     bg: 'rgba(59,130,246,0.09)',
     soon: true,
+    to: '',
   },
   {
     icon: Bell,
@@ -24,6 +27,7 @@ const sections = [
     color: '#d97706',
     bg: 'rgba(245,158,11,0.09)',
     soon: true,
+    to: '',
   },
   {
     icon: Palette,
@@ -32,6 +36,7 @@ const sections = [
     color: '#059669',
     bg: 'rgba(16,185,129,0.09)',
     soon: true,
+    to: '',
   },
 ];
 
@@ -52,40 +57,48 @@ export default function AdminSettings() {
 
       {/* Settings cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {sections.map(({ icon: Icon, title, description, color, bg, soon }, i) => (
-          <div
-            key={title}
-            className="bg-white rounded-2xl p-5 flex items-start gap-4 animate-fade-up relative overflow-hidden"
-            style={{
-              border: '1px solid rgba(0,0,0,0.05)',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              animationDelay: `${i * 55}ms`,
-              opacity: soon ? 0.72 : 1,
-            }}
-          >
-            <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: bg }}
-            >
-              <Icon size={20} style={{ color }} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="font-bold text-slate-900 text-[14px] tracking-[-0.02em]">{title}</p>
-                {soon && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold"
-                    style={{ background: 'rgba(100,116,139,0.10)', color: '#64748b' }}>
-                    <Clock size={8} /> Próximamente
-                  </span>
-                )}
+        {sections.map(({ icon: Icon, title, description, color, bg, soon, to }, i) => {
+          const inner = (
+            <>
+              <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: bg }}
+              >
+                <Icon size={20} style={{ color }} />
               </div>
-              <p className="text-[12px] text-slate-400 font-medium leading-relaxed">{description}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-bold text-slate-900 text-[14px] tracking-[-0.02em]">{title}</p>
+                  {soon && (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold"
+                      style={{ background: 'rgba(100,116,139,0.10)', color: '#64748b' }}>
+                      <Clock size={8} /> Próximamente
+                    </span>
+                  )}
+                </div>
+                <p className="text-[12px] text-slate-400 font-medium leading-relaxed">{description}</p>
+              </div>
+              {!soon && <ChevronRight size={16} className="text-slate-300 flex-shrink-0 mt-0.5" />}
+            </>
+          );
+          const baseClass = 'bg-white rounded-2xl p-5 flex items-start gap-4 animate-fade-up relative overflow-hidden';
+          const style = {
+            border: '1px solid rgba(0,0,0,0.05)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            animationDelay: `${i * 55}ms`,
+            opacity: soon ? 0.72 : 1,
+          } as const;
+
+          return to ? (
+            <Link key={title} to={to} className={`${baseClass} tap-scale transition-shadow hover:shadow-md`} style={style}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={title} className={baseClass} style={style}>
+              {inner}
             </div>
-            {!soon && (
-              <ChevronRight size={16} className="text-slate-300 flex-shrink-0 mt-0.5" />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* System info */}

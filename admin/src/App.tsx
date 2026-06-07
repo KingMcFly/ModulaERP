@@ -9,6 +9,7 @@ import TenantDetail from './pages/TenantDetail';
 import Modules from './pages/Modules';
 import Users from './pages/Users';
 import AdminSettings from './pages/AdminSettings';
+import Security from './pages/Security';
 import { api, ApiError } from './api';
 
 interface AuthUser { id: number; name: string; email: string; role: string; }
@@ -31,12 +32,22 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function handleLogin(email: string, password: string) {
-    const res = await api.post<{ token: string; user: AuthUser }>('/auth/login', { email, password });
+  async function handleLogin(
+    email: string,
+    password: string,
+    totpCode?: string,
+  ): Promise<{ requires2fa?: boolean }> {
+    const res = await api.post<{ token?: string; user?: AuthUser; requires_2fa?: boolean }>(
+      '/auth/login',
+      { email, password, ...(totpCode ? { totp_code: totpCode } : {}) },
+    );
+    if (res.requires_2fa) return { requires2fa: true };
+    if (!res.token || !res.user) throw new Error('Respuesta inválida del servidor');
     if (res.user.role !== 'super_admin') throw new Error('Solo super admins pueden acceder aquí');
     localStorage.setItem('token', res.token);
     setUser(res.user);
     navigate('/');
+    return {};
   }
 
   function handleLogout() { localStorage.removeItem('token'); setUser(null); }
@@ -62,6 +73,7 @@ export default function App() {
                 <Route path="modules"    element={<Modules />} />
                 <Route path="users"      element={<Users />} />
                 <Route path="settings"   element={<AdminSettings />} />
+                <Route path="settings/security" element={<Security />} />
                 <Route path="*"          element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>

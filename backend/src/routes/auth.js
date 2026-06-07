@@ -8,13 +8,15 @@ import db from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { resetPasswordEmail } from '../utils/emailTemplates.js';
 import { audit } from '../utils/audit.js';
+import { generateSecret, verifyToken, buildOtpAuthUri } from '../utils/totp.js';
 import { z } from 'zod';
 import { validate } from '../middleware/validate.js';
 
 // ── A03: Input validation schemas ─────────────────────────────────────────────
 const loginSchema = z.object({
-  email:    z.string().min(1).max(254).trim(),
-  password: z.string().min(1).max(128),
+  email:     z.string().min(1).max(254).trim(),
+  password:  z.string().min(1).max(128),
+  totp_code: z.string().max(10).optional(),
 });
 
 const changePasswordSchema = z.object({
@@ -102,11 +104,49 @@ router.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
       return res.status(403).json({ error: 'Cuenta suspendida. Contacte al administrador.' });
     }
 
+    // ── Doble autenticación (2FA / TOTP) ──────────────────────────────────────
+    // Password OK; if the account has 2FA enabled, demand a valid code before
+    // issuing a token. The frontend shows a code step when it sees requires_2fa.
+    if (user.totp_enabled) {
+      const code = req.body.totp_code;
+      if (!code) {
+        return res.status(200).json({ requires_2fa: true });
+      }
+      if (!verifyToken(user.totp_secret, code)) {
+        await audit.log(req, audit.EVENTS.TWO_FA_FAILED, { user_id: user.id });
+        return res.status(401).json({ error: 'Código de verificación incorrecto', requires_2fa: true });
+      }
+    }
+
     const sessionId = randomBytes(32).toString('hex');
     await db.query(
       'UPDATE users SET last_login = NOW(), active_session_id = ? WHERE id = ?',
       [sessionId, user.id]
     );
+
+    // ── Registro de sesión por dispositivo ────────────────────────────────────
+    const userAgent = (req.headers['user-agent'] || '').slice(0, 500);
+    const ip = req.ip || null;
+    if (user.role === 'super_admin') {
+      // Multi-dispositivo: conserva sesiones existentes, añade esta (máx. 20)
+      await db.query(
+        'INSERT INTO user_sessions (session_id, user_id, user_agent, ip_address) VALUES (?, ?, ?, ?)',
+        [sessionId, user.id, userAgent, ip]
+      );
+      await db.query(
+        `DELETE FROM user_sessions WHERE user_id = ? AND id NOT IN (
+           SELECT id FROM user_sessions WHERE user_id = ? ORDER BY last_seen_at DESC LIMIT 20
+         )`,
+        [user.id, user.id]
+      );
+    } else {
+      // Sesión única: reemplaza cualquier sesión previa
+      await db.query('DELETE FROM user_sessions WHERE user_id = ?', [user.id]);
+      await db.query(
+        'INSERT INTO user_sessions (session_id, user_id, user_agent, ip_address) VALUES (?, ?, ?, ?)',
+        [sessionId, user.id, userAgent, ip]
+      );
+    }
 
     const FULL_ACCESS = ['super_admin', 'admin', 'manager'];
     let modulesRows;
@@ -169,6 +209,10 @@ router.post('/logout', requireAuth, async (req, res) => {
       'UPDATE users SET active_session_id = NULL WHERE id = ?',
       [req.user.id]
     );
+    // Remove just this device's session row (other admin devices stay signed in)
+    if (req.user.session_id) {
+      await db.query('DELETE FROM user_sessions WHERE session_id = ?', [req.user.session_id]).catch(() => {});
+    }
     await audit.log(req, audit.EVENTS.LOGOUT, { user_id: req.user.id });
     res.json({ message: 'Sesión cerrada correctamente' });
   } catch (err) {
@@ -369,6 +413,113 @@ router.post('/reset-password/:token', validate(resetPasswordSchema), async (req,
     console.error(`[${new Date().toISOString()}] RESET_PASSWORD_ERROR:`, err.message);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  DOBLE AUTENTICACIÓN (2FA / TOTP)
+// ════════════════════════════════════════════════════════════════════════════
+
+const twoFaCodeSchema = z.object({ code: z.string().min(6).max(10) });
+const twoFaDisableSchema = z.object({
+  password: z.string().min(1).max(128),
+  code:     z.string().min(6).max(10),
+});
+
+// Estado actual del 2FA del usuario autenticado
+router.get('/2fa/status', requireAuth, async (req, res) => {
+  const [rows] = await db.query('SELECT totp_enabled FROM users WHERE id = ?', [req.user.id]);
+  res.json({ enabled: !!rows[0]?.totp_enabled });
+});
+
+// Paso 1: generar secreto + URI para el QR (aún no activa el 2FA)
+router.post('/2fa/setup', requireAuth, async (req, res) => {
+  const [rows] = await db.query('SELECT email, totp_enabled FROM users WHERE id = ?', [req.user.id]);
+  const u = rows[0];
+  if (!u) return res.status(404).json({ error: 'Usuario no encontrado' });
+  if (u.totp_enabled) return res.status(400).json({ error: 'El 2FA ya está activado' });
+
+  const secret = generateSecret();
+  await db.query('UPDATE users SET totp_secret = ? WHERE id = ?', [secret, req.user.id]);
+
+  const otpauth_uri = buildOtpAuthUri({ secret, account: u.email });
+  res.json({ secret, otpauth_uri });
+});
+
+// Paso 2: verificar un código del autenticador y activar el 2FA
+router.post('/2fa/enable', requireAuth, validate(twoFaCodeSchema), async (req, res) => {
+  const [rows] = await db.query('SELECT totp_secret, totp_enabled FROM users WHERE id = ?', [req.user.id]);
+  const u = rows[0];
+  if (!u || !u.totp_secret) return res.status(400).json({ error: 'Primero genera el código QR' });
+  if (u.totp_enabled) return res.status(400).json({ error: 'El 2FA ya está activado' });
+
+  if (!verifyToken(u.totp_secret, req.body.code)) {
+    await audit.log(req, audit.EVENTS.TWO_FA_FAILED, { user_id: req.user.id, stage: 'enable' });
+    return res.status(400).json({ error: 'Código incorrecto. Verifica la hora de tu dispositivo.' });
+  }
+
+  await db.query('UPDATE users SET totp_enabled = true WHERE id = ?', [req.user.id]);
+  await audit.log(req, audit.EVENTS.TWO_FA_ENABLED, { user_id: req.user.id });
+  res.json({ message: 'Doble autenticación activada' });
+});
+
+// Desactivar 2FA — requiere contraseña actual + un código válido (defensa en profundidad)
+router.post('/2fa/disable', requireAuth, validate(twoFaDisableSchema), async (req, res) => {
+  const { password, code } = req.body;
+  const [rows] = await db.query('SELECT password, totp_secret, totp_enabled FROM users WHERE id = ?', [req.user.id]);
+  const u = rows[0];
+  if (!u || !u.totp_enabled) return res.status(400).json({ error: 'El 2FA no está activado' });
+
+  if (!(await bcrypt.compare(password, u.password))) {
+    return res.status(400).json({ error: 'Contraseña incorrecta' });
+  }
+  if (!verifyToken(u.totp_secret, code)) {
+    return res.status(400).json({ error: 'Código incorrecto' });
+  }
+
+  await db.query('UPDATE users SET totp_enabled = false, totp_secret = NULL WHERE id = ?', [req.user.id]);
+  await audit.log(req, audit.EVENTS.TWO_FA_DISABLED, { user_id: req.user.id });
+  res.json({ message: 'Doble autenticación desactivada' });
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+//  GESTIÓN DE SESIONES (dispositivos activos)
+// ════════════════════════════════════════════════════════════════════════════
+
+// Listar las sesiones activas del usuario autenticado
+router.get('/sessions', requireAuth, async (req, res) => {
+  const [rows] = await db.query(
+    `SELECT id, session_id, user_agent, ip_address, created_at, last_seen_at
+     FROM user_sessions WHERE user_id = ? ORDER BY last_seen_at DESC`,
+    [req.user.id]
+  );
+  const sessions = rows.map(s => ({
+    id: s.id,
+    user_agent: s.user_agent,
+    ip_address: s.ip_address,
+    created_at: s.created_at,
+    last_seen_at: s.last_seen_at,
+    current: s.session_id === req.user.session_id,
+  }));
+  res.json(sessions);
+});
+
+// Cerrar todas las demás sesiones (mantiene la actual)
+router.delete('/sessions/others', requireAuth, async (req, res) => {
+  await db.query(
+    'DELETE FROM user_sessions WHERE user_id = ? AND session_id <> ?',
+    [req.user.id, req.user.session_id || '']
+  );
+  await audit.log(req, audit.EVENTS.SESSION_REVOKED, { user_id: req.user.id, scope: 'others' });
+  res.json({ message: 'Otras sesiones cerradas' });
+});
+
+// Revocar una sesión específica
+router.delete('/sessions/:id', requireAuth, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'ID inválido' });
+  await db.query('DELETE FROM user_sessions WHERE id = ? AND user_id = ?', [id, req.user.id]);
+  await audit.log(req, audit.EVENTS.SESSION_REVOKED, { user_id: req.user.id, session_row: id });
+  res.json({ message: 'Sesión cerrada' });
 });
 
 export default router;

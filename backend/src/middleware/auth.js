@@ -25,8 +25,8 @@ export async function requireAuth(req, res, next) {
   }
 
   // A07: Concurrent session check — revokes old tokens when user logs in elsewhere
-  // Skip for super_admin to avoid extra DB hit on every request
   if (decoded.session_id && decoded.role !== 'super_admin') {
+    // Regular users: single active session enforced via users.active_session_id
     try {
       const [rows] = await db.query(
         'SELECT active_session_id FROM users WHERE id = ? AND is_active = true',
@@ -45,6 +45,27 @@ export async function requireAuth(req, res, next) {
           reason: 'session_replaced',
         });
       }
+    } catch (err) {
+      console.error(`[SESSION_CHECK_ERROR][${req.id}] ${err.message}`);
+      // Fail open only on DB error — availability over security for this check
+    }
+  } else if (decoded.session_id && decoded.role === 'super_admin') {
+    // Super admins: multi-device sessions tracked in user_sessions, each
+    // individually revocable from the Security panel.
+    try {
+      const [rows] = await db.query(
+        'SELECT id FROM user_sessions WHERE session_id = ? AND user_id = ?',
+        [decoded.session_id, decoded.id]
+      );
+      if (!rows.length) {
+        return res.status(401).json({
+          error: 'Tu sesión fue cerrada o revocada. Inicia sesión nuevamente.',
+          reason: 'session_revoked',
+        });
+      }
+      // Best-effort "last seen" touch (non-blocking)
+      db.query('UPDATE user_sessions SET last_seen_at = NOW() WHERE session_id = ?', [decoded.session_id])
+        .catch(() => {});
     } catch (err) {
       console.error(`[SESSION_CHECK_ERROR][${req.id}] ${err.message}`);
       // Fail open only on DB error — availability over security for this check

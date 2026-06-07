@@ -229,20 +229,38 @@ function InfoPanel() {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-interface Props { onLogin: (email: string, password: string) => Promise<void>; }
+interface Props {
+  onLogin: (email: string, password: string, totpCode?: string) => Promise<{ requires2fa?: boolean }>;
+}
 
 export default function Login({ onLogin }: Props) {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
+  const [step, setStep]         = useState<'credentials' | 'twofa'>('credentials');
+  const [code, setCode]         = useState('');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
-    try { await onLogin(email, password); }
+    try {
+      const res = await onLogin(email, password);
+      if (res.requires2fa) { setStep('twofa'); setCode(''); }
+    }
     catch (err: any) { toast.error(err.message || 'Credenciales incorrectas'); }
     finally { setLoading(false); }
   }
+
+  async function handleVerify2fa(e: FormEvent) {
+    e.preventDefault();
+    if (code.replace(/\s/g, '').length < 6) return toast.error('Ingresa el código de 6 dígitos');
+    setLoading(true);
+    try { await onLogin(email, password, code.replace(/\s/g, '')); }
+    catch (err: any) { toast.error(err.message || 'Código incorrecto'); }
+    finally { setLoading(false); }
+  }
+
+  function backToCredentials() { setStep('credentials'); setCode(''); }
 
   return (
     <main
@@ -267,56 +285,127 @@ export default function Login({ onLogin }: Props) {
             <Brand />
 
             <div className="flex flex-1 flex-col justify-center pt-8 lg:pt-0">
-              <div className="mb-8">
-                <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: col.accent }}>
-                  Super Admin
-                </p>
-                <h1 className="text-[31px] font-black leading-tight tracking-[-0.045em]" style={{ color: col.text }}>
-                  Accede al panel
-                </h1>
-                <p className="mt-3 text-[14px] leading-6" style={{ color: col.muted }}>
-                  Área exclusiva para administradores del sistema FB Core.
-                </p>
-              </div>
+              {step === 'credentials' ? (
+                <>
+                  <div className="mb-8">
+                    <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em]" style={{ color: col.accent }}>
+                      Super Admin
+                    </p>
+                    <h1 className="text-[31px] font-black leading-tight tracking-[-0.045em]" style={{ color: col.text }}>
+                      Accede al panel
+                    </h1>
+                    <p className="mt-3 text-[14px] leading-6" style={{ color: col.muted }}>
+                      Área exclusiva para administradores del sistema FB Core.
+                    </p>
+                  </div>
 
-              <form onSubmit={handleSubmit} noValidate className="space-y-5">
-                <Field
-                  id="admin-email"
-                  label="Correo electrónico"
-                  type="email"
-                  value={email}
-                  onChange={setEmail}
-                  placeholder="admin@fbcore.cloud"
-                  autoComplete="email"
-                  icon={<Mail size={17} strokeWidth={2.1} />}
-                />
+                  <form onSubmit={handleSubmit} noValidate className="space-y-5">
+                    <Field
+                      id="admin-email"
+                      label="Correo electrónico"
+                      type="email"
+                      value={email}
+                      onChange={setEmail}
+                      placeholder="admin@fbcore.cloud"
+                      autoComplete="email"
+                      icon={<Mail size={17} strokeWidth={2.1} />}
+                    />
 
-                <PasswordField
-                  id="admin-password"
-                  label="Contraseña"
-                  value={password}
-                  onChange={setPassword}
-                  autoComplete="current-password"
-                />
+                    <PasswordField
+                      id="admin-password"
+                      label="Contraseña"
+                      value={password}
+                      onChange={setPassword}
+                      autoComplete="current-password"
+                    />
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-                  style={{ background: col.accent, color: col.accentText }}
-                  onMouseEnter={e => { if (!loading) e.currentTarget.style.background = col.accentHover; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = col.accent; }}
-                >
-                  {loading ? (
-                    <>
-                      <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent opacity-80" />
-                      Iniciando sesión…
-                    </>
-                  ) : (
-                    <>Ingresar <ArrowRight size={17} strokeWidth={2.4} /></>
-                  )}
-                </button>
-              </form>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                      style={{ background: col.accent, color: col.accentText }}
+                      onMouseEnter={e => { if (!loading) e.currentTarget.style.background = col.accentHover; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = col.accent; }}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent opacity-80" />
+                          Iniciando sesión…
+                        </>
+                      ) : (
+                        <>Ingresar <ArrowRight size={17} strokeWidth={2.4} /></>
+                      )}
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <div className="mb-7">
+                    <div
+                      className="mb-5 grid size-12 place-items-center rounded-2xl"
+                      style={{ background: `${col.accent}1F`, border: `1px solid ${col.accent}40` }}
+                    >
+                      <ShieldCheck size={22} strokeWidth={2.1} style={{ color: col.accent }} />
+                    </div>
+                    <h1 className="text-[27px] font-black leading-tight tracking-[-0.04em]" style={{ color: col.text }}>
+                      Verificación en dos pasos
+                    </h1>
+                    <p className="mt-3 text-[14px] leading-6" style={{ color: col.muted }}>
+                      Ingresa el código de 6 dígitos de tu app de autenticación
+                      (Google Authenticator, Authy…).
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleVerify2fa} noValidate className="space-y-5">
+                    <div className="space-y-2">
+                      <label htmlFor="totp-code" className="block text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: col.subtle }}>
+                        Código de verificación
+                      </label>
+                      <input
+                        id="totp-code"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        autoFocus
+                        maxLength={6}
+                        value={code}
+                        onChange={e => setCode(e.target.value.replace(/[^\d]/g, ''))}
+                        placeholder="000000"
+                        className="h-14 w-full rounded-xl border bg-transparent text-center text-[26px] font-black tracking-[0.5em] outline-none transition"
+                        style={{ background: col.field, borderColor: col.border, color: col.text }}
+                        onFocus={e => { e.currentTarget.style.borderColor = col.accent; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(198,146,43,0.12)'; }}
+                        onBlur={e => { e.currentTarget.style.borderColor = col.border; e.currentTarget.style.boxShadow = 'none'; }}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex h-12 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                      style={{ background: col.accent, color: col.accentText }}
+                      onMouseEnter={e => { if (!loading) e.currentTarget.style.background = col.accentHover; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = col.accent; }}
+                    >
+                      {loading ? (
+                        <>
+                          <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent opacity-80" />
+                          Verificando…
+                        </>
+                      ) : (
+                        <>Verificar y entrar <ArrowRight size={17} strokeWidth={2.4} /></>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={backToCredentials}
+                      className="w-full text-center text-[13px] font-semibold transition hover:opacity-80"
+                      style={{ color: col.subtle }}
+                    >
+                      ← Volver
+                    </button>
+                  </form>
+                </>
+              )}
             </div>
           </div>
         </div>

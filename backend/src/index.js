@@ -69,6 +69,29 @@ db.query(`
   CREATE INDEX IF NOT EXISTS idx_audit_created_at ON security_audit_log (created_at);
 `).catch(() => {/* indexes non-fatal */});
 
+// ── Security: 2FA (TOTP) columns + multi-device session tracking ──────────────
+db.query(`
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret  VARCHAR(64);
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT false;
+`).catch(err => console.error('[DB] 2FA columns init failed:', err.message));
+
+db.query(`
+  CREATE TABLE IF NOT EXISTS user_sessions (
+    id           BIGSERIAL PRIMARY KEY,
+    session_id   VARCHAR(64) UNIQUE NOT NULL,
+    user_id      INTEGER     NOT NULL,
+    user_agent   TEXT,
+    ip_address   VARCHAR(45),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`).catch(err => console.error('[DB] user_sessions table init failed:', err.message));
+
+db.query(`
+  CREATE INDEX IF NOT EXISTS idx_sessions_user    ON user_sessions (user_id);
+  CREATE INDEX IF NOT EXISTS idx_sessions_session ON user_sessions (session_id);
+`).catch(() => {/* indexes non-fatal */});
+
 const app = express();
 
 // Trust Vercel/proxy headers so req.ip resolves correctly (needed for rate limiting)
