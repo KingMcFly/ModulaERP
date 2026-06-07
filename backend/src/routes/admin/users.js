@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import db from '../../db.js';
 import { requireSuperAdmin } from '../../middleware/auth.js';
+import { notifyEvent } from '../../utils/notifier.js';
 
 const router = Router();
 router.use(requireSuperAdmin);
@@ -38,6 +39,13 @@ router.post('/', w(async (req, res) => {
     [email.trim().toLowerCase(), hash, name.trim(), validRoles.includes(role) ? role : 'admin']
   );
   console.info(`[${new Date().toISOString()}] ADMIN_USER_CREATED id=${uRows[0].id} by=${req.user.id}`);
+  await notifyEvent('admin_created', {
+    lines: [
+      `<strong>Nombre:</strong> ${name.trim()}`,
+      `<strong>Email:</strong> ${email.trim().toLowerCase()}`,
+      `<strong>Rol:</strong> ${validRoles.includes(role) ? role : 'admin'}`,
+    ],
+  });
   res.status(201).json({ id: uRows[0].id, message: 'Usuario creado' });
 }));
 

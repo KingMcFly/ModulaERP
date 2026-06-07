@@ -9,6 +9,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { resetPasswordEmail } from '../utils/emailTemplates.js';
 import { audit } from '../utils/audit.js';
 import { generateSecret, verifyToken, buildOtpAuthUri } from '../utils/totp.js';
+import { notifyEvent } from '../utils/notifier.js';
 import { z } from 'zod';
 import { validate } from '../middleware/validate.js';
 
@@ -478,6 +479,12 @@ router.post('/2fa/disable', requireAuth, validate(twoFaDisableSchema), async (re
 
   await db.query('UPDATE users SET totp_enabled = false, totp_secret = NULL WHERE id = ?', [req.user.id]);
   await audit.log(req, audit.EVENTS.TWO_FA_DISABLED, { user_id: req.user.id });
+  await notifyEvent('twofa_disabled', {
+    lines: [
+      `<strong>Cuenta:</strong> ${req.user.email || `usuario #${req.user.id}`}`,
+      'La doble autenticación fue <strong>desactivada</strong> en esta cuenta.',
+    ],
+  });
   res.json({ message: 'Doble autenticación desactivada' });
 });
 

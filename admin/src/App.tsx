@@ -11,6 +11,8 @@ import Users from './pages/Users';
 import AdminSettings from './pages/AdminSettings';
 import Security from './pages/Security';
 import Regional from './pages/Regional';
+import Notifications from './pages/Notifications';
+import Appearance from './pages/Appearance';
 import { SettingsProvider } from './context/Settings';
 import { api, ApiError } from './api';
 
@@ -78,6 +80,8 @@ export default function App() {
                   <Route path="settings"   element={<AdminSettings />} />
                   <Route path="settings/security" element={<Security />} />
                   <Route path="settings/regional" element={<Regional />} />
+                  <Route path="settings/notifications" element={<Notifications />} />
+                  <Route path="settings/appearance" element={<Appearance />} />
                   <Route path="*"          element={<Navigate to="/" replace />} />
                 </Routes>
               </Layout>

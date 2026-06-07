@@ -17,10 +17,49 @@ export const DEFAULT_SETTINGS: RegionalSettings = {
   date_style: 'medium',
 };
 
+export interface AppearanceSettings {
+  brand_name: string;
+  accent_color: string;
+  logo_url: string | null;
+}
+
+export const DEFAULT_APPEARANCE: AppearanceSettings = {
+  brand_name: 'FB Core',
+  accent_color: '#F2B045',
+  logo_url: null,
+};
+
 type DateInput = string | number | Date | null | undefined;
+
+// ── Color helpers for the live accent (darker shade + readable text) ──────────
+export function shadeColor(hex: string, amount: number): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const adj = (c: number) => Math.max(0, Math.min(255, Math.round(c * (1 + amount))));
+  const r = adj((n >> 16) & 255), g = adj((n >> 8) & 255), b = adj(n & 255);
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+export function contrastText(hex: string): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex);
+  if (!m) return '#131316';
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  // Relative luminance
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return lum > 0.6 ? '#131316' : '#ffffff';
+}
+
+export function applyAccent(accent: string) {
+  const root = document.documentElement;
+  root.style.setProperty('--brand', accent);
+  root.style.setProperty('--brand-strong', shadeColor(accent, -0.08));
+  root.style.setProperty('--brand-text', contrastText(accent));
+}
 
 interface SettingsCtx {
   settings: RegionalSettings;
+  appearance: AppearanceSettings;
   refresh: () => Promise<void>;
   fmtDate: (d: DateInput) => string;
   fmtDateTime: (d: DateInput) => string;
@@ -38,11 +77,19 @@ function toDate(d: DateInput): Date | null {
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<RegionalSettings>(DEFAULT_SETTINGS);
+  const [appearance, setAppearance] = useState<AppearanceSettings>(DEFAULT_APPEARANCE);
 
   const refresh = useCallback(async () => {
     try {
-      const s = await api.get<RegionalSettings>('/admin/settings');
+      const s = await api.get<RegionalSettings & Partial<AppearanceSettings>>('/admin/settings');
       setSettings({ ...DEFAULT_SETTINGS, ...s });
+      const appr: AppearanceSettings = {
+        brand_name: s.brand_name || DEFAULT_APPEARANCE.brand_name,
+        accent_color: s.accent_color || DEFAULT_APPEARANCE.accent_color,
+        logo_url: s.logo_url ?? null,
+      };
+      setAppearance(appr);
+      applyAccent(appr.accent_color);
     } catch { /* keep defaults on error */ }
   }, []);
 
@@ -82,7 +129,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings]);
 
   return (
-    <Ctx.Provider value={{ settings, refresh, fmtDate, fmtDateTime, fmtNumber, fmtCurrency }}>
+    <Ctx.Provider value={{ settings, appearance, refresh, fmtDate, fmtDateTime, fmtNumber, fmtCurrency }}>
       {children}
     </Ctx.Provider>
   );

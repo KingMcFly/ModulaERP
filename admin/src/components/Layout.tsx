@@ -4,10 +4,31 @@ import {
   LayoutDashboard, Building2, Puzzle, Users, Settings,
   LogOut, Boxes, PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
+import { useSettings } from '../context/Settings';
 
 const TRANSITION = 'all 200ms cubic-bezier(0.23, 1, 0.32, 1)';
 
 interface LayoutProps { children: ReactNode; userName: string; onLogout: () => void; }
+
+// Brand logo — custom image if configured, else the default Boxes mark
+function BrandMark({ logoUrl, size = 8 }: { logoUrl: string | null; size?: number }) {
+  const px = size * 4;
+  return (
+    <div
+      className="rounded-[10px] flex items-center justify-center flex-shrink-0 overflow-hidden relative z-10"
+      style={{
+        width: px, height: px,
+        background: logoUrl ? '#fff' : 'linear-gradient(135deg, var(--brand), var(--brand-strong))',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.22)',
+      }}
+      aria-hidden="true"
+    >
+      {logoUrl
+        ? <img src={logoUrl} alt="" className="w-full h-full object-contain" />
+        : <Boxes size={Math.round(px * 0.47)} style={{ color: 'var(--brand-text)' }} />}
+    </div>
+  );
+}
 
 const navItems = [
   { to: '/',        icon: LayoutDashboard, label: 'Dashboard',     shortLabel: 'Inicio'   },
@@ -29,6 +50,9 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
   const pageTitle = usePageTitle();
+  const { appearance } = useSettings();
+  const brandName = appearance.brand_name;
+  const logoUrl = appearance.logo_url;
 
   function handleLogout() { onLogout(); navigate('/login'); }
 
@@ -56,22 +80,13 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
           className="flex items-center gap-3 px-4 h-[58px] flex-shrink-0 relative overflow-hidden"
           style={{
             borderBottom: '1px solid rgba(255,255,255,0.065)',
-            background: 'linear-gradient(180deg, rgba(242,176,69,0.14) 0%, transparent 100%)',
+            background: 'linear-gradient(180deg, color-mix(in srgb, var(--brand) 14%, transparent) 0%, transparent 100%)',
           }}
         >
-          <div
-            className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 relative z-10"
-            style={{
-              background: 'linear-gradient(135deg, #F2B045, #EDA135)',
-              boxShadow: '0 4px 12px rgba(242,176,69,0.55), inset 0 1px 0 rgba(255,255,255,0.22)',
-            }}
-            aria-hidden="true"
-          >
-            <Boxes size={15} style={{ color: '#131316' }} />
-          </div>
+          <BrandMark logoUrl={logoUrl} size={8} />
           {sidebarOpen && (
             <div className="flex flex-col min-w-0 relative z-10">
-              <span className="font-bold text-white text-[13px] tracking-[-0.02em] leading-tight">FB Core</span>
+              <span className="font-bold text-white text-[13px] tracking-[-0.02em] leading-tight truncate">{brandName}</span>
               <span className="text-[10.5px] font-medium" style={{ color: 'rgba(255,255,255,0.35)' }}>Super Admin</span>
             </div>
           )}
@@ -112,7 +127,7 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
           >
             <div
               className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #F2B045, #EDA135)', boxShadow: '0 2px 6px rgba(242,176,69,0.4)', color: '#131316' }}
+              style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-strong))', boxShadow: '0 2px 6px rgba(0,0,0,0.25)', color: 'var(--brand-text)' }}
               aria-hidden="true"
             >
               {userName[0]?.toUpperCase()}
@@ -174,15 +189,8 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
         >
           <div className="flex items-center gap-2.5 lg:gap-3 min-w-0">
             {/* Logo chip on mobile (no sidebar there) */}
-            <div
-              className="lg:hidden w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0"
-              style={{
-                background: 'linear-gradient(135deg, #F2B045, #EDA135)',
-                boxShadow: '0 2px 8px rgba(242,176,69,0.45)',
-              }}
-              aria-hidden="true"
-            >
-              <Boxes size={15} style={{ color: '#131316' }} />
+            <div className="lg:hidden">
+              <BrandMark logoUrl={logoUrl} size={8} />
             </div>
 
             {/* Desktop sidebar toggle */}
@@ -208,7 +216,7 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
           <div className="flex items-center gap-2 flex-shrink-0">
             <div
               className="hidden sm:block px-2.5 py-1.5 rounded-lg text-[11px] font-semibold"
-              style={{ background: 'rgba(242,176,69,0.10)', color: '#EDA135', border: '1px solid rgba(242,176,69,0.20)' }}
+              style={{ background: 'color-mix(in srgb, var(--brand) 10%, transparent)', color: 'var(--brand-strong)', border: '1px solid color-mix(in srgb, var(--brand) 22%, transparent)' }}
             >
               Admin Panel
             </div>
@@ -269,7 +277,7 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
                       width: 52,
                       height: 30,
                       borderRadius: 999,
-                      background: isActive ? 'rgba(242,176,69,0.18)' : 'transparent',
+                      background: isActive ? 'color-mix(in srgb, var(--brand) 20%, transparent)' : 'transparent',
                       transition: 'background 200ms cubic-bezier(0.23, 1, 0.32, 1)',
                     }}
                   >
@@ -277,7 +285,7 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
                       size={21}
                       strokeWidth={isActive ? 2.4 : 1.9}
                       style={{
-                        color: isActive ? '#F2B045' : 'rgba(255,255,255,0.42)',
+                        color: isActive ? 'var(--brand)' : 'rgba(255,255,255,0.42)',
                         transition: 'color 200ms cubic-bezier(0.23, 1, 0.32, 1)',
                       }}
                       aria-hidden="true"
@@ -287,7 +295,7 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
                     className="text-[10px] tracking-[0.01em] leading-none"
                     style={{
                       fontWeight: isActive ? 800 : 600,
-                      color: isActive ? '#F2B045' : 'rgba(255,255,255,0.40)',
+                      color: isActive ? 'var(--brand)' : 'rgba(255,255,255,0.40)',
                       transition: 'color 200ms cubic-bezier(0.23, 1, 0.32, 1)',
                     }}
                   >

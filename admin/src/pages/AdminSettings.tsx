@@ -23,20 +23,20 @@ const sections = [
   {
     icon: Bell,
     title: 'Notificaciones',
-    description: 'Configuración de alertas por correo electrónico y eventos críticos del sistema.',
+    description: 'Alertas por correo electrónico de eventos críticos del sistema.',
     color: '#d97706',
     bg: 'rgba(245,158,11,0.09)',
-    soon: true,
-    to: '',
+    soon: false,
+    to: '/settings/notifications',
   },
   {
     icon: Palette,
     title: 'Apariencia',
-    description: 'Personalización de tema, logotipo corporativo y colores del panel de control.',
+    description: 'Nombre de marca, color de acento y logotipo del panel de control.',
     color: '#059669',
     bg: 'rgba(16,185,129,0.09)',
-    soon: true,
-    to: '',
+    soon: false,
+    to: '/settings/appearance',
   },
 ];
 

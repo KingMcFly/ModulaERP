@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import db from '../../db.js';
 import { requireSuperAdmin } from '../../middleware/auth.js';
+import { notifyEvent } from '../../utils/notifier.js';
 
 const router = Router();
 router.use(requireSuperAdmin);
@@ -50,6 +51,16 @@ router.post('/', w(async (req, res) => {
 
     await conn.commit();
     conn.release();
+
+    await notifyEvent('new_tenant', {
+      lines: [
+        `<strong>Empresa:</strong> ${name}`,
+        `<strong>Slug:</strong> ${slug}`,
+        `<strong>Plan:</strong> ${plan || 'starter'}`,
+        contact_email ? `<strong>Contacto:</strong> ${contact_email}` : '',
+      ].filter(Boolean),
+    });
+
     res.status(201).json({ id: tenantId, message: 'Tenant creado' });
   } catch (e) {
     await conn.rollback(); conn.release();
@@ -96,6 +107,17 @@ router.patch('/:id/status', w(async (req, res) => {
   const valid = ['trial', 'active', 'suspended', 'cancelled'];
   if (!valid.includes(status)) return res.status(400).json({ error: 'Estado inválido' });
   await db.query('UPDATE tenants SET status=? WHERE id=?', [status, req.params.id]);
+
+  const [[t]] = await db.query('SELECT name FROM tenants WHERE id=?', [req.params.id]);
+  const STATUS_ES = { trial: 'En prueba', active: 'Activa', suspended: 'Suspendida', cancelled: 'Cancelada' };
+  await notifyEvent('tenant_suspended', {
+    subject: `FB Core · ${t?.name || 'Empresa'} ahora está ${STATUS_ES[status] || status}`,
+    lines: [
+      `<strong>Empresa:</strong> ${t?.name || `#${req.params.id}`}`,
+      `<strong>Nuevo estado:</strong> ${STATUS_ES[status] || status}`,
+    ],
+  });
+
   res.json({ message: 'Estado actualizado' });
 }));
 

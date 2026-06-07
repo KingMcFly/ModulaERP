@@ -105,6 +105,16 @@ db.query(`
   )
 `)
   .then(() => db.query(`INSERT INTO system_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING`))
+  .then(() => db.query(`
+    ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS notify_enabled BOOLEAN NOT NULL DEFAULT false;
+    ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS notify_email   VARCHAR(254);
+    ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS notify_events  JSONB NOT NULL DEFAULT '{}'::jsonb;
+  `))
+  .then(() => db.query(`
+    ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS brand_name   VARCHAR(60)  NOT NULL DEFAULT 'FB Core';
+    ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS accent_color VARCHAR(7)   NOT NULL DEFAULT '#F2B045';
+    ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS logo_url     VARCHAR(500);
+  `))
   .catch(err => console.error('[DB] system_settings init failed:', err.message));
 
 const app = express();
