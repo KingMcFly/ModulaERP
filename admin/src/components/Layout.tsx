@@ -33,7 +33,7 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
   function handleLogout() { onLogout(); navigate('/login'); }
 
   return (
-    <div className="bg-[#F2F2F6] lg:flex lg:h-[100dvh] lg:overflow-hidden">
+    <div className="bg-[#F2F2F6] min-h-[100dvh] lg:flex lg:h-[100dvh] lg:overflow-hidden">
 
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
 

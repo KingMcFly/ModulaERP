@@ -32,7 +32,11 @@
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     letter-spacing: -0.011em;
-    @apply bg-[#F2F2F6] text-slate-900 antialiased;
+    @apply text-slate-900 antialiased;
+    /* Dark "void" background: any iOS fixed/dvh gap below the app shell or
+       login shows this instead of a jarring white strip. App pages paint
+       their own light surface on top via the Layout container. */
+    background: #0A0A12;
     min-height: 100dvh;
     width: 100%;
     /* clip (not hidden) kills horizontal scroll WITHOUT creating a scroll
