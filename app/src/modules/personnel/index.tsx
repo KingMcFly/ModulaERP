@@ -122,8 +122,9 @@ function PermissionsModal({ userId, userName, onClose }: { userId: number; userN
   const isFullAccess = data && ['admin', 'manager', 'super_admin'].includes(data.role);
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[85vh] flex flex-col" style={cardStyle}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="rounded-t-3xl sm:rounded-3xl shadow-soft-xl w-full sm:max-w-lg p-5 sm:p-6 max-h-[90dvh] flex flex-col" style={{ ...cardStyle, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+        <div className="sheet-handle" />
         <div className="flex items-center gap-3 mb-5">
           <div className="size-10 rounded-2xl bg-primary-50 flex items-center justify-center">
             <ShieldCheck size={18} className="text-primary-500" />
@@ -201,8 +202,9 @@ function ResetPasswordModal({ userId, userName, onClose }: { userId: number; use
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="rounded-3xl shadow-soft-xl w-full max-w-sm p-6" style={cardStyle}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="rounded-t-3xl sm:rounded-3xl shadow-soft-xl w-full sm:max-w-sm p-5 sm:p-6 max-h-[92dvh] overflow-y-auto scroll-touch" style={{ ...cardStyle, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+        <div className="sheet-handle" />
         <div className="flex items-center gap-3 mb-5">
           <KeyRound size={18} className="text-primary-500" />
           <div>
@@ -272,8 +274,9 @@ function PersonForm({ person, onClose, onSaved }: { person?: Person | null; onCl
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="rounded-3xl shadow-soft-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto" style={cardStyle}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="rounded-t-3xl sm:rounded-3xl shadow-soft-xl w-full sm:max-w-xl p-5 sm:p-6 max-h-[92dvh] overflow-y-auto scroll-touch" style={{ ...cardStyle, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+        <div className="sheet-handle" />
         <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>
           {person ? 'Editar Persona' : 'Nueva Persona'}
         </h2>
@@ -281,7 +284,7 @@ function PersonForm({ person, onClose, onSaved }: { person?: Person | null; onCl
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--ds-text-subtle)' }}>Datos personales</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="col-span-2">
                 <label className="label">Nombre completo *</label>
                 <input className="input" value={form.name} onChange={e => set('name', e.target.value)} />
@@ -307,7 +310,7 @@ function PersonForm({ person, onClose, onSaved }: { person?: Person | null; onCl
 
           <div className="pt-4" style={{ borderTop: '1px solid var(--ds-border)' }}>
             <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--ds-text-subtle)' }}>Datos laborales</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="label">Cargo / Puesto</label>
                 <input className="input" value={form.position} onChange={e => set('position', e.target.value)} />
@@ -333,7 +336,7 @@ function PersonForm({ person, onClose, onSaved }: { person?: Person | null; onCl
 
           <div className="pt-4" style={{ borderTop: '1px solid var(--ds-border)' }}>
             <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--ds-text-subtle)' }}>Cuenta del sistema</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="label">Rol</label>
                 <select className="input" value={form.role} onChange={e => set('role', e.target.value)}>
@@ -477,7 +480,79 @@ export default function PersonnelModule() {
         )}
       </div>
 
-      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+      {/* ── MOBILE / TABLET: cards ─────────────────────────────────────── */}
+      <div className="lg:hidden space-y-2.5">
+        {loading ? (
+          <div className="rounded-2xl p-8 text-center text-sm shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>Cargando…</div>
+        ) : people.length === 0 ? (
+          <div className="rounded-2xl p-10 text-center text-sm shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>Sin personas registradas</div>
+        ) : people.map(p => {
+          const rc = ROLE_LABELS[p.role || 'user'] || ROLE_LABELS.user;
+          return (
+            <div key={p.id} className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
+              <div className="flex items-start gap-3">
+                <div className="size-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold flex-shrink-0">
+                  {p.name[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-semibold truncate" style={{ color: 'var(--ds-text)' }}>{p.name}</p>
+                  <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--ds-text-muted)' }}>{p.email || p.national_id || p.user_rut || '—'}</p>
+                </div>
+                <span className="text-[11px] font-semibold flex-shrink-0" style={{ color: p.is_active ? '#10B981' : 'var(--ds-text-subtle)' }}>
+                  {p.is_active ? 'Activa' : 'Inactiva'}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                {p.position && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[12px] font-medium" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-muted)' }}>
+                    {p.position}{p.department ? ` · ${p.department}` : ''}
+                  </span>
+                )}
+                {p.user_id ? (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold" style={{ background: rc.bg, color: rc.color }}>{rc.label}</span>
+                ) : (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-medium" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-subtle)' }}>Sin cuenta</span>
+                )}
+                {p.is_technician && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold" style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}>
+                    <Wrench size={10} /> Técnico
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: '1px solid var(--ds-border)' }}>
+                {canWrite('personnel') && p.id && (
+                  <button type="button" onClick={() => setEditing(p as any)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold tap-scale" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text)' }}>
+                    <Edit2 size={14} /> Editar
+                  </button>
+                )}
+                {isAdmin && p.user_id && (
+                  <button type="button" onClick={() => setPermPerson(p)} aria-label="Permisos"
+                    className="inline-flex items-center justify-center size-[42px] rounded-xl tap-scale" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-muted)' }}>
+                    <ShieldCheck size={16} />
+                  </button>
+                )}
+                {isAdmin && p.user_id && (
+                  <button type="button" onClick={() => setResetPerson(p)} aria-label="Cambiar contraseña"
+                    className="inline-flex items-center justify-center size-[42px] rounded-xl text-amber-600 tap-scale" style={{ background: 'rgba(245,158,11,0.10)' }}>
+                    <KeyRound size={16} />
+                  </button>
+                )}
+                {canDelete('personnel') && p.id && (
+                  <button type="button" onClick={() => deactivate(p as any)} aria-label="Desactivar"
+                    className="inline-flex items-center justify-center size-[42px] rounded-xl text-red-500 tap-scale" style={{ background: 'rgba(239,68,68,0.08)' }}>
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── DESKTOP: table ─────────────────────────────────────────────── */}
+      <div className="hidden lg:block rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
@@ -571,6 +646,7 @@ export default function PersonnelModule() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {editing !== undefined && (

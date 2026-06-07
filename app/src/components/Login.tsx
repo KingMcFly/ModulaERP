@@ -128,7 +128,7 @@ function ThemeToggle({ dark, onClick }: ThemeProps & { onClick: () => void }) {
       type="button"
       onClick={onClick}
       aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-      className="fixed right-4 top-4 z-50 grid size-10 place-items-center rounded-xl transition hover:-translate-y-0.5"
+      className="grid size-10 place-items-center rounded-xl transition hover:-translate-y-0.5 flex-shrink-0"
       style={{
         background: c.card,
         border: `1px solid ${c.border}`,
@@ -585,7 +585,6 @@ export default function Login() {
   return (
     <main className="relative min-h-[100dvh] overflow-hidden px-4 py-5 sm:px-6 lg:px-8">
       <PageBackground dark={dark} />
-      <ThemeToggle dark={dark} onClick={toggle} />
 
       <section className="relative z-10 mx-auto flex min-h-[calc(100dvh-2.5rem)] w-full max-w-6xl flex-col justify-center">
         <div className="grid items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
@@ -603,8 +602,11 @@ export default function Login() {
           />
         </div>
 
-        <div className="mt-5 flex items-center justify-between gap-4 px-1">
-          <StatusBadge dark={dark} />
+        <div className="mt-5 flex items-center justify-between gap-3 px-1">
+          <div className="flex items-center gap-2.5">
+            <StatusBadge dark={dark} />
+            <ThemeToggle dark={dark} onClick={toggle} />
+          </div>
           <p className="hidden text-right text-[12px] font-medium sm:block" style={{ color: c.subtle }}>
             © {new Date().getFullYear()} FBSystems
           </p>
