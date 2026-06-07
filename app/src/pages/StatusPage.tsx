@@ -225,7 +225,7 @@ export default function StatusPage() {
   const OverallIcon = overallMeta.icon;
 
   return (
-    <div className="min-h-screen" style={{ background: '#F3F3F7' }}>
+    <div style={{ background: '#F3F3F7', minHeight: '100dvh' }}>
       {/* Ambient gradient */}
       <div aria-hidden="true" className="fixed inset-0 overflow-hidden pointer-events-none">
         <div

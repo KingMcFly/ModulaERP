@@ -79,8 +79,8 @@ export default function App() {
 
   if (loading) return (
     <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: 'var(--ds-surface)' }}
+      className="flex items-center justify-center"
+      style={{ background: 'var(--ds-surface)', minHeight: '100dvh' }}
     >
       <div
         className="size-9 rounded-full animate-spin"

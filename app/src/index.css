@@ -67,6 +67,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
+    overscroll-behavior-y: none;
+    width: 100%;
   }
 
   body {
@@ -76,6 +78,20 @@
     letter-spacing: -0.011em;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     @apply antialiased;
+    min-height: 100dvh;
+    width: 100%;
+    /* clip (not hidden) kills horizontal scroll without breaking sticky */
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  #root { min-height: 100dvh; }
+
+  /* Better touch behavior on iOS/Android */
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   :focus         { outline: none; }
@@ -274,3 +290,42 @@ body::after {
   ::view-transition-old(root),
   ::view-transition-new(root) { animation: none !important; }
 }
+
+/* ── CRITICAL: prevent iOS Safari auto-zoom when focusing a field ──────────
+   iOS zooms into any input/select/textarea whose font-size is < 16px and does
+   NOT zoom back out. Forcing 16px on touch breakpoints kills the bug while
+   keeping the compact design on desktop. */
+@media (max-width: 1023px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  select,
+  textarea,
+  .input {
+    font-size: 16px !important;
+  }
+}
+
+/* ── Mobile polish helpers ─────────────────────────────────────────────── */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Grab handle for bottom-sheet modals on phones */
+.sheet-handle { display: none; }
+@media (max-width: 639px) {
+  .sheet-handle {
+    display: block;
+    width: 36px; height: 4px;
+    border-radius: 999px;
+    background: rgba(128,128,128,0.4);
+    margin: -2px auto 14px;
+  }
+}
+
+@media (hover: none) {
+  .tap-scale:active { transform: scale(0.97); }
+}
+
+/* Safe-area helpers */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }

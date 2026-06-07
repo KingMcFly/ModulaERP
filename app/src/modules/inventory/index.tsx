@@ -94,11 +94,12 @@ function AssetForm({ asset, onClose, onSaved }: { asset?: Asset | null; onClose:
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
       <div
-        className="rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto"
-        style={cardStyle}
+        className="rounded-t-3xl sm:rounded-3xl shadow-soft-xl w-full sm:max-w-lg p-5 sm:p-6 max-h-[92dvh] overflow-y-auto scroll-touch"
+        style={{ ...cardStyle, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}
       >
+        <div className="sheet-handle" />
         <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>
           {asset ? 'Editar Activo' : 'Nuevo Activo'}
         </h2>
@@ -115,7 +116,7 @@ function AssetForm({ asset, onClose, onSaved }: { asset?: Asset | null; onClose:
               }}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label htmlFor="asset-type" className="label">Tipo *</label>
               {assetTypes.length > 0 ? (
@@ -204,7 +205,7 @@ function AssetsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <button
           type="button" onClick={handleExport}
           className="btn btn-ghost"
@@ -253,7 +254,66 @@ function AssetsTab() {
         </select>
       </div>
 
-      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+      {/* ── MOBILE / TABLET: cards ─────────────────────────────────────── */}
+      <div className="lg:hidden space-y-2.5">
+        {loading ? (
+          <div className="rounded-2xl p-8 text-center text-sm shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>Cargando…</div>
+        ) : assets.length === 0 ? (
+          <div className="rounded-2xl p-10 text-center shadow-soft" style={cardStyle}>
+            <Package size={32} className="mx-auto mb-2" style={{ color: 'var(--ds-border-strong)' }} />
+            <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Sin activos. Toca "Nuevo Activo".</p>
+          </div>
+        ) : assets.map(a => {
+          const sc = STATUS_CFG[a.status] || STATUS_CFG.available;
+          const meta = [a.brand, a.model].filter(Boolean).join(' ');
+          return (
+            <div key={a.id} className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
+              <div className="flex items-start gap-3">
+                <div className="size-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(242,176,69,0.12)' }}>
+                  <Package size={18} className="text-primary-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-semibold truncate" style={{ color: 'var(--ds-text)' }}>{a.asset_type}</p>
+                  <p className="text-xs font-mono mt-0.5 truncate" style={{ color: 'var(--ds-text-muted)' }}>{a.serial_number || 'Sin serie'}</p>
+                </div>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[12.5px]" style={{ color: 'var(--ds-text-muted)' }}>
+                {meta && <span>{meta}</span>}
+                {a.location_name && <span className="inline-flex items-center gap-1"><MapPin size={12} style={{ color: 'var(--ds-text-subtle)' }} />{a.location_name}</span>}
+                {a.value ? <span className="font-semibold" style={{ color: 'var(--ds-text)' }}>${Number(a.value).toLocaleString()}</span> : null}
+              </div>
+              <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: '1px solid var(--ds-border)' }}>
+                <Link to={`/inventory/asset/${a.id}`}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold tap-scale"
+                  style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text)' }}>
+                  <ExternalLink size={14} /> Ver ficha
+                </Link>
+                <button type="button" onClick={() => setQrAsset(a)} aria-label="Ver QR"
+                  className="inline-flex items-center justify-center size-[42px] rounded-xl tap-scale" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-muted)' }}>
+                  <QrCode size={16} />
+                </button>
+                {canWrite('inventory') && (
+                  <button type="button" onClick={() => setEditing(a)} aria-label="Editar"
+                    className="inline-flex items-center justify-center size-[42px] rounded-xl tap-scale" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-muted)' }}>
+                    <Edit2 size={16} />
+                  </button>
+                )}
+                {canDelete('inventory') && (
+                  <button type="button" onClick={() => del(a.id)} aria-label="Eliminar"
+                    className="inline-flex items-center justify-center size-[42px] rounded-xl text-red-500 tap-scale" style={{ background: 'rgba(239,68,68,0.08)' }}>
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── DESKTOP: table ─────────────────────────────────────────────── */}
+      <div className="hidden lg:block rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
@@ -353,6 +413,7 @@ function AssetsTab() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {editing !== undefined && <AssetForm asset={editing} onClose={() => setEditing(undefined)} onSaved={load} />}
@@ -407,8 +468,9 @@ function SupplyForm({ supply, onClose, onSaved }: { supply?: Supply | null; onCl
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" style={cardStyle}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="rounded-t-3xl sm:rounded-3xl shadow-soft-xl w-full sm:max-w-lg p-5 sm:p-6 max-h-[92dvh] overflow-y-auto scroll-touch" style={{ ...cardStyle, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+        <div className="sheet-handle" />
         <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>
           {supply ? 'Editar Insumo' : 'Nuevo Insumo'}
         </h2>
@@ -417,7 +479,7 @@ function SupplyForm({ supply, onClose, onSaved }: { supply?: Supply | null; onCl
             <label htmlFor="supply-name" className="label">Nombre *</label>
             <input id="supply-name" className="input" value={form.name} onChange={e => set('name', e.target.value)} required />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label htmlFor="supply-category" className="label">Categoría</label>
               {categories.length > 0 ? (
@@ -496,8 +558,9 @@ function MovementModal({ supply, onClose, onSaved }: { supply: Supply; onClose: 
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="rounded-3xl shadow-soft-xl w-full max-w-sm p-6" style={cardStyle}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="rounded-t-3xl sm:rounded-3xl shadow-soft-xl w-full sm:max-w-sm p-5 sm:p-6 max-h-[92dvh] overflow-y-auto scroll-touch" style={{ ...cardStyle, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+        <div className="sheet-handle" />
         <h2 className="text-lg font-semibold mb-1" style={{ color: 'var(--ds-text)' }}>Movimiento de Stock</h2>
         <p className="text-sm mb-5" style={{ color: 'var(--ds-text-muted)' }}>
           {supply.name} · Stock actual: <strong style={{ color: 'var(--ds-text)' }}>{supply.current_stock} {supply.unit || 'un.'}</strong>
@@ -585,7 +648,7 @@ function SuppliesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
         <button
           type="button" onClick={handleExportSupplies}
           className="btn btn-ghost"
@@ -620,7 +683,66 @@ function SuppliesTab() {
         </div>
       </div>
 
-      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+      {/* ── MOBILE / TABLET: cards ─────────────────────────────────────── */}
+      <div className="lg:hidden space-y-2.5">
+        {loading ? (
+          <div className="rounded-2xl p-8 text-center text-sm shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>Cargando…</div>
+        ) : supplies.length === 0 ? (
+          <div className="rounded-2xl p-10 text-center shadow-soft" style={cardStyle}>
+            <ShoppingBag size={32} className="mx-auto mb-2" style={{ color: 'var(--ds-border-strong)' }} />
+            <p className="text-sm" style={{ color: 'var(--ds-text-muted)' }}>Sin insumos. Toca "Nuevo Insumo".</p>
+          </div>
+        ) : supplies.map(s => {
+          const isLow = s.current_stock <= s.min_stock;
+          return (
+            <div key={s.id} className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
+              <div className="flex items-start gap-3">
+                <div className="size-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(16,185,129,0.12)' }}>
+                  <ShoppingBag size={17} className="text-emerald-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-semibold truncate" style={{ color: 'var(--ds-text)' }}>{s.name}</p>
+                  <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--ds-text-muted)' }}>{s.category || 'Sin categoría'}</p>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-bold flex-shrink-0"
+                  style={{ background: isLow ? 'rgba(239,68,68,0.10)' : 'var(--ds-card-alt)', color: isLow ? '#EF4444' : 'var(--ds-text)' }}>
+                  {s.current_stock} {s.unit || ''}{isLow && <AlertTriangle size={11} />}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[12.5px]" style={{ color: 'var(--ds-text-muted)' }}>
+                <span>Mín: <strong style={{ color: 'var(--ds-text)' }}>{s.min_stock}</strong></span>
+                {s.unit_cost ? <span>Costo: ${Number(s.unit_cost).toLocaleString()}</span> : null}
+                {s.location_name && <span className="inline-flex items-center gap-1"><MapPin size={12} style={{ color: 'var(--ds-text-subtle)' }} />{s.location_name}</span>}
+              </div>
+              <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: '1px solid var(--ds-border)' }}>
+                {canWrite('inventory') && (
+                  <button type="button" onClick={() => setMoving(s)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold text-emerald-600 tap-scale"
+                    style={{ background: 'rgba(16,185,129,0.10)' }}>
+                    <RotateCcw size={14} /> Movimiento
+                  </button>
+                )}
+                {canWrite('inventory') && (
+                  <button type="button" onClick={() => setEditing(s)} aria-label="Editar"
+                    className="inline-flex items-center justify-center size-[42px] rounded-xl tap-scale" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-muted)' }}>
+                    <Edit2 size={16} />
+                  </button>
+                )}
+                {canDelete('inventory') && (
+                  <button type="button" onClick={() => del(s.id)} aria-label="Eliminar"
+                    className="inline-flex items-center justify-center size-[42px] rounded-xl text-red-500 tap-scale" style={{ background: 'rgba(239,68,68,0.08)' }}>
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── DESKTOP: table ─────────────────────────────────────────────── */}
+      <div className="hidden lg:block rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
@@ -711,6 +833,7 @@ function SuppliesTab() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       {editing !== undefined && <SupplyForm supply={editing} onClose={() => setEditing(undefined)} onSaved={load} />}

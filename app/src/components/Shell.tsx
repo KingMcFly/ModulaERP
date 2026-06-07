@@ -4,7 +4,7 @@ import {
   Menu, X, LogOut, Bell, ChevronDown, Boxes, Package, ArrowRightLeft,
   Wrench, Users, Activity, LayoutDashboard, Settings, BarChart2,
   AlertCircle, AlertTriangle, CheckCircle, Truck, ClipboardList,
-  FileCheck, LifeBuoy, PieChart, ShoppingCart, Zap, Sun, Moon,
+  FileCheck, LifeBuoy, PieChart, ShoppingCart, Zap, Sun, Moon, LayoutGrid,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
@@ -165,13 +165,53 @@ function PlanBanner({
 }
 
 function useIsMobile() {
-  const [mobile, setMobile] = useState(() => window.innerWidth < 768);
+  // < lg (1024): phones + tablet-portrait → drawer + bottom nav
+  const [mobile, setMobile] = useState(() => window.innerWidth < 1024);
   useEffect(() => {
-    const handler = () => setMobile(window.innerWidth < 768);
+    const handler = () => setMobile(window.innerWidth < 1024);
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
   return mobile;
+}
+
+function BottomItem({ to, end, icon, label, color, dark, onClick }: {
+  to: string; end?: boolean; icon: React.ReactNode; label: string;
+  color: string; dark: boolean; onClick?: () => void;
+}) {
+  const idle = dark ? 'rgba(255,255,255,0.42)' : '#9898A3';
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      onClick={onClick}
+      className="flex-1 flex flex-col items-center justify-center gap-1 relative select-none min-w-0"
+      style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
+    >
+      {({ isActive }) => (
+        <>
+          <span
+            className="flex items-center justify-center"
+            style={{
+              width: 50, height: 28, borderRadius: 999,
+              background: isActive ? `color-mix(in srgb, ${color} 18%, transparent)` : 'transparent',
+              color: isActive ? color : idle,
+              transition: 'background 200ms cubic-bezier(0.23, 1, 0.32, 1), color 200ms',
+            }}
+            aria-hidden="true"
+          >
+            {icon}
+          </span>
+          <span
+            className="text-[10px] leading-none max-w-full truncate px-0.5"
+            style={{ fontWeight: isActive ? 700 : 600, color: isActive ? color : idle }}
+          >
+            {label}
+          </span>
+        </>
+      )}
+    </NavLink>
+  );
 }
 
 export default function Shell({ children }: { children: React.ReactNode }) {
@@ -179,7 +219,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const { theme, toggle }         = useTheme();
   const dark                      = theme === 'dark';
   const isMobile                  = useIsMobile();
-  const [sidebarOpen, setSidebarOpen]       = useState(() => window.innerWidth >= 768);
+  const [sidebarOpen, setSidebarOpen]       = useState(() => window.innerWidth >= 1024);
   const [profileOpen, setProfileOpen]       = useState(false);
   const [notifOpen,   setNotifOpen]         = useState(false);
   const [notifs,      setNotifs]            = useState<NotifSummary>({ total: 0, items: [] });
@@ -194,6 +234,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => { if (isMobile) setSidebarOpen(false); }, [isMobile]);
 
   const primaryColor = user?.tenant?.primary_color || '#C6922B';
+
+  // Modules available to this tenant, for the mobile bottom navigation
+  const navModules    = (user?.modules || []).filter(m => MODULE_ROUTES[m.code]);
+  const bottomModules = navModules.slice(0, 3);
 
   function handleLogout() { logout(); navigate('/login'); }
 
@@ -271,8 +315,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const dividerColor = dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
 
   return (
-    <div className="flex h-screen overflow-hidden"
-      style={{ background: dark ? '#0F1115' : '#F5F6F8' }}>
+    <div className="flex overflow-hidden"
+      style={{ background: dark ? '#0F1115' : '#F5F6F8', height: '100dvh' }}>
       <a href="#main-content" className="skip-link">Saltar al contenido principal</a>
 
       {/* Mobile backdrop */}
@@ -488,8 +532,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
         {/* Topbar */}
         <header
-          className="h-[58px] flex items-center justify-between px-4 flex-shrink-0"
+          className="flex items-center justify-between px-4 flex-shrink-0"
           style={{
+            minHeight: 'calc(58px + env(safe-area-inset-top, 0px))',
+            paddingTop: 'env(safe-area-inset-top, 0px)',
             background: topbarBg,
             backdropFilter: 'blur(12px) saturate(180%)',
             WebkitBackdropFilter: 'blur(12px) saturate(180%)',
@@ -628,7 +674,12 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content */}
-        <main id="main-content" className="flex-1 overflow-y-auto p-6" tabIndex={-1}>
+        <main
+          id="main-content"
+          className="flex-1 overflow-y-auto scroll-touch p-4 sm:p-5 lg:p-6"
+          style={{ paddingBottom: isMobile ? 'calc(82px + env(safe-area-inset-bottom, 0px))' : undefined }}
+          tabIndex={-1}
+        >
           <PlanBanner
             plan={plan}
             tenantName={user?.tenant?.name || 'tu empresa'}
@@ -642,6 +693,50 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      {/* ── Mobile / tablet bottom navigation ───────────────────────────── */}
+      {isMobile && (
+        <nav
+          aria-label="Navegación rápida"
+          className="fixed inset-x-0 bottom-0 z-40"
+          style={{
+            background: dark ? 'rgba(15,17,21,0.94)' : 'rgba(255,255,255,0.94)',
+            backdropFilter: 'blur(28px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+            borderTop: `1px solid ${sidebarBdr}`,
+            boxShadow: dark ? '0 -6px 28px rgba(0,0,0,0.32)' : '0 -6px 24px rgba(0,0,0,0.08)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          }}
+        >
+          <div className="flex items-stretch h-[62px] max-w-xl mx-auto px-1.5">
+            <BottomItem to="/" end icon={<LayoutDashboard size={20} />} label="Inicio" color={primaryColor} dark={dark} onClick={() => setSidebarOpen(false)} />
+            {bottomModules.map(m => (
+              <BottomItem
+                key={m.code}
+                to={MODULE_ROUTES[m.code]}
+                icon={<span className="flex [&_svg]:size-5">{MODULE_ICONS[m.code] || <Package size={20} />}</span>}
+                label={MODULE_DISPLAY[m.code] || m.name}
+                color={primaryColor}
+                dark={dark}
+                onClick={() => setSidebarOpen(false)}
+              />
+            ))}
+            {/* Menú — opens the full drawer with every module + settings */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="flex-1 flex flex-col items-center justify-center gap-1 select-none"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+              aria-label="Abrir menú completo"
+            >
+              <span className="flex items-center justify-center" style={{ width: 50, height: 28, borderRadius: 999 }}>
+                <LayoutGrid size={20} style={{ color: dark ? 'rgba(255,255,255,0.42)' : '#9898A3' }} />
+              </span>
+              <span className="text-[10px] font-semibold leading-none" style={{ color: dark ? 'rgba(255,255,255,0.42)' : '#9898A3' }}>Menú</span>
+            </button>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
