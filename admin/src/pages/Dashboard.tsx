@@ -105,7 +105,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="animate-fade-up">
         <h1 className="text-[22px] sm:text-[26px] font-bold text-slate-900 tracking-[-0.03em] leading-tight">Dashboard</h1>
@@ -113,10 +113,10 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {loading
           ? [0, 1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-2xl p-5" style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <div key={i} className="bg-white rounded-2xl p-4 sm:p-5" style={{ border: '1px solid rgba(0,0,0,0.05)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
               <Skeleton className="w-11 h-11 rounded-2xl mb-4" />
               <Skeleton className="w-16 h-7 mb-2 rounded-lg" />
               <Skeleton className="w-24 h-3.5 rounded-lg" />
@@ -125,7 +125,7 @@ export default function Dashboard() {
           : stats.map(({ label, value, icon: Icon, color, bg, delta }, i) => (
             <div
               key={label}
-              className="bg-white rounded-2xl p-5 animate-fade-up"
+              className="bg-white rounded-2xl p-4 sm:p-5 animate-fade-up"
               style={{
                 border: '1px solid rgba(0,0,0,0.05)',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 2px 10px rgba(0,0,0,0.03)',
@@ -157,10 +157,10 @@ export default function Dashboard() {
         }
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         {/* Plan distribution */}
         <div
-          className="bg-white rounded-2xl p-6 animate-fade-up delay-150"
+          className="bg-white rounded-2xl p-5 sm:p-6 animate-fade-up delay-150"
           style={{
             border: '1px solid rgba(0,0,0,0.05)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
@@ -216,7 +216,7 @@ export default function Dashboard() {
 
         {/* Recent tenants */}
         <div
-          className="bg-white rounded-2xl p-6 animate-fade-up delay-200"
+          className="bg-white rounded-2xl p-5 sm:p-6 animate-fade-up delay-200"
           style={{
             border: '1px solid rgba(0,0,0,0.05)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.06)',

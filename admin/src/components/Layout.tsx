@@ -228,8 +228,8 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
         {/* Content */}
         <main
           id="main-content"
-          className="lg:flex-1 lg:overflow-y-auto p-4 sm:p-5 lg:p-6"
-          style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom, 0px))' }}
+          className="lg:flex-1 lg:overflow-y-auto scroll-touch px-4 py-5 sm:px-6 sm:py-6 lg:p-6"
+          style={{ paddingBottom: 'calc(82px + env(safe-area-inset-bottom, 0px))' }}
           tabIndex={-1}
         >
           {children}
@@ -242,57 +242,53 @@ export default function Layout({ children, userName, onLogout }: LayoutProps) {
       <nav
         className="lg:hidden fixed inset-x-0 bottom-0 z-40"
         style={{
-          background: 'rgba(10,10,18,0.96)',
-          backdropFilter: 'blur(28px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-          borderTop: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 -4px 24px rgba(0,0,0,0.18)',
+          background: 'rgba(10,10,18,0.94)',
+          backdropFilter: 'blur(30px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+          borderTop: '1px solid rgba(255,255,255,0.09)',
+          boxShadow: '0 -6px 28px rgba(0,0,0,0.22)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
         aria-label="Navegación principal"
       >
-        <div className="flex items-stretch h-[60px] max-w-2xl mx-auto px-1">
+        <div className="flex items-stretch h-[64px] max-w-xl mx-auto px-2">
           {navItems.map(({ to, icon: Icon, shortLabel }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
-              className="flex-1 flex flex-col items-center justify-center gap-1 relative select-none"
+              className="flex-1 flex flex-col items-center justify-center gap-1.5 relative select-none"
               style={{ WebkitTapHighlightColor: 'transparent', outline: 'none' }}
             >
               {({ isActive }) => (
                 <>
-                  {isActive && (
-                    <span
-                      className="absolute top-0 left-1/2 -translate-x-1/2 h-[2.5px] w-7 rounded-full"
-                      style={{ background: '#F2B045' }}
-                      aria-hidden="true"
-                    />
-                  )}
+                  {/* Active pill highlight behind the icon (Material-3 style) */}
                   <span
-                    className="flex items-center justify-center rounded-xl"
+                    className="flex items-center justify-center"
                     style={{
-                      width: 44,
-                      height: 26,
-                      background: isActive ? 'rgba(242,176,69,0.16)' : 'transparent',
-                      transition: 'background 180ms cubic-bezier(0.23, 1, 0.32, 1)',
+                      width: 52,
+                      height: 30,
+                      borderRadius: 999,
+                      background: isActive ? 'rgba(242,176,69,0.18)' : 'transparent',
+                      transition: 'background 200ms cubic-bezier(0.23, 1, 0.32, 1)',
                     }}
                   >
                     <Icon
-                      size={20}
-                      strokeWidth={isActive ? 2.3 : 1.8}
+                      size={21}
+                      strokeWidth={isActive ? 2.4 : 1.9}
                       style={{
-                        color: isActive ? '#F2B045' : 'rgba(255,255,255,0.40)',
-                        transition: 'color 180ms cubic-bezier(0.23, 1, 0.32, 1)',
+                        color: isActive ? '#F2B045' : 'rgba(255,255,255,0.42)',
+                        transition: 'color 200ms cubic-bezier(0.23, 1, 0.32, 1)',
                       }}
                       aria-hidden="true"
                     />
                   </span>
                   <span
-                    className="text-[10px] font-bold tracking-[0.01em] leading-none"
+                    className="text-[10px] tracking-[0.01em] leading-none"
                     style={{
-                      color: isActive ? '#F2B045' : 'rgba(255,255,255,0.34)',
-                      transition: 'color 180ms cubic-bezier(0.23, 1, 0.32, 1)',
+                      fontWeight: isActive ? 800 : 600,
+                      color: isActive ? '#F2B045' : 'rgba(255,255,255,0.40)',
+                      transition: 'color 200ms cubic-bezier(0.23, 1, 0.32, 1)',
                     }}
                   >
                     {shortLabel}

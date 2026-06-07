@@ -75,13 +75,13 @@ export default function Modules() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-5 sm:space-y-6 max-w-5xl mx-auto">
       <div className="animate-fade-up">
-        <h1 className="text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Módulos</h1>
+        <h1 className="text-[22px] sm:text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Módulos</h1>
         <p className="text-slate-400 text-[13px] mt-0.5 font-medium">Catálogo global de módulos de la plataforma</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {loading
           ? [0, 1, 2, 3, 4].map(i => <Skeleton key={i} />)
           : modules.map((m, i) => (

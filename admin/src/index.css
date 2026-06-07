@@ -196,6 +196,36 @@ body::after {
   .input {
     font-size: 16px !important;
   }
+  /* Roomier, easier-to-tap controls on touch devices */
+  .input { padding-top: 0.7rem; padding-bottom: 0.7rem; }
+}
+
+/* ── Mobile polish helpers ─────────────────────────────────────────────── */
+/* Momentum scrolling for any internal scroll area on iOS */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Grab handle shown at the top of bottom-sheet modals on phones */
+.sheet-handle {
+  display: none;
+}
+@media (max-width: 639px) {
+  .sheet-handle {
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.14);
+    margin: -2px auto 14px;
+  }
+}
+
+/* Tap feedback for card / list rows on touch */
+@media (hover: none) {
+  .tap-row:active { background: rgba(0,0,0,0.03); }
+  .tap-scale:active { transform: scale(0.98); }
 }
 
 @media (prefers-reduced-motion: reduce) {

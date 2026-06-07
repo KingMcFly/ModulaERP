@@ -166,6 +166,7 @@ export default function Users() {
               paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
             }}
           >
+            <div className="sheet-handle" />
             <h2 className="font-bold text-slate-900 text-[15px] mb-4 tracking-[-0.02em]">Cambiar contraseña</h2>
             <form onSubmit={resetPassword} className="space-y-3">
               <div>
@@ -210,6 +211,7 @@ export default function Users() {
               paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
             }}
           >
+            <div className="sheet-handle" />
             <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(239,68,68,0.10)' }}>
               <Trash2 size={20} className="text-red-500" />
             </div>
@@ -237,9 +239,9 @@ export default function Users() {
       )}
 
       {/* ─── MOBILE / TABLET: card list ─────────────────────────── */}
-      <div className="lg:hidden space-y-3 animate-fade-up delay-80">
+      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-3 animate-fade-up delay-80">
         {loading ? (
-          Array.from({ length: 3 }).map((_, i) => (
+          Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="bg-white rounded-2xl p-4" style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
               <div className="flex items-center gap-3">
                 <Skeleton className="w-11 h-11 rounded-xl flex-shrink-0" />
@@ -251,7 +253,7 @@ export default function Users() {
             </div>
           ))
         ) : users.length === 0 ? (
-          <div className="bg-white rounded-2xl py-14 flex flex-col items-center gap-2.5" style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
+          <div className="md:col-span-2 bg-white rounded-2xl py-14 flex flex-col items-center gap-2.5" style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
             <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center">
               <UsersIcon size={20} className="text-slate-300" />
             </div>

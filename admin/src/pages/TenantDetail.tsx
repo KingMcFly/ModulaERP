@@ -252,24 +252,24 @@ export default function TenantDetail() {
                 {mod.enabled && !mod.is_mandatory && (
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     <button onClick={() => handleTrialAction(mod.id, 'extend', 30)}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10.5px] font-semibold hover:opacity-80 transition-opacity"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold tap-scale hover:opacity-80 transition-opacity"
                       style={{ background: 'rgba(242,176,69,0.12)', color: '#b45309' }}>
-                      <CalendarPlus size={10} /> +30d
+                      <CalendarPlus size={11} /> +30d
                     </button>
                     <button onClick={() => handleTrialAction(mod.id, 'extend', 60)}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10.5px] font-semibold hover:opacity-80 transition-opacity"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold tap-scale hover:opacity-80 transition-opacity"
                       style={{ background: 'rgba(242,176,69,0.12)', color: '#b45309' }}>
-                      <CalendarPlus size={10} /> +60d
+                      <CalendarPlus size={11} /> +60d
                     </button>
                     <button onClick={() => handleTrialAction(mod.id, 'set_unlimited')}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10.5px] font-semibold hover:opacity-80 transition-opacity"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold tap-scale hover:opacity-80 transition-opacity"
                       style={{ background: isTrialMod ? 'rgba(34,197,94,0.10)' : 'rgba(99,102,241,0.10)', color: isTrialMod ? '#16a34a' : '#4f46e5' }}>
-                      <Infinity size={10} /> Ilimitado
+                      <Infinity size={11} /> Ilimitado
                     </button>
                     {isTrialMod && days !== null && days <= 0 && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10.5px] font-semibold"
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold"
                         style={{ background: 'rgba(239,68,68,0.10)', color: '#dc2626' }}>
-                        <AlertTriangle size={10} /> Vencido
+                        <AlertTriangle size={11} /> Vencido
                       </span>
                     )}
                   </div>

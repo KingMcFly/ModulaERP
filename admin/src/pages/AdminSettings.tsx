@@ -44,14 +44,14 @@ const sysInfo = [
 
 export default function AdminSettings() {
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-5 sm:space-y-6 max-w-4xl mx-auto">
       <div className="animate-fade-up">
-        <h1 className="text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Configuración del sistema</h1>
+        <h1 className="text-[22px] sm:text-[24px] font-bold text-slate-900 tracking-[-0.03em]">Configuración del sistema</h1>
         <p className="text-slate-400 text-[13px] mt-0.5 font-medium">Ajustes globales de la plataforma FB Core</p>
       </div>
 
       {/* Settings cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {sections.map(({ icon: Icon, title, description, color, bg, soon }, i) => (
           <div
             key={title}
