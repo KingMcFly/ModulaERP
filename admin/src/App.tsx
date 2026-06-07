@@ -10,6 +10,8 @@ import Modules from './pages/Modules';
 import Users from './pages/Users';
 import AdminSettings from './pages/AdminSettings';
 import Security from './pages/Security';
+import Regional from './pages/Regional';
+import { SettingsProvider } from './context/Settings';
 import { api, ApiError } from './api';
 
 interface AuthUser { id: number; name: string; email: string; role: string; }
@@ -65,18 +67,21 @@ export default function App() {
         <Route path="/login" element={!user ? <Login onLogin={handleLogin} /> : <Navigate to="/" replace />} />
         {user ? (
           <Route path="/*" element={
-            <Layout userName={user.name} onLogout={handleLogout}>
-              <Routes>
-                <Route index        element={<Dashboard />} />
-                <Route path="tenants"    element={<Tenants />} />
-                <Route path="tenants/:id" element={<TenantDetail />} />
-                <Route path="modules"    element={<Modules />} />
-                <Route path="users"      element={<Users />} />
-                <Route path="settings"   element={<AdminSettings />} />
-                <Route path="settings/security" element={<Security />} />
-                <Route path="*"          element={<Navigate to="/" replace />} />
-              </Routes>
-            </Layout>
+            <SettingsProvider>
+              <Layout userName={user.name} onLogout={handleLogout}>
+                <Routes>
+                  <Route index        element={<Dashboard />} />
+                  <Route path="tenants"    element={<Tenants />} />
+                  <Route path="tenants/:id" element={<TenantDetail />} />
+                  <Route path="modules"    element={<Modules />} />
+                  <Route path="users"      element={<Users />} />
+                  <Route path="settings"   element={<AdminSettings />} />
+                  <Route path="settings/security" element={<Security />} />
+                  <Route path="settings/regional" element={<Regional />} />
+                  <Route path="*"          element={<Navigate to="/" replace />} />
+                </Routes>
+              </Layout>
+            </SettingsProvider>
           } />
         ) : (
           <Route path="*" element={<Navigate to="/login" replace />} />

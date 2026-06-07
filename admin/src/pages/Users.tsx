@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { UserPlus, Pencil, KeyRound, Check, X, Shield, Users as UsersIcon, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
+import { useSettings } from '../context/Settings';
 
 interface AdminUser {
   id: number;
@@ -20,6 +21,7 @@ function Skeleton({ className = '' }: { className?: string }) {
 }
 
 export default function Users() {
+  const { fmtDate } = useSettings();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -292,9 +294,7 @@ export default function Users() {
                 {u.role === 'super_admin' ? 'Super Admin' : 'Admin'}
               </span>
               <span className="text-[12px] font-medium text-slate-400 px-2.5 py-1 rounded-lg" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                {u.last_login
-                  ? new Date(u.last_login).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
-                  : 'Nunca'}
+                {u.last_login ? fmtDate(u.last_login) : 'Nunca'}
               </span>
             </div>
 
@@ -412,9 +412,7 @@ export default function Users() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-slate-400 font-medium">
-                    {u.last_login
-                      ? new Date(u.last_login).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' })
-                      : <span className="text-slate-300">Nunca</span>}
+                    {u.last_login ? fmtDate(u.last_login) : <span className="text-slate-300">Nunca</span>}
                   </td>
                   <td className="px-6 py-4">
                     {u.is_active

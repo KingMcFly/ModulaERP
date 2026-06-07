@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
+import { useSettings } from '../context/Settings';
 
 const MODULE_ICONS: Record<string, ReactNode> = {
   inventory:    <Package size={15} />,
@@ -80,6 +81,7 @@ function TrialBadge({ expires_at, unlimited }: { expires_at: string | null; unli
 
 export default function TenantDetail() {
   const { id } = useParams<{ id: string }>();
+  const { fmtDate } = useSettings();
   const [tenant, setTenant] = useState<TenantDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddUser, setShowAddUser] = useState(false);
@@ -226,7 +228,7 @@ export default function TenantDetail() {
                       </div>
                       {mod.expires_at && !mod.unlimited && (
                         <p className="text-[10.5px] text-slate-400 mt-0.5">
-                          Vence: {new Date(mod.expires_at).toLocaleDateString('es-CL')}
+                          Vence: {fmtDate(mod.expires_at)}
                         </p>
                       )}
                     </div>

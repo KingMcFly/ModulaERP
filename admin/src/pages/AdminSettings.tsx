@@ -14,11 +14,11 @@ const sections = [
   {
     icon: Globe,
     title: 'Regional',
-    description: 'Zona horaria, idioma predeterminado y formato de fechas y números.',
+    description: 'Zona horaria, idioma, moneda y formato de fechas y números.',
     color: '#2563eb',
     bg: 'rgba(59,130,246,0.09)',
-    soon: true,
-    to: '',
+    soon: false,
+    to: '/settings/regional',
   },
   {
     icon: Bell,

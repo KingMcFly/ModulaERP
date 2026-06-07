@@ -28,6 +28,7 @@ import suppliesRouter      from './routes/supplies.js';
 import adminTenantsRouter  from './routes/admin/tenants.js';
 import adminModulesRouter  from './routes/admin/modules.js';
 import adminUsersRouter    from './routes/admin/users.js';
+import adminSettingsRouter from './routes/admin/settings.js';
 import catalogRouter       from './routes/catalog.js';
 import notificationsRouter from './routes/notifications.js';
 import reportsRouter       from './routes/reports.js';
@@ -91,6 +92,20 @@ db.query(`
   CREATE INDEX IF NOT EXISTS idx_sessions_user    ON user_sessions (user_id);
   CREATE INDEX IF NOT EXISTS idx_sessions_session ON user_sessions (session_id);
 `).catch(() => {/* indexes non-fatal */});
+
+// ── Regional / platform settings (single-row config) ──────────────────────────
+db.query(`
+  CREATE TABLE IF NOT EXISTS system_settings (
+    id          INT PRIMARY KEY,
+    locale      VARCHAR(10) NOT NULL DEFAULT 'es-CL',
+    timezone    VARCHAR(64) NOT NULL DEFAULT 'America/Santiago',
+    currency    VARCHAR(8)  NOT NULL DEFAULT 'CLP',
+    date_style  VARCHAR(10) NOT NULL DEFAULT 'medium',
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`)
+  .then(() => db.query(`INSERT INTO system_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING`))
+  .catch(err => console.error('[DB] system_settings init failed:', err.message));
 
 const app = express();
 
@@ -195,6 +210,7 @@ app.use('/api/supplies',      suppliesRouter);
 app.use('/api/admin/tenants', adminTenantsRouter);
 app.use('/api/admin/modules', adminModulesRouter);
 app.use('/api/admin/users',   adminUsersRouter);
+app.use('/api/admin/settings', adminSettingsRouter);
 app.use('/api/catalog',        catalogRouter);
 app.use('/api/notifications',  notificationsRouter);
 app.use('/api/reports',        reportsRouter);
