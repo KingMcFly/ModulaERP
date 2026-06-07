@@ -4,7 +4,9 @@ import { toast } from 'sonner';
 
 // ── Design tokens (dark only — admin is always dark) ──────────────────────────
 const col = {
-  page:         '#0F1115',
+  // Matches body + sidebar + bottom nav (#0A0A12) so no dark seam ever shows
+  // in the iOS dvh gap at the bottom of the screen.
+  page:         '#0A0A12',
   card:         '#151922',
   cardAlt:      '#11141B',
   field:        '#171B24',

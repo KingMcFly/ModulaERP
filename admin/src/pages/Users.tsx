@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { UserPlus, Pencil, KeyRound, Check, X, Shield, Users as UsersIcon } from 'lucide-react';
+import { UserPlus, Pencil, KeyRound, Check, X, Shield, Users as UsersIcon, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../api';
 
@@ -27,6 +27,8 @@ export default function Users() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [pwdUserId, setPwdUserId] = useState<number | null>(null);
   const [newPwd, setNewPwd] = useState('');
+  const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   function load() {
     api.get<AdminUser[]>('/admin/users').then(setUsers).finally(() => setLoading(false));
@@ -72,6 +74,19 @@ export default function Users() {
       setPwdUserId(null);
       setNewPwd('');
     } catch (err: any) { toast.error(err.message); }
+  }
+
+  async function confirmDelete() {
+    if (!deletingUser) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/admin/users/${deletingUser.id}`);
+      toast.success('Usuario eliminado');
+      setDeletingUser(null);
+      load();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally { setDeleting(false); }
   }
 
   return (
@@ -175,6 +190,52 @@ export default function Users() {
         </div>
       )}
 
+      {/* Delete confirmation modal */}
+      {deletingUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+          style={{
+            background: 'rgba(0,0,0,0.45)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            animation: 'fade-in 0.18s cubic-bezier(0.23, 1, 0.32, 1) both',
+          }}
+        >
+          <div
+            className="bg-white w-full sm:max-w-sm p-5 sm:p-6 rounded-t-[24px] sm:rounded-[24px]"
+            style={{
+              border: '1px solid rgba(0,0,0,0.07)',
+              boxShadow: '0 -8px 48px rgba(0,0,0,0.14), 0 16px 48px rgba(0,0,0,0.14)',
+              animation: 'slide-up 0.22s cubic-bezier(0.23, 1, 0.32, 1) both',
+              paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
+            }}
+          >
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'rgba(239,68,68,0.10)' }}>
+              <Trash2 size={20} className="text-red-500" />
+            </div>
+            <h2 className="text-[17px] font-bold text-slate-900 tracking-[-0.02em]">Eliminar usuario</h2>
+            <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">
+              ¿Estás seguro que deseas eliminar a <span className="font-bold text-slate-700">{deletingUser.name}</span>? Perderá el acceso al panel y esta acción no se puede deshacer.
+            </p>
+            <div className="flex gap-3 mt-5">
+              <button type="button" onClick={() => setDeletingUser(null)} className="btn-ghost flex-1">Cancelar</button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={confirmDelete}
+                className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-[13px] font-bold text-white"
+                style={{
+                  background: deleting ? '#fca5a5' : '#ef4444',
+                  transition: 'background 160ms cubic-bezier(0.23, 1, 0.32, 1)',
+                }}
+              >
+                {deleting ? 'Eliminando...' : 'Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── MOBILE / TABLET: card list ─────────────────────────── */}
       <div className="lg:hidden space-y-3 animate-fade-up delay-80">
         {loading ? (
@@ -258,6 +319,14 @@ export default function Users() {
                 aria-label={u.is_active ? 'Desactivar' : 'Activar'}
               >
                 {u.is_active ? <X size={15} /> : <Check size={15} />}
+              </button>
+              <button
+                onClick={() => setDeletingUser(u)}
+                className="inline-flex items-center justify-center w-[42px] h-[42px] rounded-xl text-slate-400"
+                style={{ background: 'rgba(0,0,0,0.04)' }}
+                aria-label="Eliminar usuario"
+              >
+                <Trash2 size={15} />
               </button>
             </div>
           </div>
@@ -380,6 +449,14 @@ export default function Users() {
                         title={u.is_active ? 'Desactivar' : 'Activar'}
                       >
                         {u.is_active ? <X size={13} /> : <Check size={13} />}
+                      </button>
+                      <button
+                        onClick={() => setDeletingUser(u)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50"
+                        style={{ transition: 'all 160ms cubic-bezier(0.23, 1, 0.32, 1)' }}
+                        title="Eliminar usuario"
+                      >
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   </td>

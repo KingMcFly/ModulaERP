@@ -82,4 +82,30 @@ router.patch('/:id/password', w(async (req, res) => {
   res.json({ message: 'Contraseña actualizada' });
 }));
 
+router.delete('/:id', w(async (req, res) => {
+  const id = Number(req.params.id);
+  // A01: strict comparison — no puedes eliminar tu propia cuenta
+  if (req.user.id === id) {
+    return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta' });
+  }
+
+  const [[user]] = await db.query('SELECT id FROM users WHERE id=? AND tenant_id=1', [id]);
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+  const conn = await db.getConnection();
+  await conn.beginTransaction();
+  try {
+    await conn.query('DELETE FROM user_module_permissions WHERE user_id=?', [id]);
+    await conn.query('DELETE FROM users WHERE id=? AND tenant_id=1', [id]);
+    await conn.commit();
+    conn.release();
+    console.info(`[${new Date().toISOString()}] ADMIN_USER_DELETED id=${id} by=${req.user.id}`);
+    res.json({ message: 'Usuario eliminado' });
+  } catch (e) {
+    await conn.rollback();
+    conn.release();
+    throw e;
+  }
+}));
+
 export default router;
