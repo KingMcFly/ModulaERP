@@ -40,11 +40,12 @@ function NewRequestModal({ onClose, onCreated }: { onClose: () => void; onCreate
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="rounded-3xl shadow-soft-xl w-full max-w-md p-6" style={cardStyle}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="rounded-t-3xl sm:rounded-3xl shadow-soft-xl w-full sm:max-w-md p-5 sm:p-6 max-h-[92dvh] overflow-y-auto scroll-touch" style={{ ...cardStyle, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+        <div className="sheet-handle" />
         <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>Nueva Solicitud</h2>
         <form onSubmit={submit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><label htmlFor="req-type" className="label">Tipo</label>
               <select id="req-type" className="input" value={f.request_type} onChange={e => set('request_type', e.target.value)}>
                 {Object.entries(TYPE_LABELS).map(([k,v]) => <option key={k} value={k}>{v}</option>)}
@@ -116,7 +117,52 @@ export default function RequestsModule() {
         </select>
       </div>
 
-      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+      {/* ── MOBILE / TABLET: cards ─────────────────────────────────────── */}
+      <div className="lg:hidden space-y-2.5">
+        {loading ? (
+          <div className="rounded-2xl p-8 text-center text-sm shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>Cargando…</div>
+        ) : items.length === 0 ? (
+          <div className="rounded-2xl p-10 text-center shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>
+            <ClipboardList size={30} className="mx-auto mb-2" style={{ color: 'var(--ds-border-strong)' }} />
+            <p className="text-sm">Sin solicitudes</p>
+          </div>
+        ) : items.map(item => {
+          const sc = STATUS_CFG[item.status] || STATUS_CFG.pending;
+          return (
+            <div key={item.id} className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
+              <div className="flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-semibold" style={{ color: 'var(--ds-text)' }}>{item.title}</p>
+                  {item.description && <p className="text-xs mt-0.5" style={{ color: 'var(--ds-text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</p>}
+                </div>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3 text-[12.5px]" style={{ color: 'var(--ds-text-muted)' }}>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md font-medium" style={{ background: 'var(--ds-card-alt)' }}>{TYPE_LABELS[item.request_type] || item.request_type}</span>
+                <span className="font-semibold inline-flex items-center gap-1" style={{ color: PRIORITY_COLORS[item.priority] }}>● {PRIORITY_CFG[item.priority]}</span>
+                <span>{item.requester_name || '—'}</span>
+                <span>{new Date(item.requested_at).toLocaleDateString('es-CL')}</span>
+              </div>
+              {canApprove && item.status === 'pending' && (
+                <div className="flex gap-2 mt-3.5 pt-3.5" style={{ borderTop: '1px solid var(--ds-border)' }}>
+                  <button type="button" onClick={() => approve(item.id)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold text-emerald-600 tap-scale" style={{ background: 'rgba(16,185,129,0.10)' }}>
+                    <CheckCircle size={15} /> Aprobar
+                  </button>
+                  <button type="button" onClick={() => reject(item.id)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold text-red-500 tap-scale" style={{ background: 'rgba(239,68,68,0.08)' }}>
+                    <XCircle size={15} /> Rechazar
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── DESKTOP: table ─────────────────────────────────────────────── */}
+      <div className="hidden lg:block rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
@@ -165,6 +211,7 @@ export default function RequestsModule() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
       {showModal && <NewRequestModal onClose={() => setShowModal(false)} onCreated={load} />}
     </div>

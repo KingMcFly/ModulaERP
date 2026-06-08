@@ -22,6 +22,9 @@ const Providers      = lazy(() => import('./modules/providers'));
 const Requests       = lazy(() => import('./modules/requests'));
 const Contracts      = lazy(() => import('./modules/contracts'));
 const Tickets        = lazy(() => import('./modules/tickets'));
+const TicketDetail   = lazy(() => import('./modules/tickets/TicketDetail'));
+const TicketReports  = lazy(() => import('./modules/tickets/Reports'));
+const TicketKB       = lazy(() => import('./modules/tickets/KB'));
 const CostCenters    = lazy(() => import('./modules/cost_centers'));
 const Purchases      = lazy(() => import('./modules/purchases'));
 
@@ -63,6 +66,9 @@ function AppRoutes() {
           <Route path="requests"             element={<ModuleGuard code="requests">      <Requests />     </ModuleGuard>} />
           <Route path="contracts"            element={<ModuleGuard code="contracts">     <Contracts />    </ModuleGuard>} />
           <Route path="tickets"              element={<ModuleGuard code="tickets">       <Tickets />      </ModuleGuard>} />
+          <Route path="tickets/reports"      element={<ModuleGuard code="tickets">       <TicketReports /></ModuleGuard>} />
+          <Route path="tickets/kb"           element={<ModuleGuard code="tickets">       <TicketKB />     </ModuleGuard>} />
+          <Route path="tickets/:id"          element={<ModuleGuard code="tickets">       <TicketDetail /> </ModuleGuard>} />
           <Route path="cost_centers"         element={<ModuleGuard code="cost_centers">  <CostCenters />  </ModuleGuard>} />
           <Route path="purchases"            element={<ModuleGuard code="purchases">     <Purchases />    </ModuleGuard>} />
           <Route path="settings"    element={<Settings />} />

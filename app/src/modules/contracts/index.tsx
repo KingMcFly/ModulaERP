@@ -44,12 +44,13 @@ function ContractForm({ item, onClose, onSaved }: { item?: Contract|null; onClos
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="rounded-3xl shadow-soft-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" style={cardStyle}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="rounded-t-3xl sm:rounded-3xl shadow-soft-xl w-full sm:max-w-lg p-5 sm:p-6 max-h-[92dvh] overflow-y-auto scroll-touch" style={{ ...cardStyle, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+        <div className="sheet-handle" />
         <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>{item ? 'Editar Contrato' : 'Nuevo Contrato'}</h2>
         <form onSubmit={submit} className="space-y-4">
           <div><label htmlFor="cont-title" className="label">Título *</label><input id="cont-title" className="input" value={f.title} onChange={e => set('title', e.target.value)} required /></div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div><label htmlFor="cont-num" className="label">N° Contrato</label><input id="cont-num" className="input" value={f.contract_number} onChange={e => set('contract_number', e.target.value)} /></div>
             <div><label htmlFor="cont-type" className="label">Tipo</label><input id="cont-type" className="input" value={f.contract_type} onChange={e => set('contract_type', e.target.value)} placeholder="Servicio, Licencia…" /></div>
             <div><label htmlFor="cont-start" className="label">Inicio</label><input id="cont-start" className="input" type="date" value={f.start_date} onChange={e => set('start_date', e.target.value)} /></div>
@@ -105,7 +106,69 @@ export default function ContractsModule() {
         </div>
       )}
 
-      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+      {/* ── MOBILE / TABLET: cards ─────────────────────────────────────── */}
+      <div className="lg:hidden space-y-2.5">
+        {loading ? (
+          <div className="rounded-2xl p-8 text-center text-sm shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>Cargando…</div>
+        ) : items.length === 0 ? (
+          <div className="rounded-2xl p-10 text-center shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>
+            <FileCheck size={30} className="mx-auto mb-2" style={{ color: 'var(--ds-border-strong)' }} />
+            <p className="text-sm">Sin contratos</p>
+          </div>
+        ) : items.map(c => {
+          const sc = STATUS_CFG[c.status] || STATUS_CFG.active;
+          const isExpiring = c.status === 'active' && c.days_remaining !== null && c.days_remaining <= c.alert_days && c.days_remaining >= 0;
+          return (
+            <div key={c.id} className="rounded-2xl p-4 shadow-soft" style={{ ...cardStyle, ...(isExpiring ? { borderColor: 'rgba(245,158,11,0.3)' } : {}) }}>
+              <div className="flex items-start gap-3">
+                <div className="size-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(20,184,166,0.12)' }}>
+                  <FileCheck size={17} className="text-teal-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-semibold truncate" style={{ color: 'var(--ds-text)' }}>{c.title}</p>
+                  <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--ds-text-muted)' }}>
+                    {[c.contract_number && `#${c.contract_number}`, c.provider_name, c.contract_type].filter(Boolean).join(' · ') || '—'}
+                  </p>
+                </div>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium" style={{ color: 'var(--ds-text-subtle)' }}>Vencimiento</p>
+                  <p className="text-[13px] font-semibold flex items-center gap-1.5" style={{ color: isExpiring ? '#F59E0B' : 'var(--ds-text)' }}>
+                    {fmt(c.end_date)}
+                    {isExpiring && <span className="text-[10px] px-1.5 rounded-full font-bold" style={{ background: 'rgba(245,158,11,0.14)' }}>{c.days_remaining}d</span>}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium" style={{ color: 'var(--ds-text-subtle)' }}>Valor</p>
+                  <p className="text-[13px] font-semibold" style={{ color: 'var(--ds-text)' }}>{fmtMoney(c.value)}</p>
+                </div>
+              </div>
+              {(canWrite('contracts') || canDelete('contracts')) && (
+                <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: '1px solid var(--ds-border)' }}>
+                  {canWrite('contracts') && (
+                    <button type="button" onClick={() => setEditing(c)}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold tap-scale" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text)' }}>
+                      <Edit2 size={14} /> Editar
+                    </button>
+                  )}
+                  {canDelete('contracts') && (
+                    <button type="button" onClick={() => del(c.id)} aria-label="Cancelar contrato"
+                      className="inline-flex items-center justify-center size-[42px] rounded-xl text-red-500 tap-scale" style={{ background: 'rgba(239,68,68,0.08)' }}>
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── DESKTOP: table ─────────────────────────────────────────────── */}
+      <div className="hidden lg:block rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
@@ -169,6 +232,7 @@ export default function ContractsModule() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
       {editing !== undefined && <ContractForm item={editing} onClose={() => setEditing(undefined)} onSaved={load} />}
     </div>

@@ -77,11 +77,12 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
-      <div className="rounded-3xl shadow-soft-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto" style={cardStyle}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="rounded-t-3xl sm:rounded-3xl shadow-soft-xl w-full sm:max-w-2xl p-5 sm:p-6 max-h-[92dvh] overflow-y-auto scroll-touch" style={{ ...cardStyle, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+        <div className="sheet-handle" />
         <h2 className="text-lg font-semibold mb-5" style={{ color: 'var(--ds-text)' }}>Nueva Orden de Compra</h2>
         <form onSubmit={submit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="col-span-2">
               <label htmlFor="po-title" className="label">Título *</label>
               <input id="po-title" className="input" value={f.title} onChange={e => set('title', e.target.value)} required />
@@ -117,8 +118,8 @@ function NewPurchaseModal({ onClose, onCreated }: { onClose: () => void; onCreat
                 <Plus size={12} /> Agregar ítem
               </button>
             </div>
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--ds-border)' }}>
-              <table className="w-full text-sm">
+            <div className="rounded-xl overflow-x-auto" style={{ border: '1px solid var(--ds-border)' }}>
+              <table className="w-full min-w-[480px] text-sm">
                 <thead>
                   <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
                     <th className="text-left px-3 py-2 text-xs font-semibold" style={{ color: 'var(--ds-text-muted)' }}>Descripción</th>
@@ -257,6 +258,64 @@ function PurchaseRow({ po, onStatusChange }: { po: Purchase; onStatusChange: () 
   );
 }
 
+function PurchaseCard({ po, onStatusChange }: { po: Purchase; onStatusChange: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const [detail, setDetail] = useState<Purchase | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  async function toggle() {
+    if (!expanded && !detail) {
+      setLoadingDetail(true);
+      const d = await authFetch(`/purchases/${po.id}`).then(r => r.json()).catch(() => null);
+      setDetail(d); setLoadingDetail(false);
+    }
+    setExpanded(e => !e);
+  }
+  async function changeStatus(status: string) {
+    await authFetch(`/purchases/${po.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    toast.success('Estado actualizado'); onStatusChange();
+  }
+
+  return (
+    <div className="rounded-2xl p-4 shadow-soft" style={cardStyle}>
+      <button type="button" onClick={toggle} className="w-full flex items-start gap-3 text-left">
+        <div className="flex-1 min-w-0">
+          <p className="text-[15px] font-semibold truncate" style={{ color: 'var(--ds-text)' }}>{po.title}</p>
+          <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--ds-text-muted)' }}>
+            {[po.po_number && `#${po.po_number}`, po.provider_name, po.cost_center_name].filter(Boolean).join(' · ') || '—'}
+          </p>
+        </div>
+        <span className="text-[15px] font-bold flex-shrink-0" style={{ color: 'var(--ds-text)' }}>{fmtMoney(po.total)}</span>
+      </button>
+      <div className="flex items-center gap-2 mt-3.5 pt-3.5" style={{ borderTop: '1px solid var(--ds-border)' }}>
+        <select className="input flex-1" value={po.status} onChange={e => changeStatus(e.target.value)}>
+          {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+        </select>
+        <button type="button" onClick={toggle} aria-label="Ver ítems"
+          className="inline-flex items-center justify-center size-[42px] rounded-xl tap-scale" style={{ background: 'var(--ds-card-alt)', color: 'var(--ds-text-muted)' }}>
+          {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+        </button>
+      </div>
+      {expanded && (
+        <div className="mt-3 pt-3 space-y-2" style={{ borderTop: '1px solid var(--ds-border)' }}>
+          {loadingDetail ? (
+            <p className="text-xs" style={{ color: 'var(--ds-text-subtle)' }}>Cargando ítems…</p>
+          ) : detail?.items && detail.items.length > 0 ? detail.items.map(it => (
+            <div key={it.id} className="flex items-start justify-between gap-3 text-[13px]">
+              <span className="min-w-0 flex-1" style={{ color: 'var(--ds-text)' }}>{it.description}</span>
+              <span className="flex-shrink-0 text-xs text-right" style={{ color: 'var(--ds-text-muted)' }}>
+                {it.quantity} × {fmtMoney(it.unit_price)}<br /><strong style={{ color: 'var(--ds-text)' }}>{fmtMoney(it.subtotal)}</strong>
+              </span>
+            </div>
+          )) : (
+            <p className="text-xs" style={{ color: 'var(--ds-text-subtle)' }}>Sin ítems registrados.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PurchasesModule() {
   const { canWrite } = useAuth();
   const [items, setItems]   = useState<Purchase[]>([]);
@@ -308,7 +367,21 @@ export default function PurchasesModule() {
         </select>
       </div>
 
-      <div className="rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+      {/* ── MOBILE / TABLET: cards ─────────────────────────────────────── */}
+      <div className="lg:hidden space-y-2.5">
+        {loading ? (
+          <div className="rounded-2xl p-8 text-center text-sm shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>Cargando…</div>
+        ) : items.length === 0 ? (
+          <div className="rounded-2xl p-10 text-center shadow-soft" style={{ ...cardStyle, color: 'var(--ds-text-muted)' }}>
+            <ShoppingCart size={30} className="mx-auto mb-2" style={{ color: 'var(--ds-border-strong)' }} />
+            <p className="text-sm">Sin órdenes de compra</p>
+          </div>
+        ) : items.map(po => <PurchaseCard key={po.id} po={po} onStatusChange={load} />)}
+      </div>
+
+      {/* ── DESKTOP: table ─────────────────────────────────────────────── */}
+      <div className="hidden lg:block rounded-2xl overflow-hidden shadow-soft" style={cardStyle}>
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr style={{ background: 'var(--ds-card-alt)', borderBottom: '1px solid var(--ds-border)' }}>
@@ -330,6 +403,7 @@ export default function PurchasesModule() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {showModal && <NewPurchaseModal onClose={() => setShowModal(false)} onCreated={load} />}

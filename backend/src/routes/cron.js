@@ -2,6 +2,8 @@ import { Router } from 'express';
 import nodemailer from 'nodemailer';
 import db from '../db.js';
 import { dailyAlertsEmail, trialExpiryEmail } from '../utils/emailTemplates.js';
+import { notifyTicketEvent } from '../utils/ticketNotify.js';
+import { genTicketNumber, derivePriority, computeSla, getUserLevel, logHistory } from '../utils/tickets.js';
 
 const router = Router();
 
@@ -159,6 +161,73 @@ router.get('/trial-alerts', verifyCron, async (req, res) => {
   }
 
   res.json({ ok: true, alerts_sent: summary, ms: Date.now() - started });
+});
+
+// GET /api/cron/ticket-sla — alerts assignees of tickets about to breach / breached
+// Schedule every ~10-15 min via Vercel Cron. Flags prevent repeat emails.
+router.get('/ticket-sla', verifyCron, async (req, res) => {
+  const started = Date.now();
+  try {
+    // Breached and not yet alerted
+    const [breached] = await db.query(
+      `SELECT id FROM tickets
+        WHERE status NOT IN ('resolved','closed','cancelled','waiting_user','waiting_vendor')
+          AND resolution_due IS NOT NULL AND resolution_due < NOW()
+          AND sla_breach_notified = false AND assigned_to IS NOT NULL`
+    );
+    for (const t of breached) await notifyTicketEvent(t.id, 'sla_breach');
+    if (breached.length)
+      await db.query('UPDATE tickets SET sla_breach_notified = true WHERE id = ANY(?)', [breached.map(t => t.id)]);
+
+    // Due within the next 30 minutes and not yet alerted
+    const [due] = await db.query(
+      `SELECT id FROM tickets
+        WHERE status NOT IN ('resolved','closed','cancelled','waiting_user','waiting_vendor')
+          AND resolution_due IS NOT NULL
+          AND resolution_due BETWEEN NOW() AND NOW() + INTERVAL '30 minutes'
+          AND sla_due_notified = false AND assigned_to IS NOT NULL`
+    );
+    for (const t of due) await notifyTicketEvent(t.id, 'sla_due');
+    if (due.length)
+      await db.query('UPDATE tickets SET sla_due_notified = true WHERE id = ANY(?)', [due.map(t => t.id)]);
+
+    res.json({ ok: true, breached: breached.length, due_soon: due.length, ms: Date.now() - started });
+  } catch (err) {
+    console.error('[CRON_TICKET_SLA_ERROR]', err.message);
+    res.status(500).json({ error: 'cron error' });
+  }
+});
+
+// GET /api/cron/ticket-recurring — creates tickets from due recurrences (daily)
+router.get('/ticket-recurring', verifyCron, async (req, res) => {
+  const started = Date.now();
+  try {
+    const [recs] = await db.query('SELECT * FROM ticket_recurrences WHERE is_active = true AND next_run_at <= CURRENT_DATE');
+    let created = 0;
+    for (const rec of recs) {
+      const ttype = rec.type === 'incident' ? 'incident' : 'request';
+      const priority = derivePriority(rec.impact, rec.urgency);
+      const number = await genTicketNumber(rec.tenant_id, ttype);
+      const sla = await computeSla(rec.tenant_id, ttype, priority);
+      const lvl = rec.assign_to ? await getUserLevel(rec.tenant_id, rec.assign_to) : null;
+      const [r] = await db.query(
+        `INSERT INTO tickets
+           (tenant_id, ticket_number, type, title, description, category_id, impact, urgency, priority,
+            status, level, channel, assigned_to, sla_policy_id, first_response_due, resolution_due)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?, 'manual', ?,?,?,?) RETURNING id`,
+        [rec.tenant_id, number, ttype, rec.title, rec.description, rec.category_id, rec.impact, rec.urgency, priority,
+         rec.assign_to ? 'assigned' : 'new', lvl || 'n1', rec.assign_to, sla.sla_policy_id, sla.first_response_due, sla.resolution_due]
+      );
+      await logHistory(null, { tenant_id: rec.tenant_id, ticket_id: r[0].id, actor_id: null, action: 'created', new_value: `${number} (recurrente)` });
+      if (rec.assign_to) await notifyTicketEvent(r[0].id, 'assigned');
+      await db.query('UPDATE ticket_recurrences SET next_run_at = next_run_at + every_days WHERE id = ?', [rec.id]);
+      created++;
+    }
+    res.json({ ok: true, created, ms: Date.now() - started });
+  } catch (err) {
+    console.error('[CRON_RECURRING_ERROR]', err.message);
+    res.status(500).json({ error: 'cron error' });
+  }
 });
 
 export default router;

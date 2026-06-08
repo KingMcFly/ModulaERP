@@ -48,6 +48,7 @@ import lookupRouter        from './routes/lookup.js';
 import registerRouter      from './routes/register.js';
 import statusRouter        from './routes/status.js';
 import db from './db.js';
+import { ensureTicketsSchema } from './utils/ticketsSchema.js';
 
 // ── A09: Bootstrap audit log table (runs once on startup) ─────────────────────
 db.query(`
@@ -116,6 +117,9 @@ db.query(`
     ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS logo_url     VARCHAR(500);
   `))
   .catch(err => console.error('[DB] system_settings init failed:', err.message));
+
+// ── Tickets ServiceDesk schema (idempotent) ───────────────────────────────────
+ensureTicketsSchema().catch(err => console.error('[DB] tickets schema init failed:', err.message));
 
 const app = express();
 

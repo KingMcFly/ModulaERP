@@ -34,11 +34,12 @@ router.get('/summary', w(async (req, res) => {
     [tid]
   ).catch(() => [[{ expiring_contracts: 0 }]]);
 
-  const [[{ open_tickets }]] = await db.query(
-    `SELECT COUNT(*) AS open_tickets FROM tickets
-     WHERE tenant_id=? AND status IN ('open','in_progress')`,
+  const [[{ breached_tickets }]] = await db.query(
+    `SELECT COUNT(*) AS breached_tickets FROM tickets
+     WHERE tenant_id=? AND status NOT IN ('resolved','closed','cancelled')
+       AND resolution_due IS NOT NULL AND resolution_due < NOW()`,
     [tid]
-  ).catch(() => [[{ open_tickets: 0 }]]);
+  ).catch(() => [[{ breached_tickets: 0 }]]);
 
   const [[{ pending_requests }]] = await db.query(
     `SELECT COUNT(*) AS pending_requests FROM requests
@@ -47,6 +48,8 @@ router.get('/summary', w(async (req, res) => {
   ).catch(() => [[{ pending_requests: 0 }]]);
 
   const items = [];
+  if (breached_tickets > 0)
+    items.push({ type: 'ticket', message: `${breached_tickets} ticket${breached_tickets > 1 ? 's' : ''} con SLA vencido`, count: breached_tickets, severity: 'high' });
   if (overdue_loans > 0)
     items.push({ type: 'loan', message: `${overdue_loans} préstamo${overdue_loans > 1 ? 's' : ''} vencido${overdue_loans > 1 ? 's' : ''}`, count: overdue_loans, severity: 'high' });
   if (low_stock > 0)
@@ -58,8 +61,8 @@ router.get('/summary', w(async (req, res) => {
   if (pending_requests > 0)
     items.push({ type: 'request', message: `${pending_requests} solicitud${pending_requests > 1 ? 'es' : ''} pendiente${pending_requests > 1 ? 's' : ''}`, count: pending_requests, severity: 'low' });
 
-  const total = Number(overdue_loans) + Number(low_stock) + Number(overdue_maintenance) + Number(expiring_contracts) + Number(pending_requests);
-  res.json({ total, overdue_loans, low_stock, overdue_maintenance, expiring_contracts, pending_requests, items });
+  const total = Number(breached_tickets) + Number(overdue_loans) + Number(low_stock) + Number(overdue_maintenance) + Number(expiring_contracts) + Number(pending_requests);
+  res.json({ total, breached_tickets, overdue_loans, low_stock, overdue_maintenance, expiring_contracts, pending_requests, items });
 }));
 
 export default router;
